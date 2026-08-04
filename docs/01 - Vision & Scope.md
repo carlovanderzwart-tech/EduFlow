@@ -8,57 +8,69 @@ EduFlow
 
 # Visie
 
-EduFlow is een AI-gestuurd workflowplatform dat onderwijsprofessionals ondersteunt bij hun dagelijkse werkzaamheden.
+EduFlow is een werkplatform dat een leerkracht in het basisonderwijs helpt bij het administratieve deel van het werk: documentatie schrijven, mails opstellen en het schooljaar overzien.
 
-Het platform heeft als doel om administratieve werkzaamheden te verminderen, repetitieve taken te automatiseren en alle belangrijke hulpmiddelen samen te brengen in één overzichtelijke omgeving.
+Het doel is tijd besparen op wat herhaalt, zodat er meer tijd overblijft voor de kinderen.
 
-EduFlow vervangt bestaande systemen niet, maar verbindt ze met elkaar zodat gebruikers minder tijd kwijt zijn aan administratie en meer tijd overhouden voor de kinderen.
+EduFlow vervangt geen bestaande systemen. Het staat ernaast.
 
 ---
 
 # Missie
 
-Het ontwikkelen van een centrale digitale werkplek waarin AI een natuurlijke rol speelt binnen de dagelijkse workflow van onderwijsprofessionals.
+Een eigen digitale werkplek waarin AI meeschrijft in plaats van in een apart venster te wachten.
 
-AI is geen losse chatbot, maar een geïntegreerde assistent die helpt bij iedere stap van het werkproces.
+Geen losse chatbot waar je je vraag naartoe kopieert, maar hulp op de plek waar het werk gebeurt.
 
 ---
 
 # Probleem
 
-Onderwijsprofessionals werken dagelijks in meerdere systemen, waaronder:
+Het werk verspreidt zich over veel systemen: Outlook, Teams, OneDrive, Momento, Word, en daarnaast losse AI-tools.
 
-- Outlook
-- Microsoft Agenda
-- Microsoft Teams
-- OneDrive
-- Momento
-- ChatGPT
-- Claude
-- Word
-- PowerPoint
+Daardoor bestaat een groot deel van de dag uit:
 
-Hierdoor ontstaat veel dubbel werk.
+- dezelfde soort teksten opnieuw schrijven;
+- gegevens van het ene naar het andere systeem overzetten;
+- steeds opnieuw dezelfde instructies aan AI geven;
+- documentatie opmaken die er elke keer anders uitziet.
 
-Veel werkzaamheden bestaan uit:
-
-- informatie zoeken;
-- teksten herschrijven;
-- documenten opstellen;
-- gegevens kopiëren;
-- steeds opnieuw dezelfde prompts schrijven.
-
-Dit kost onnodig veel tijd.
+Dat kost meer tijd dan nodig.
 
 ---
 
 # Oplossing
 
-EduFlow centraliseert deze werkzaamheden in één platform.
+EduFlow brengt de terugkerende taken samen in één omgeving, met AI die de context al kent: de schrijfstijl, de groep, de lopende projecten.
 
-Vanuit één dashboard krijgt de gebruiker toegang tot alle veelgebruikte functies en AI-ondersteuning.
+**EduFlow koppelt niet met andere systemen.** Het produceert tekst die je zelf verplaatst. Dat is een bewuste keuze, geen tekortkoming — zie *Randvoorwaarden*.
 
-De software ondersteunt bestaande systemen zonder deze te vervangen.
+---
+
+# Randvoorwaarden
+
+Twee dingen bepalen wat er wel en niet gebouwd kan worden.
+
+## Geen toegang tot Microsoft 365
+
+Een koppeling met Outlook of de agenda vereist een app-registratie in de Entra ID van de school. Die toestemming is aangevraagd en niet verleend, en dat verandert voorlopig niet.
+
+Gevolg: EduFlow leest geen mail, verstuurt geen mail en synchroniseert geen agenda. De mailmodule stelt concepten op die je zelf kopieert. De agenda is zelfstandig.
+
+Dit is geen tijdelijke workaround waar later omheen gebouwd wordt. Het is het uitgangspunt.
+
+## Verwerking van gegevens van kinderen
+
+Documentatie gaat over minderjarigen. Namen staan in de lopende tekst, foto's horen bij het werk.
+
+Daarom geldt:
+
+- Foto's gaan nooit naar een AI-dienst.
+- Voornamen worden vervangen door codes voordat tekst wordt verstuurd.
+- De gebruiker kan altijd zien wat er wordt verstuurd.
+- Er wordt niets opgeslagen buiten het eigen apparaat.
+
+Voordat EduFlow met echte gegevens wordt gebruikt, wordt de opzet voorgelegd aan de functionaris gegevensbescherming van het schoolbestuur.
 
 ---
 
@@ -66,101 +78,68 @@ De software ondersteunt bestaande systemen zonder deze te vervangen.
 
 ## Fase 1
 
-Basisonderwijs
-
-- Leerkrachten
-- Intern begeleiders
-- Onderwijsassistenten
-- Schoolleiding
+Eén gebruiker: de leerkracht die dit bouwt. Geen accounts, geen rollen, geen delen.
 
 ## Fase 2
 
-Kinderopvang
+Collega's binnen dezelfde school. Dit vraagt om accounts en gedeelde opslag, en dus om een gesprek met ICT en de privacyfunctionaris.
 
-- Pedagogisch medewerkers
-- Locatiemanagers
-- Coaches
+## Fase 3
 
-De architectuur moet vanaf het begin uitbreidbaar zijn zodat ondersteuning voor kinderopvang eenvoudig toegevoegd kan worden.
+Breder onderwijs en kinderopvang.
+
+De architectuur moet uitbreiding toestaan, maar er wordt niets voor fase 2 of 3 gebouwd zolang fase 1 niet af is.
 
 ---
 
 # Kernwaarden
 
-## AI First
+## AI schrijft mee, niet over
 
-AI ondersteunt iedere workflow.
-
-Niet als losse chatbot maar als geïntegreerde assistent.
-
----
-
-## Workflow boven functies
-
-EduFlow automatiseert complete werkzaamheden in plaats van losse acties.
-
----
+AI stelt voor. De gebruiker beslist. Eigen tekst wordt nooit vervangen zonder handeling.
 
 ## Zo min mogelijk klikken
 
-Iedere workflow moet uiteindelijk uit zo min mogelijk handelingen bestaan.
+Iedere workflow moet uit zo weinig mogelijk handelingen bestaan.
 
----
+## Werkt op telefoon en laptop
+
+Beide zijn even belangrijk. Ieder scherm wordt eerst voor een smal scherm ontworpen.
 
 ## Modulair
 
-Nieuwe functionaliteiten moeten eenvoudig toegevoegd kunnen worden zonder bestaande onderdelen te wijzigen.
+Nieuwe onderdelen toevoegen zonder bestaande te wijzigen.
 
----
+## Privacy by design
 
-## Privacy by Design
-
-EduFlow verwerkt zo min mogelijk persoonsgegevens en slaat alleen gegevens op wanneer dat noodzakelijk is.
-
----
-
-## Gebruiksvriendelijkheid
-
-De software moet intuïtief zijn en zonder uitgebreide uitleg gebruikt kunnen worden.
+Zo min mogelijk gegevens verwerken, en zichtbaar maken wat er wél wordt verwerkt.
 
 ---
 
 # Scope versie 1
 
-De eerste versie bevat de volgende modules:
-
 - Dashboard
 - Documentatie
 - Mail
 - Agenda
-- AI Chat
-- Kennisbank
 - Instellingen
 
 ---
 
 # Scope versie 2
 
-Uitbreidingen:
-
-- Outlook integratie
-- Microsoft Agenda integratie
-- Chrome extensie
-- Browserautomatisering
-- Afbeeldinganalyse
-- AI workflows
+- Kennisbank: eigen documenten als context voor AI
+- Meer mailsjablonen
+- Meer opmaaktemplates voor documentatie
+- Losse AI-chat
 
 ---
 
 # Scope versie 3
 
-Uitbreidingen:
-
-- Momento automatisering
-- Volledige AI Workflows
-- Workflowbibliotheek
-- Templates
-- Ondersteuning voor kinderopvang
+- Ondersteuning voor meerdere gebruikers
+- Delen met collega's
+- Momento-ondersteuning, mits dat binnen de voorwaarden van dat systeem past
 
 ---
 
@@ -168,21 +147,26 @@ Uitbreidingen:
 
 EduFlow is geen:
 
-- Leerlingvolgsysteem
-- Financieel systeem
-- Administratiesysteem
-- Vervanging van Momento
-- Vervanging van Microsoft 365
+- leerlingvolgsysteem;
+- administratiesysteem;
+- vervanging van Momento;
+- vervanging van Microsoft 365;
+- mailprogramma.
 
-EduFlow ondersteunt deze systemen, maar neemt hun functie niet over.
+En EduFlow doet niet:
+
+- mail lezen of versturen;
+- agenda's synchroniseren;
+- browserautomatisering van systemen van derden.
 
 ---
 
 # Succescriteria
 
-EduFlow is succesvol wanneer:
+EduFlow is geslaagd wanneer:
 
-- administratieve werkzaamheden aantoonbaar minder tijd kosten;
-- AI een vanzelfsprekend onderdeel wordt van dagelijkse werkzaamheden;
-- gebruikers minder tussen verschillende applicaties hoeven te wisselen;
-- nieuwe functionaliteiten eenvoudig toegevoegd kunnen worden.
+- een documentatie sneller klaar is dan nu;
+- de documentaties er consistenter uitzien zonder dat de opmaak elke keer opnieuw bedacht moet worden;
+- een mail opstellen minder tijd kost dan hem zelf schrijven;
+- het schooljaar in één overzicht past;
+- er niets misgaat met gegevens van kinderen.
