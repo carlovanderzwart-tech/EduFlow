@@ -65,12 +65,26 @@ Documentatie gaat over minderjarigen. Namen staan in de lopende tekst, foto's ho
 
 Daarom geldt:
 
-- Foto's gaan nooit naar een AI-dienst.
-- Voornamen worden vervangen door codes voordat tekst wordt verstuurd.
-- De gebruiker kan altijd zien wat er wordt verstuurd.
-- Er wordt niets opgeslagen buiten het eigen apparaat.
+- Foto's gaan nooit naar een AI-dienst. Dit is absoluut: de AI-laag accepteert geen binaire data.
+- Voornamen uit de eigen namenlijst worden vervangen door codes voordat tekst wordt verstuurd.
+- De gebruiker kan altijd zien wat er wordt verstuurd — volledig, dus inclusief het stijlvoorbeeld, de instructie aan de AI en eerdere documentaties uit dezelfde reeks.
+- Documentaties en foto's worden alleen op het eigen apparaat opgeslagen. Er is geen server-opslag en geen account.
 
-Voordat EduFlow met echte gegevens wordt gebruikt, wordt de opzet voorgelegd aan de functionaris gegevensbescherming van het schoolbestuur.
+## Wat dit níét is
+
+Twee dingen moeten eerlijk staan, want anders klopt het gesprek met de functionaris gegevensbescherming niet.
+
+**De namenlijst is een vangnet, geen garantie.** Een lijst is nooit compleet: een naam die er niet in staat gaat gewoon mee. Daarom staat de controlelink er altijd naast, en daarom is die de laatste zekerheid en niet de eerste.
+
+**Tekst die naar een AI-provider gaat, gaat het apparaat af.** Hoe lang die daar blijft hangt af van de provider en van de gemaakte afspraken. Vervangen van namen maakt tekst gepseudonimiseerd, niet anoniem — en gepseudonimiseerde gegevens blijven persoonsgegevens.
+
+Daaruit volgt:
+
+- er wordt een provider gekozen die niet traint op ingevoerde data en die binnen de EU verwerkt;
+- de verwerkingsverantwoordelijke is het schoolbestuur, niet de individuele leerkracht. Een verwerkersovereenkomst loopt dus via het bestuur;
+- tot dat geregeld is, gaat er geen enkel gegeven van een echt kind naar een AI-provider. Er wordt gebouwd en getest met een verzonnen groep.
+
+**Voordat EduFlow met echte gegevens wordt gebruikt, wordt de opzet voorgelegd aan de functionaris gegevensbescherming van het schoolbestuur.** Dat is een harde voorwaarde en hij staat als zodanig in doc 00.
 
 ---
 
@@ -90,6 +104,12 @@ Breder onderwijs en kinderopvang.
 
 De architectuur moet uitbreiding toestaan, maar er wordt niets voor fase 2 of 3 gebouwd zolang fase 1 niet af is.
 
+## Fase en versie zijn niet hetzelfde
+
+Een **fase** gaat over wie het gebruikt. Een **versie** gaat over wat de software kan.
+
+Ze lopen niet gelijk op: versie 1 en 2 zijn allebei voor fase 1 — één gebruiker, één apparaat. Fase 2 begint pas bij versie 3, want collega's betekent accounts, gedeelde opslag en synchronisatie, en dat is een ander product dan wat hier beschreven staat.
+
 ---
 
 # Kernwaarden
@@ -105,6 +125,8 @@ Iedere workflow moet uit zo weinig mogelijk handelingen bestaan.
 ## Werkt op telefoon en laptop
 
 Beide zijn even belangrijk. Ieder scherm wordt eerst voor een smal scherm ontworpen.
+
+Wel met één beperking die uit de opslagkeuze volgt: **gegevens staan op het apparaat waar je ze invoert, en apparaten synchroniseren niet.** Een documentatie begin je en maak je af op hetzelfde apparaat. Overzetten kan met een exportbestand. Zie doc 05, besluit B-01.
 
 ## Modulair
 
@@ -132,6 +154,10 @@ Zo min mogelijk gegevens verwerken, en zichtbaar maken wat er wél wordt verwerk
 - Meer mailsjablonen
 - Meer opmaaktemplates voor documentatie
 - Losse AI-chat
+- Donkere modus
+- Titel laten voorstellen door AI
+- Mail inkorten, uitbreiden, samenvatten en achteraf van toon wisselen
+- Centrale logging in plaats van alleen de browserconsole
 
 ---
 
@@ -139,7 +165,9 @@ Zo min mogelijk gegevens verwerken, en zichtbaar maken wat er wél wordt verwerk
 
 - Ondersteuning voor meerdere gebruikers
 - Delen met collega's
-- Momento-ondersteuning, mits dat binnen de voorwaarden van dat systeem past
+- Synchronisatie tussen apparaten, met server-opslag
+
+Momento staat niet op de planning. Er is geen koppeling zonder browserautomatisering, en die is uitgesloten. Komt daar een echte koppelmogelijkheid, dan wordt het opnieuw bekeken.
 
 ---
 
@@ -170,3 +198,4 @@ EduFlow is geslaagd wanneer:
 - een mail opstellen minder tijd kost dan hem zelf schrijven;
 - het schooljaar in één overzicht past;
 - er niets misgaat met gegevens van kinderen.
+
