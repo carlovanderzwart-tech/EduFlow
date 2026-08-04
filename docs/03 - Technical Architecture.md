@@ -2,9 +2,9 @@
 
 ## Doel
 
-EduFlow wordt ontwikkeld als een modulair, schaalbaar en AI-first platform.
+EduFlow is een modulaire webapplicatie voor één gebruiker, die op telefoon en laptop gelijk werkt.
 
-De architectuur moet eenvoudig uitbreidbaar zijn zodat nieuwe modules en AI-providers toegevoegd kunnen worden zonder bestaande functionaliteit te wijzigen.
+De architectuur moet uitbreidbaar zijn zodat modules en AI-providers toegevoegd kunnen worden zonder bestaande onderdelen te wijzigen.
 
 ---
 
@@ -12,267 +12,216 @@ De architectuur moet eenvoudig uitbreidbaar zijn zodat nieuwe modules en AI-prov
 
 ## Frontend
 
-- Next.js
+- Next.js (App Router)
 - React
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
-
----
+- Lucide Icons
 
 ## Backend
 
-- Next.js API Routes
+Next.js API Routes. Geen aparte backend in versie 1.
 
-Versie 1 gebruikt de ingebouwde API-functionaliteit van Next.js.
-
-Hierdoor is geen aparte backend nodig.
-
-Wanneer EduFlow groter wordt kan de backend worden losgekoppeld.
-
----
-
-## Database
-
-Nog niet aanwezig.
-
-Versie 1 gebruikt lokale opslag waar mogelijk.
-
-Wanneer gebruikersaccounts worden toegevoegd zal PostgreSQL worden gebruikt.
-
----
+De API-routes doen precies één ding: AI-aanroepen doorsturen, zodat de API-sleutel op de server blijft. Alle overige logica draait in de browser.
 
 ## Authenticatie
 
-Nog niet aanwezig.
+Niet aanwezig. EduFlow is voor één gebruiker.
 
-EduFlow wordt in eerste instantie ontwikkeld voor één gebruiker.
+---
 
-Authenticatie wordt later toegevoegd.
+# Opslag
+
+Dit is de belangrijkste technische keuze van versie 1, want documentatie bestaat voor een groot deel uit foto's.
+
+## IndexedDB voor alles van formaat
+
+Documentaties, foto's en mailconcepten gaan in IndexedDB.
+
+**Niet localStorage.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op. Eén documentatie met zes telefoonfoto's zit daar al overheen. localStorage wordt uitsluitend gebruikt voor kleine instellingen: gekozen regio, standaardtoon, gekozen AI-provider.
+
+## Foto's
+
+- Foto's worden als Blob opgeslagen, niet als base64-tekst. Base64 maakt bestanden een derde groter en is trager.
+- Bij het toevoegen wordt een foto verkleind naar maximaal 2400 pixels op de lange zijde, als JPEG. Dat is ruim genoeg voor 300 dpi op een A4 en scheelt een factor tien in opslag ten opzichte van een onbewerkte telefoonfoto.
+- Weergeven gebeurt via object-URL's, die na gebruik worden vrijgegeven.
+- Bij het benaderen van de opslaglimiet krijgt de gebruiker een waarschuwing met de mogelijkheid om te exporteren en op te ruimen.
+
+## Geen server-opslag
+
+Er gaat niets naar een server, behalve tekst richting de AI-provider. Foto's verlaten het apparaat nooit.
+
+## Later
+
+Zodra er meerdere gebruikers komen: PostgreSQL en objectopslag voor de foto's. Daarom loopt alle opslag via `DocumentService` en nooit rechtstreeks vanuit een component — dan is dat één vervanging in plaats van een verbouwing.
 
 ---
 
 # Architectuur
 
-EduFlow bestaat uit losse modules.
+EduFlow bestaat uit losse modules. Iedere module is zelfstandig.
 
-Iedere module is zelfstandig.
+Modules communiceren uitsluitend via gedeelde services, nooit direct met elkaar.
 
-Modules communiceren uitsluitend via gedeelde services.
+## Mappenstructuur
 
-Modules communiceren nooit direct met elkaar.
+```
+src/
+  app/          Next.js routes en API-routes
+  components/   Gedeelde UI
+  modules/      De vijf modules
+  services/     Alle logica
+  hooks/
+  types/
+  utils/
+  data/         schoolvakanties.json
+  styles/
+```
 
----
+Geen aparte `frontend/`-map. Versie 1 is één Next.js-project.
 
-# Mappenstructuur
+## Modules
 
-frontend/
-
-app/
-
-components/
-
+```
 modules/
+  dashboard/
+  documentation/
+  mail/
+  agenda/
+  settings/
+```
 
-services/
+Iedere module bevat `components/`, `hooks/`, `services/`, `types/`.
 
-hooks/
-
-types/
-
-utils/
-
-styles/
-
----
-
-# Modules
-
-Iedere module krijgt dezelfde structuur.
-
-modules/
-
-dashboard/
-
-documentation/
-
-mail/
-
-agenda/
-
-momento/
-
-knowledge/
-
-settings/
-
-Iedere module bevat:
-
-- components
-- hooks
-- services
-- types
+Kennisbank komt in versie 2. Momento staat niet op de planning.
 
 ---
 
 # Services
 
-Alle logica komt in services.
+Alle logica zit in services. Componenten bevatten geen businesslogica.
 
-Voorbeelden:
-
-AIService
-
-MailService
-
-AgendaService
-
-MomentoService
-
-KnowledgeService
-
-DocumentService
+| Service | Verantwoordelijkheid |
+|---|---|
+| `AIService` | Enige toegang tot AI. Roept altijd eerst `PrivacyService` aan. |
+| `PrivacyService` | Namen vervangen door codes en weer terugzetten. |
+| `DocumentService` | Documentaties en foto's opslaan, ophalen, verwijderen. |
+| `ExportService` | Print-PDF en deelbare afbeelding genereren. |
+| `MailService` | Sjablonen en concepten. |
+| `AgendaService` | Vakantiedata, eigen afspraken, aangepaste vakantiedatums. |
+| `SettingsService` | Instellingen, namenlijst, reeksen. |
 
 Services mogen elkaar gebruiken.
 
-Componenten bevatten geen bedrijfslogica.
+---
+
+# AI-architectuur
+
+Alle AI-functionaliteit loopt via `AIService`. Modules praten nooit rechtstreeks met een AI-provider.
+
+Zo kan later gewisseld worden tussen Claude, ChatGPT, Gemini of een lokaal model zonder de modules aan te passen.
+
+## Afscherming is niet optioneel
+
+`AIService` is de enige plek die de API-route aanroept, en die roept altijd eerst `PrivacyService` aan. Er is geen weg om AI te bereiken die daaromheen gaat.
+
+Dat is een architectuurkeuze, geen instelling. Een module die zelf `fetch` naar de AI-route doet is een fout die bij review wordt afgekeurd.
+
+Foto's worden nooit meegestuurd. `AIService` accepteert geen binaire data.
 
 ---
 
-# AI Architectuur
+# Export
 
-Alle AI-functionaliteit loopt via één centrale AIService.
+Twee formaten, één renderlaag: de documentatiepagina wordt als HTML opgebouwd volgens het gekozen template, en daarna omgezet.
 
-Modules communiceren nooit rechtstreeks met Claude of andere AI-modellen.
+- **Print-PDF** — via een print-stylesheet en de printfunctie van de browser. Die levert vectortekst en scherpe foto's op zonder externe bibliotheek.
+- **Deelbare afbeelding** — de pagina wordt naar canvas gerasterd op een verhoogde schaalfactor en als JPEG weggeschreven.
 
-Hierdoor kan later eenvoudig gewisseld worden tussen:
+De keuze van bibliotheek voor het rasteren wordt gemaakt op het moment dat dit gebouwd wordt, niet nu.
 
-- Claude
-- ChatGPT
-- Gemini
-- Lokaal model
-
-zonder wijzigingen aan de modules.
+Templates zijn losse componenten met dezelfde props. Een template toevoegen raakt geen bestaande documentaties.
 
 ---
 
 # UI
 
-Iedere pagina bestaat uit:
+## Layout
 
-Header
+Mobiel eerst. Ieder scherm wordt ontworpen voor een smal scherm en groeit mee.
 
-Sidebar
+- **Telefoon** — header, content, navigatiebalk onderaan met vijf iconen.
+- **Laptop** — header, vaste zijbalk links, content.
 
-Content
+Geen apart AI-paneel. AI-resultaat verschijnt in de contentkolom, onder de eigen tekst van de gebruiker.
 
-AI Panel
+## Styling
 
-Footer (optioneel)
+Tailwind CSS, shadcn/ui, Lucide Icons.
 
-Navigatie blijft overal gelijk.
-
----
-
-# Styling
-
-Tailwind CSS
-
-shadcn/ui
-
-Lucide Icons
-
-Dark Mode ondersteuning vanaf versie 1.
+**Donkere modus komt in versie 2.** De export is altijd licht, dus donkere modus zou alleen voor de invoerschermen gelden.
 
 ---
 
 # Bestandsstructuur
 
-Iedere component krijgt één verantwoordelijkheid.
+Iedere component heeft één verantwoordelijkheid. Geen component groter dan ongeveer 300 regels.
 
-Voorbeeld:
-
-Button.tsx
-
-Sidebar.tsx
-
-DocumentCard.tsx
-
-MailCard.tsx
-
-Geen component groter dan ongeveer 300 regels.
+Voorbeelden: `Button.tsx`, `BottomNav.tsx`, `DocumentCard.tsx`, `PhotoGrid.tsx`, `TemplateA.tsx`.
 
 ---
 
 # State Management
 
-Versie 1 gebruikt React Context.
-
-Wanneer nodig kan later Zustand worden toegevoegd.
+React Context in versie 1. Zustand later, als het nodig blijkt.
 
 ---
 
 # API
 
-Alle API-routes bevinden zich onder:
+Alle routes onder `/api/`:
 
-/api/
-
-Voorbeelden:
-
+```
 /api/ai
+```
 
-/api/mail
-
-/api/documentation
-
-/api/momento
-
-/api/settings
+Meer niet in versie 1. Mail, agenda, documentatie en instellingen draaien volledig in de browser en hebben geen server nodig.
 
 ---
 
 # Error Handling
 
-Iedere service retourneert gestandaardiseerde fouten.
+Iedere service geeft gestandaardiseerde fouten terug.
 
-Frontend toont altijd een gebruikersvriendelijke melding.
+De frontend toont altijd een melding in gewone taal met een vervolgstap. Technische details gaan naar de console.
 
-Technische fouten worden gelogd.
+Werk gaat nooit verloren door een fout. Bij een mislukte AI-aanroep blijft de eigen tekst staan.
 
 ---
 
 # Logging
 
-Versie 1:
+Versie 1: browserconsole. Versie 2: centrale logging.
 
-Browser Console
-
-Versie 2:
-
-Centrale logging
+Er wordt nooit inhoud van documentaties gelogd.
 
 ---
 
 # Performance
 
-Code splitting
+Code splitting, lazy loading, beeldoptimalisatie, caching waar zinvol.
 
-Lazy loading
-
-Image optimization
-
-Caching waar mogelijk
+Foto's worden verkleind bij het toevoegen, niet bij het tonen.
 
 ---
 
 # Security
 
-Geen secrets in de frontend.
-
-API keys uitsluitend via environment variables.
-
-Geen gevoelige gegevens in Local Storage.
+- Geen secrets in de frontend. API-sleutels uitsluitend via environment variables op de server.
+- Geen persoonsgegevens in localStorage. Documentaties staan in IndexedDB op het eigen apparaat.
+- Foto's verlaten het apparaat niet.
+- Geen externe trackers of analytics.
 
 ---
 
@@ -281,6 +230,6 @@ Geen gevoelige gegevens in Local Storage.
 - Modules zijn onafhankelijk.
 - Componenten bevatten geen businesslogica.
 - Services bevatten alle logica.
-- AI loopt altijd via AIService.
-- Herbruikbare code gaat naar shared components.
+- AI loopt altijd via `AIService`, en `AIService` loopt altijd via `PrivacyService`.
+- Opslag loopt altijd via een service, nooit rechtstreeks.
 - Iedere nieuwe module volgt dezelfde structuur.
