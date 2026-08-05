@@ -1,6 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
 interface EmptyStateAction {
   label: string;
@@ -10,28 +17,35 @@ interface EmptyStateAction {
 interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
+  /** Eén zin die uitlegt wat hier komt te staan. */
   description: string;
+  /** Hooguit één knop. */
   action?: EmptyStateAction;
 }
 
 /**
- * Gedeeld patroon voor lege schermen (zie `docs/04 - Product Blueprint.md`,
- * *Gedeelde patronen*): nooit alleen leegte, altijd één zin uitleg en
- * hooguit één knop.
+ * Preset boven de `Empty`-primitive.
+ *
+ * Doc 04 (*Gedeelde patronen*) schrijft voor lege schermen een vaste vorm voor:
+ * *"Nooit alleen leegte. Altijd één zin die uitlegt wat hier komt te staan,
+ * plus één knop."* De primitive is vrij samen te stellen; deze wrapper legt die
+ * vorm vast zodat elk leeg scherm in EduFlow er hetzelfde uitziet.
  */
 export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-      <Icon aria-hidden="true" className="size-10 text-muted-foreground" />
-      <div className="space-y-1">
-        <h1 className="text-base font-medium text-foreground">{title}</h1>
-        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
-      </div>
+    <Empty className="min-h-[50vh]">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
       {action ? (
-        <Button size="sm" onClick={action.onClick} className="mt-1">
+        <Button size="sm" onClick={action.onClick}>
           {action.label}
         </Button>
       ) : null}
-    </div>
+    </Empty>
   );
 }
