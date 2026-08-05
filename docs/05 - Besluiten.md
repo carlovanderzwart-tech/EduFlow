@@ -286,6 +286,19 @@ Aanleiding: doorloop van doc 00 t/m 04 op conflicten, gaten en gemiste kansen. 5
 | T-09 | Zoeken via een index in het geheugen; foto's opruimen bij verwijderen; autosave met vertraging; waarschuwing bij 80% van de opslaglimiet | Niet eerder belegd |
 | T-10 | `04 - product blueprint` hernoemd naar `04 - Product Blueprint.md` | Werd op GitHub niet als document weergegeven |
 
+B-13 – Architectuur bevriezen
+
+De architectuur zoals vastgelegd na PR #15 geldt als het uitgangspunt voor de implementatie van Sprint 2A.
+
+Tijdens de implementatie worden geen nieuwe architectuurpatronen, services, repositories, entiteiten of fundamentele ontwerpkeuzes toegevoegd.
+
+Wijzigingen aan de architectuur zijn alleen toegestaan wanneer:
+
+een aantoonbare fout in de documentatie wordt gevonden;
+de implementatie onmogelijk blijkt met het huidige ontwerp;
+of een expliciet nieuw architectuurbesluit wordt genomen en gedocumenteerd.
+
+Kleine verduidelijkingen en tekstcorrecties zijn toegestaan zolang ze het ontwerp niet veranderen.
 ---
 
 # Openstaand
