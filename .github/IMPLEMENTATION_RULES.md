@@ -24,6 +24,8 @@ When code and documentation differ:
 
 ## Architecture Freeze
 
+See also: docs/ARCHITECTURE_FREEZE.md
+
 Do not introduce:
 
 - new services
