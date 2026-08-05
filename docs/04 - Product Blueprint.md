@@ -14,7 +14,7 @@ Vier schermen plus instellingen:
 - Documentatie
 - Mail
 - Agenda
-- Instellingen
+- Instellingen, met daaronder Leerlingen en groepen
 
 Kennisbank, AI Chat en Momento vallen buiten versie 1.
 
@@ -39,6 +39,8 @@ Concreet betekent dat: geen twee kolommen naast elkaar, geen tabellen met veel k
 **Telefoon:** balk onderaan met vijf iconen. Geen hamburgermenu — dat kost een extra tik en verbergt waar je heen kunt.
 
 De navigatie is overal gelijk en verandert nooit van plek.
+
+**Het blijven vijf items.** Schermen die je zelden opent — zoals Leerlingen en groepen — hangen onder Instellingen. Een zesde icoon maakt de balk op een telefoon te krap en zou een dagelijkse plek geven aan iets wat je een paar keer per jaar doet.
 
 ---
 
@@ -69,7 +71,7 @@ Wat je ziet als je EduFlow opent.
 - titel
 - reeks (indien van toepassing)
 - datum
-- leerlingen
+- groep
 - of er foto's bij zitten
 - status: concept of afgerond
 
@@ -81,7 +83,7 @@ Er is daarom een tweede weergave: **gegroepeerd per reeks**, met de losse docume
 
 Wisselen tussen "Alles" en "Per reeks" gebeurt met twee tabbladen bovenaan.
 
-**Filteren op:** reeks, leerlingen en periode. Meer niet.
+**Filteren op:** reeks, groep, leerling en periode. Meer niet.
 
 **Per documentatie (via lang indrukken of een menu-icoon):** openen, dupliceren, exporteren, verwijderen.
 
@@ -108,7 +110,8 @@ Afgeleid uit de bestaande documentaties van maart en mei.
 
 - **Reeks** (optioneel) — kiezen uit bestaande reeksen of een nieuwe aanmaken. Wordt als voorvoegsel voor de titel gebruikt.
 - **Titel**
-- **Leerlingen** — één regel, zoals "groep geel", "groep 1/2", "groep 3 & 4". Suggesties uit eerder gebruikte waarden. Dit is een groepsaanduiding, geen lijst met kinderen.
+- **Groep** — één groep, gekozen uit je eigen groepen. Staat standaard ingevuld met je standaardgroep.
+- **Leerlingen** (optioneel) — nul of meer kinderen uit die groep aanvinken. Voor een documentatie die echt over een paar specifieke kinderen gaat. Leeg laten is de normale situatie en kost geen handeling.
 - **Datum**
 - **Tekst** — één doorlopend tekstveld, geen aparte kopjes.
 - **Citaten** (optioneel) — losse uitspraken van kinderen, apart toe te voegen omdat ze in de opmaak een eigen plek krijgen.
@@ -126,12 +129,12 @@ Namen staan **in de lopende tekst**, niet in een apart veld: *"Na een aantal kee
 
 Daarom:
 
-1. In de instellingen houd je een lijst bij met de voornamen van je groep.
+1. In de instellingen houd je je leerlingen bij, met hun voornaam en achternaam.
 2. Voordat er tekst naar AI gaat, vervangt EduFlow die namen door Kind A, Kind B, enzovoort.
 3. Wat terugkomt wordt teruggezet naar de echte namen.
 4. Op je scherm zie je altijd de echte namen.
 
-**En omdat een namenlijst nooit compleet is:** naast de AI-knop staat een link "Bekijk wat er verstuurd wordt". Daar zie je de tekst zoals AI hem krijgt. Één tik, geen verplichte stap, maar wel altijd controleerbaar.
+**En omdat een leerlingenregister nooit compleet is:** een broertje, een kind uit een andere groep of een collega staat er niet in. Naast de AI-knop staat daarom een link "Bekijk wat er verstuurd wordt". Daar zie je de tekst zoals AI hem krijgt. Één tik, geen verplichte stap, maar wel altijd controleerbaar.
 
 Foto's gaan nooit mee. Ook niet als de gebruiker daarom vraagt.
 
@@ -170,7 +173,7 @@ De keuze staat als vier miniaturen bovenaan het exportscherm. Wisselen kan altij
 **Regels voor alle templates:**
 
 - Titel bovenaan, met de reeks als voorvoegsel wanneer die is ingevuld.
-- Daaronder in kleiner grijs: `Leerling(en): [waarde]`.
+- Daaronder in kleiner grijs: `Leerling(en): [groep]`. Zijn er leerlingen gekoppeld, dan komen hun voornamen erachter: `Leerling(en): groep geel — Kjeld, Roos`. De groep staat er altijd, de namen alleen als je ze zelf hebt gekoppeld.
 - Citaten krijgen een eigen plek in de opmaak, tussen aanhalingstekens, los van de lopende tekst.
 - Bij minder foto's dan het template aankan schuift de rest op. Geen lege vakken.
 
@@ -192,7 +195,9 @@ Bewust geen PDF voor de tweede: een afbeelding is meteen zichtbaar in een mail o
 
 Eén vinkje, geen automatische controle. EduFlow weet niet wie er op een foto staat en gaat dat ook niet proberen te bepalen.
 
-**Namen blijven standaard staan** in beide exports, zoals in de huidige documentaties. Bij de deelbare afbeelding zit een schakelaar om ze te vervangen door initialen — die gebruikt dezelfde namenlijst als de AI-afscherming.
+**Namen blijven standaard staan** in beide exports, zoals in de huidige documentaties. Bij de deelbare afbeelding zit een schakelaar om ze te vervangen door initialen — die gebruikt hetzelfde leerlingenregister als de AI-afscherming.
+
+Die schakelaar geldt voor de **hele pagina**: de namen in de lopende tekst, in de citaten, én de voornamen van gekoppelde leerlingen op de `Leerling(en)`-regel. Zou die regel buiten de schakelaar vallen, dan zet je hem aan in de veronderstelling dat er geen namen meer op staan terwijl ze bovenaan de pagina blijven staan.
 
 ### Onderaan
 
@@ -264,15 +269,49 @@ Titel, datum, tijd (of hele dag), notitie. Meer niet. Geen deelnemers, geen loca
 
 ## Scherm 6 — Instellingen
 
-- **Namen van je groep** — de voornamen die EduFlow moet afschermen voordat tekst naar AI gaat. Blijft lokaal.
+- **Leerlingen en groepen** — opent scherm 7. De namen hieruit schermt EduFlow af voordat tekst naar AI gaat. Blijft lokaal.
 - **Reeksen** — bestaande reeksen hernoemen of opruimen.
-- **Standaard leerlingen** — bijvoorbeeld "groep geel", zodat dat veld vast staat ingevuld.
+- **Standaardgroep** — bijvoorbeeld "groep geel", zodat dat veld bij een nieuwe documentatie vast staat ingevuld.
 - Vakantieregio
 - Schrijfstijl voor documentaties (voorbeeldtekst die AI als richtlijn gebruikt — vul hier een bestaande documentatie in)
 - Standaardtoon voor mail
 - AI-provider
 - Alle gegevens exporteren
 - Alle gegevens wissen
+
+---
+
+## Scherm 7 — Leerlingen en groepen
+
+Bereikbaar via Instellingen. **Geen zesde icoon in de navigatie:** dit beheer je een paar keer per jaar, niet dagelijks, en de balk onderaan blijft op vijf.
+
+**Twee tabbladen:** Leerlingen en Groepen.
+
+### Leerlingen
+
+**Bovenaan:** zoekveld op naam, een keuzelijst voor de groep, en een knop "Leerling toevoegen".
+
+**Daaronder:** de lijst, per regel voornaam en achternaam, de groep, en de leeftijd. Inactieve leerlingen staan er niet tussen tot je ze aanzet met een schakelaar "Toon inactieve leerlingen"; ze zijn dan zichtbaar grijs.
+
+**Een leerling toevoegen of aanpassen** gebeurt in een paneel dat over het scherm schuift, met: voornaam, achternaam, geboortedatum, groep, en actief of inactief. Voornaam en groep zijn verplicht, de rest mag leeg.
+
+Onder de geboortedatum staat de leeftijd zodra die is ingevuld: "4 jaar en 1 maand". Is hij leeg, dan staat er niets — geen streepje en geen schatting.
+
+**Op inactief zetten in plaats van verwijderen.** In het paneel staat een schakelaar, geen verwijderknop. Daarnaast in gewone taal waarom: *"Een leerling die van school gaat zet je op inactief. De naam blijft dan afgeschermd in documentaties van eerder dit jaar."*
+
+### Groepen
+
+Lijst met de naam van elke groep en hoeveel leerlingen erin zitten. Toevoegen, hernoemen en opruimen.
+
+Opruimen vraagt om bevestiging en zegt wat er gebeurt: de leerlingen en documentaties blijven bestaan en raken hun groep kwijt. Er verdwijnt dus niets, en dat staat er ook zo.
+
+### Importeren en exporteren
+
+Komt later, niet in versie 1. Wanneer het er is: een knop "Leerlingen importeren" die een CSV- of Excel-bestand accepteert, eerst laat zien wat er gaat gebeuren — hoeveel nieuw, hoeveel bijgewerkt, wat er niet te lezen valt — en pas daarna doorzet. Plus een knop om de huidige leerlingen te exporteren naar dezelfde twee formaten.
+
+### Lege toestand
+
+"Nog geen leerlingen. Voeg ze toe zodat EduFlow hun namen kan afschermen voordat er tekst naar AI gaat." met één knop.
 
 ---
 

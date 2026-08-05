@@ -27,13 +27,18 @@ Het belangrijkste onderdeel.
 
 - reeks (optioneel — een doorlopend project waar deze documentatie bij hoort)
 - titel
-- leerlingen (een groepsaanduiding, zoals "groep geel")
+- groep (één, gekozen uit de eigen groepen)
+- gekoppelde leerlingen (optioneel, nul of meer uit de gekozen groep)
 - datum (de dag waarop het gebeurde; kan afwijken van de dag waarop je het opschrijft)
 - tekst (één doorlopend veld)
 - citaten van kinderen (optioneel, los toe te voegen)
 - foto's (nul tot ongeveer zes)
 - opmaaktemplate
 - status (concept of afgerond)
+
+**Groep en gekoppelde leerlingen doen verschillend werk.** De groep vertelt over wie het gaat en verschijnt in de opmaak; die kies je altijd. Leerlingen koppelen is optioneel en bedoeld voor het geval een documentatie echt over een paar specifieke kinderen gaat. Wie je koppelt hoeft niet te kloppen met wie er in de tekst wordt genoemd — de tekst blijft leidend, en de afscherming werkt op de tekst en niet op de koppeling.
+
+**Koppelen is nooit verplicht.** Een documentatie over de hele groep koppelt niemand, en dat is de normale situatie.
 
 Er moet tekst zijn, of foto's, of allebei. Al het andere is optioneel. Een documentatie met alleen foto's moet gewoon kunnen opslaan.
 
@@ -53,7 +58,7 @@ Een documentatie zonder tekst én zonder foto's wordt niet bewaard. Verlaat de g
 - exporteren als print-PDF (A4 liggend, foto's op 300 dpi) en als deelbare afbeelding (JPG, één per pagina);
 - een deelbare afbeelding direct doorsturen via het deelmenu van het apparaat, of kopiëren naar het klembord.
 
-**Zoeken** doorzoekt titel, tekst en citaten. **Filteren** kan op reeks, op leerlingen en op periode, waarbij periode een vrij te kiezen datumbereik is met het lopende schooljaar als standaard.
+**Zoeken** doorzoekt titel, tekst en citaten. **Filteren** kan op reeks, op groep, op leerling en op periode, waarbij periode een vrij te kiezen datumbereik is met het lopende schooljaar als standaard. Filteren op leerling toont de documentaties waaraan die leerling is gekoppeld; documentaties die het kind alleen in de lopende tekst noemen vallen daar buiten, want die koppeling bestaat niet.
 
 ## AI ondersteunt
 
@@ -75,13 +80,68 @@ Deze eisen zijn niet alleen een instructie aan de AI. Ze worden vastgelegd in ee
 
 ## Eisen aan gegevensverwerking
 
-- Voordat tekst naar AI gaat worden voornamen uit de namenlijst vervangen door codes.
+- Voordat tekst naar AI gaat worden namen uit het leerlingenregister vervangen door codes. Dat geldt voor voornamen én achternamen, en voor **alle** leerlingen in het register — ook wie op inactief staat, want die komt voor in oudere documentaties.
 - Wat terugkomt wordt teruggezet naar de echte namen.
 - Foto's worden nooit verstuurd.
 - De gebruiker kan altijd inzien wat er precies verstuurd wordt: de eigen tekst, het stijlvoorbeeld, de instructie aan de AI en eventuele eerdere documentaties uit dezelfde reeks.
-- Bij de deelbare afbeelding kan de gebruiker voornamen laten vervangen door initialen. Die vervanging gebruikt dezelfde namenlijst als de afscherming richting AI, en het voorbeeld toont het resultaat vóór het exporteren.
+- Bij de deelbare afbeelding kan de gebruiker voornamen laten vervangen door initialen. Die vervanging gebruikt hetzelfde leerlingenregister als de afscherming richting AI, en het voorbeeld toont het resultaat vóór het exporteren.
 - Voordat een deelbare afbeelding wordt gemaakt bevestigt de gebruiker eenmalig per documentatie dat de kinderen op de foto's toestemming hebben voor beeldgebruik.
-- Is de namenlijst leeg, dan waarschuwt EduFlow vóór de eerste AI-aanroep dat er niets wordt afgeschermd, en vraagt om een eenmalige bevestiging.
+- Is het leerlingenregister leeg, dan waarschuwt EduFlow vóór de eerste AI-aanroep dat er niets wordt afgeschermd, en vraagt om een eenmalige bevestiging.
+
+---
+
+# Leerlingen en groepen
+
+Het fundament onder de afscherming richting AI, en de plek waar je vastlegt wie er in je groep zit. Bereikbaar via Instellingen; geen eigen plek in de hoofdnavigatie.
+
+## Een leerling bevat
+
+- voornaam
+- achternaam
+- geboortedatum
+- groep (één)
+- actief of inactief
+
+Voornaam en groep zijn verplicht. De rest mag leeg blijven — een register met gaten is bruikbaarder dan een register dat je pas mag opslaan als je alles weet.
+
+## Een groep bevat
+
+- naam
+
+Meer niet, in versie 1. Een groep is wél een eigen gegeven en geen los tekstje, zodat er later eigenschappen bij kunnen zonder dat elke documentatie en elke leerling opnieuw moet worden aangeraakt. Verwachte uitbreidingen: kleur, locatie, schooljaar en mentor.
+
+## De gebruiker kan
+
+- leerlingen toevoegen, aanpassen en op inactief zetten;
+- leerlingen filteren op groep en op actief of inactief;
+- zoeken op naam;
+- groepen toevoegen, hernoemen en opruimen;
+- zien hoeveel leerlingen er in een groep zitten.
+
+**Leerlingen worden niet verwijderd, maar op inactief gezet.** Een kind dat van school gaat komt nog voor in documentaties van eerder dit jaar. Zou het record verdwijnen, dan gaat die naam vanaf dat moment onafgeschermd naar de AI-provider. Inactieve leerlingen tellen dus gewoon mee bij de afscherming, maar verschijnen niet meer in keuzelijsten.
+
+Echt verwijderen kan alleen via *alle gegevens wissen*.
+
+**Een groep opruimen laat leerlingen en documentaties intact.** Ze raken hun groepsverwijzing kwijt en blijven zichtbaar. Opruimen mag nooit werk weggooien.
+
+## Leeftijd
+
+Uit de geboortedatum volgt de leeftijd, getoond in jaren en maanden ("4 jaar en 1 maand"). Staat er geen geboortedatum, dan toont EduFlow niets — geen streepje, geen schatting.
+
+## Import en export
+
+Een groep overtypen is werk dat niemand wil doen, en de gegevens staan al ergens. Daarom moeten leerlingen te importeren zijn uit **CSV** en **Excel**, en te exporteren naar diezelfde twee formaten.
+
+Eisen daaraan:
+
+- importeren toont eerst wat er gaat gebeuren — hoeveel nieuw, hoeveel bijgewerkt, wat er niet te lezen valt — en pas daarna bevestig je;
+- importeren voegt toe en werkt bij, maar verwijdert nooit iets dat niet in het bestand staat;
+- een mislukte regel stopt de rest niet, en wordt benoemd;
+- exporteren levert een bestand dat je ongewijzigd weer kunt importeren.
+
+Handmatig toevoegen blijft altijd mogelijk en is de standaardweg voor één nieuw kind.
+
+**Deze functionaliteit staat gepland, maar niet voor versie 1.** Wat wél voor versie 1 geldt: de opzet moet dit kunnen dragen zonder verbouwing. Zie doc 03.
 
 ---
 
@@ -145,9 +205,9 @@ Studiedagen en margedagen zijn hele-dag-afspraken met een eigen kleur, zodat ze 
 
 De gebruiker kan:
 
-- de voornamen van de groep beheren (voor het afschermen richting AI);
+- leerlingen en groepen beheren (zie *Leerlingen en groepen*);
 - reeksen hernoemen en opruimen;
-- een standaardwaarde voor het veld leerlingen instellen;
+- een standaardgroep instellen, die bij een nieuwe documentatie vast staat ingevuld;
 - de vakantieregio kiezen;
 - een voorbeelddocumentatie opgeven die AI als stijlrichtlijn gebruikt;
 - een standaardtoon voor mail kiezen;
@@ -181,7 +241,7 @@ De software moet:
 - werken in moderne browsers, zonder app store en zonder installatiebestand. Op de telefoon vraagt de app wel om zichzelf op het beginscherm te zetten — dat is nodig om te voorkomen dat de browser opgeslagen werk na een week wist. Overslaan kan; de vraag komt dan terug;
 - modulair zijn opgebouwd, met alle logica in services;
 - alle AI-aanroepen via één centrale service laten lopen;
-- geen persoonsgegevens in localStorage zetten. Documentaties, foto's, mailconcepten, de namenlijst en het stijlvoorbeeld staan in IndexedDB;
+- geen persoonsgegevens in localStorage zetten. Documentaties, foto's, mailconcepten, het leerlingenregister, de groepen en het stijlvoorbeeld staan in IndexedDB;
 - geen sleutels of geheimen in de frontend hebben;
 - de AI-route afschermen, zodat die niet door willekeurige bezoekers gebruikt kan worden.
 
@@ -210,7 +270,7 @@ Mail
 
 Dashboard en agenda
 
-Instellingen worden gebouwd op het moment dat een module ze nodig heeft, niet als apart project. In de praktijk betekent dat: de namenlijst, het stijlvoorbeeld en de standaardwaarde voor leerlingen komen mét documentatie, want zonder die drie werkt documentatie niet.
+Instellingen worden gebouwd op het moment dat een module ze nodig heeft, niet als apart project. In de praktijk betekent dat: het leerlingenregister, de groepen en het stijlvoorbeeld komen mét documentatie, want zonder die drie werkt documentatie niet.
 
 ---
 

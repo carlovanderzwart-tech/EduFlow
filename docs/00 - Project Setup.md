@@ -92,6 +92,7 @@ Leesvolgorde:
 | 04 | Product Blueprint | Hoe ziet het eruit |
 | 03 | Technical Architecture | Hoe is het gebouwd |
 | 05 | Besluiten | Wat is er beslist en waarom |
+| 99 | Development Standards | Waar code aan moet voldoen |
 
 Doc 04 is leidend voor wat er gebouwd wordt: staat een functionaliteit er niet in, dan komt hij er niet. Doc 03 is leidend voor hoe. Wijkt de code af van de architectuur, dan is de code fout.
 
@@ -131,8 +132,8 @@ Los van de Definition of Done per functionaliteit geldt één voorwaarde voor de
 
 Dat betekent tijdens het bouwen:
 
-- ontwikkelen en testen gebeurt met een verzonnen groep en verzonnen documentaties;
+- ontwikkelen en testen gebeurt met een verzonnen groep en verzonnen documentaties. Sinds besluit B-15 gaat het om verzonnen leerlingen mét achternaam en geboortedatum, niet om losse voornamen;
 - het stijlvoorbeeld in de instellingen is een gefictionaliseerde versie van een echte documentatie, geen echte;
-- de FG krijgt een werkende app te zien met het controlescherm erbij, niet een plan op papier.
+- de FG krijgt een werkende app te zien met het controlescherm erbij, niet een plan op papier. Daar hoort nu ook het leerlingenregister bij: welke velden er staan, waarom elk veld er staat, en dat het het apparaat niet verlaat.
 
 Deze voorwaarde heeft een eigenaar: de Product Owner. Zie doc 01, Randvoorwaarden.

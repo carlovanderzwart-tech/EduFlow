@@ -60,18 +60,37 @@ Dit is de belangrijkste technische keuze van versie 1, want documentatie bestaat
 
 In IndexedDB:
 
-- documentaties, inclusief tekst, citaten, foto's, gekozen template en de vlag of de toestemmingsvraag voor deze documentatie al is beantwoord;
+- documentaties, inclusief tekst, citaten, foto's, gekozen template, de gekoppelde leerlingen en de vlag of de toestemmingsvraag voor deze documentatie al is beantwoord;
 - mailconcepten;
-- **de namenlijst** — de voornamen van de groep;
+- **het leerlingenregister** — voornaam, achternaam, geboortedatum, groep en of de leerling actief is;
+- **de groepen**;
 - **het stijlvoorbeeld** — dat is zelf een documentatie;
-- reeksen, standaardwaarde leerlingen, eerder gebruikte waarden voor leerlingen;
+- reeksen en de standaardgroep;
 - eigen afspraken en aangepaste vakantiedatums.
 
-In localStorage alleen wat over niemand gaat: gekozen regio, standaardtoon, gekozen AI-provider, laatst gekozen weergave, datum van de laatste back-up, en of de eenmalige vragen al zijn beantwoord (lege namenlijst, beginscherm).
+In localStorage alleen wat over niemand gaat: gekozen regio, standaardtoon, gekozen AI-provider, laatst gekozen weergave, datum van de laatste back-up, en of de eenmalige vragen al zijn beantwoord (leeg leerlingenregister, beginscherm).
 
 De toegangscode staat niet in localStorage maar in een cookie die de server zet, want die code moet bij elke aanroep van `/api/ai` mee.
 
-**Niet localStorage voor de rest.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op — één documentatie met zes telefoonfoto's zit daar al overheen. En belangrijker: de namenlijst is het gevoeligste bestand in de app, en persoonsgegevens horen niet in localStorage.
+**Niet localStorage voor de rest.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op — één documentatie met zes telefoonfoto's zit daar al overheen. En belangrijker: het leerlingenregister is het gevoeligste bestand in de app, en persoonsgegevens horen niet in localStorage.
+
+## Datamodel: leerlingen, groepen en documentaties
+
+Drie aparte stores met verwijzingen ertussen, niet één store met alles erin.
+
+| Store | Sleutel | Verwijst naar |
+|---|---|---|
+| `groups` | id | — |
+| `students` | id | `groupId` |
+| `documentations` | id | `groupId`, `studentIds[]` |
+
+**Een documentatie heeft één groep en optioneel gekoppelde leerlingen** (besluit B-13). De groep bepaalt wat er in de opmaak komt te staan; de koppeling is aanvullend en mag leeg blijven.
+
+**Waarom groepen een eigen store krijgen en geen tekstveld** (besluit B-14). Een groep heeft nu alleen een naam, dus een tekstveld op de leerling zou volstaan. Toch een eigen entiteit, om twee redenen. Er komen eigenschappen bij — kleur, locatie, schooljaar, mentor — en die kunnen nergens heen als een groep alleen als tekst bestaat. En een groep hernoemen raakt dan één record in plaats van elke leerling en elke documentatie die de oude naam bevat. De prijs is een extra store; die is klein en eenmalig.
+
+**Verwijzingen mogen doodlopen.** Een opgeruimde groep laat leerlingen en documentaties staan die er nog naar wijzen. Die blijven zichtbaar en tonen geen groepsnaam. Hetzelfde geldt voor een reeks. Opruimen mag nooit werk weggooien, dus wordt er niet cascaderend verwijderd — behalve bij foto's, die zonder hun documentatie geen betekenis hebben.
+
+**Leerlingen worden niet verwijderd maar op inactief gezet.** Dat is een architectuureis en geen instelling: `PrivacyService` schermt af op het volledige register, inclusief inactieve leerlingen, omdat een vertrokken kind nog voorkomt in oudere documentaties. Een harde verwijdering zou die documentaties stilzwijgend onbeschermd maken.
 
 Alle opslag loopt via services, nooit rechtstreeks vanuit een component. Zodra er meerdere gebruikers komen (PostgreSQL, objectopslag voor foto's) is dat één vervanging in plaats van een verbouwing.
 
@@ -146,9 +165,12 @@ modules/
   mail/
   agenda/
   settings/
+  students/
 ```
 
 Iedere module bevat `components/`, `hooks/`, `services/`, `types/`.
+
+**Leerlingen en groepen zitten in één module `students/`.** Ze worden in hetzelfde scherm beheerd en een groep zonder leerlingen heeft geen betekenis; twee modules zouden dat kunstmatig uit elkaar trekken. De module is bereikbaar via Instellingen en heeft **geen eigen plek in de hoofdnavigatie** — die blijft vijf items (besluit B-16). Een eigen module en een eigen plek in de navigatie zijn twee verschillende dingen.
 
 **Waar hoort een service.** Wordt hij door meer dan één module gebruikt, dan staat hij in `src/services/`. Alleen als hij echt van één module is, staat hij in die module. In de praktijk staan alle services uit de tabel hieronder in `src/services/`, want het dashboard gebruikt documentatie- én agendagegevens.
 
@@ -163,17 +185,43 @@ Alle logica zit in services. Componenten bevatten geen businesslogica.
 | Service | Verantwoordelijkheid |
 |---|---|
 | `AIService` | Enige toegang tot AI. Roept altijd eerst `PrivacyService` aan. |
-| `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. |
+| `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. Haalt de namen bij `StudentService`. |
 | `StorageService` | De enige laag die IndexedDB en localStorage aanraakt. |
 | `DocumentService` | Documentaties en foto's opslaan, ophalen, verwijderen, zoeken. |
+| `StudentService` | Leerlingen opslaan, ophalen, op inactief zetten, zoeken. Levert de namen voor de afscherming en berekent de leeftijd. Draagt import en export. |
+| `GroupService` | Groepen opslaan, ophalen, hernoemen, opruimen. |
 | `RenderService` | Een documentatie omzetten naar pagina's volgens het gekozen template. |
 | `ExportService` | Print-PDF en deelbare afbeelding genereren, delen en kopiëren. Roept `PrivacyService` aan als de initialenschakelaar aan staat. |
 | `BackupService` | Alle gegevens exporteren naar één bestand en terugzetten. |
 | `MailService` | Sjablonen, concepten en zoeken in concepten. |
 | `AgendaService` | Vakantiedata, eigen afspraken, aangepaste vakantiedatums. |
-| `SettingsService` | Instellingen, namenlijst, reeksen. |
+| `SettingsService` | Instellingen en reeksen. |
 
 Services mogen elkaar gebruiken.
+
+## Import en export van leerlingen
+
+Deze functionaliteit komt niet in versie 1. De opzet moet hem wel kunnen dragen zonder verbouwing, en dat stelt één eis aan de architectuur.
+
+**`StudentService` kent geen bestandsformaten.** Hij werkt met leerlingrecords, niet met CSV-regels of Excel-cellen. Het lezen en schrijven van bestanden gebeurt in een aparte laag die records in en uit die service brengt:
+
+```
+CSV-adapter  ─┐
+              ├─→  rijen  ─→  StudentService.import(rijen) → rapport
+Excel-adapter ─┘
+```
+
+**Waarom die scheiding.** Zonder scheiding zit CSV-kennis in de service, en dan levert Excel erbij een tweede route door dezelfde logica op — met twee plekken waar dubbele leerlingen en ontbrekende velden worden afgehandeld, die uit elkaar gaan lopen. Met de scheiding is een formaat toevoegen één adapter, en verandert er niets aan de service.
+
+Wat `StudentService` daarvoor moet kunnen, ook al bouwen we het later:
+
+- **records in bulk verwerken**, niet één voor één. Een klas is één handeling, geen dertig;
+- **een rapport teruggeven** in plaats van alleen slagen of falen: hoeveel nieuw, hoeveel bijgewerkt, welke regels overgeslagen en waarom;
+- **droog draaien** — dezelfde verwerking zonder op te slaan, zodat het scherm vooraf kan tonen wat er gaat gebeuren;
+- **herkennen wat al bestaat**, zodat een tweede import geen dubbele leerlingen oplevert. Dat vraagt een sleutel: voornaam, achternaam en geboortedatum samen. Ontbreekt de geboortedatum, dan is er geen betrouwbare sleutel en wordt de regel als nieuw behandeld en gemeld;
+- **records exporteren** als platte gegevens, zonder opmaak.
+
+Twee dingen om bij het bouwen rekening mee te houden. Excel vraagt een bibliotheek en CSV niet; die bibliotheek wordt pas geladen op het moment dat iemand een Excel-bestand kiest, zodat de app er niet zwaarder van wordt. En een geïmporteerd bestand met leerlinggegevens is persoonsgegevens: het wordt in de browser verwerkt en gaat nergens heen.
 
 ---
 
@@ -200,11 +248,11 @@ Foto's worden nooit meegestuurd. `AIService` accepteert geen binaire data — da
 - de instructie aan de AI;
 - bij een vervolgzin: de eerdere documentaties uit dezelfde reeks.
 
-Alle vier gaan door de naamvervanging heen, ook het stijlvoorbeeld — dat is zelf een documentatie en bevat namen, mogelijk van kinderen die niet meer in de huidige namenlijst staan.
+Alle vier gaan door de naamvervanging heen, ook het stijlvoorbeeld — dat is zelf een documentatie en bevat namen, mogelijk van kinderen die inmiddels op inactief staan. Dat die inactieve leerlingen in het register blijven, is precies wat dit geval afdekt.
 
 ## Namen vervangen
 
-De regels, want "voornamen vervangen door codes" is minder simpel dan het klinkt:
+De namen komen uit het leerlingenregister, via `StudentService`. De regels, want "namen vervangen door codes" is minder simpel dan het klinkt:
 
 - alleen hele woorden, zodat een kind dat Roos heet geen rozen in de schooltuin omzet;
 - hoofdletterongevoelig zoeken, maar de hoofdletters van het origineel herstellen bij het terugzetten;
@@ -214,9 +262,15 @@ De regels, want "voornamen vervangen door codes" is minder simpel dan het klinkt
 - twee kinderen met dezelfde voornaam krijgen elk een eigen code, zodat terugzetten klopt;
 - terugvertalen gebeurt op de code, nooit op de naam.
 
+**Achternamen tellen mee.** Voornaam en achternaam van dezelfde leerling krijgen dezelfde code, zodat "Kjeld", "Kjeld de Vries" en "de Vries" alle drie naar dat ene kind wijzen. Tussenvoegsels horen bij de achternaam en worden als geheel behandeld — "de Vries" is één naam, niet twee woorden. Een achternaam van één of twee letters wordt overgeslagen: dat levert meer valse treffers op in gewone tekst dan het aan bescherming toevoegt.
+
+**Inactieve leerlingen tellen ook mee.** Een kind dat van school is gegaan komt voor in oudere documentaties, en die worden bewerkt en als context meegestuurd bij een vervolgzin. Afschermen op alleen de actieve leerlingen zou die documentaties stilzwijgend onbeschermd maken.
+
+**Codes hangen aan het leerling-id**, niet aan de plek in een lijst. Daardoor krijgt hetzelfde kind bij elke aanroep dezelfde code, ook nadat er leerlingen bij zijn gekomen of op inactief zijn gezet.
+
 Hier hoort een testset bij die bij elke wijziging draait.
 
-**Is de namenlijst leeg, dan wordt er niets afgeschermd.** `AIService` weigert in dat geval de aanroep tot de gebruiker dat één keer bewust heeft bevestigd.
+**Is het leerlingenregister leeg, dan wordt er niets afgeschermd.** `AIService` weigert in dat geval de aanroep tot de gebruiker dat één keer bewust heeft bevestigd.
 
 ---
 
@@ -347,7 +401,7 @@ Zijn de data op, dan toont de agenda dat en blijven eigen afspraken gewoon werke
 
 - Geen secrets in de frontend. API-sleutels uitsluitend via environment variables op de server.
 - De AI-route is afgeschermd met een toegangscode en een snelheidslimiet.
-- Geen persoonsgegevens in localStorage. Documentaties, foto's, mailconcepten, de namenlijst en het stijlvoorbeeld staan in IndexedDB op het eigen apparaat.
+- Geen persoonsgegevens in localStorage. Documentaties, foto's, mailconcepten, het leerlingenregister, de groepen en het stijlvoorbeeld staan in IndexedDB op het eigen apparaat.
 - Foto's verlaten het apparaat niet.
 - Geen externe trackers of analytics.
 

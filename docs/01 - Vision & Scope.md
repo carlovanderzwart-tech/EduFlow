@@ -66,15 +66,29 @@ Documentatie gaat over minderjarigen. Namen staan in de lopende tekst, foto's ho
 Daarom geldt:
 
 - Foto's gaan nooit naar een AI-dienst. Dit is absoluut: de AI-laag accepteert geen binaire data.
-- Voornamen uit de eigen namenlijst worden vervangen door codes voordat tekst wordt verstuurd.
+- Namen uit het eigen leerlingenregister worden vervangen door codes voordat tekst wordt verstuurd.
 - De gebruiker kan altijd zien wat er wordt verstuurd — volledig, dus inclusief het stijlvoorbeeld, de instructie aan de AI en eerdere documentaties uit dezelfde reeks.
-- Documentaties en foto's worden alleen op het eigen apparaat opgeslagen. Er is geen server-opslag en geen account.
+- Documentaties, foto's en het leerlingenregister worden alleen op het eigen apparaat opgeslagen. Er is geen server-opslag en geen account.
+
+## Het leerlingenregister
+
+EduFlow houdt een eigen lijst bij van de kinderen in de groep: voornaam, achternaam, geboortedatum, groep, en of een leerling nog actief is.
+
+**Waarom dit er is.** De afscherming richting AI moet weten welke woorden namen zijn. Een losse lijst voornamen deed dat ook, maar wist niets van kinderen die van school gaan, kon twee kinderen met dezelfde voornaam niet uit elkaar houden, en kon achternamen niet afschermen. Het register lost die drie op. Daarnaast kan een documentatie eraan gekoppeld worden, en volgt de leeftijd uit de geboortedatum.
+
+**Wat dit betekent voor de gegevens.** Waar eerder losse voornamen zonder context stonden, staat nu een set die een kind direct identificeert. Dat is een bewuste verzwaring, geen bijvangst. Daarom:
+
+- het register verlaat het apparaat niet, net zomin als foto's;
+- een leerling die van school gaat wordt op **inactief** gezet en niet verwijderd. Dat is geen administratieve netheid maar een vereiste: een kind komt voor in documentaties van eerder dit jaar, en zou het record verdwijnen, dan gaat die naam vanaf dat moment onafgeschermd naar de AI-provider;
+- ieder veld heeft een reden om te bestaan. Geboortedatum staat er voor de leeftijd en voor verjaardagen in de agenda. Komt een veld nergens terug in de app, dan hoort het er niet.
+
+**Dit is geen dossier.** Er worden geen observaties, resultaten, vorderingen of bijzonderheden per kind vastgelegd. Zie *Buiten scope*.
 
 ## Wat dit níét is
 
 Twee dingen moeten eerlijk staan, want anders klopt het gesprek met de functionaris gegevensbescherming niet.
 
-**De namenlijst is een vangnet, geen garantie.** Een lijst is nooit compleet: een naam die er niet in staat gaat gewoon mee. Daarom staat de controlelink er altijd naast, en daarom is die de laatste zekerheid en niet de eerste.
+**Het leerlingenregister is een vangnet, geen garantie.** Een register is nooit compleet: een kind uit een andere groep, een broertje, een ouder of een collega die in de tekst wordt genoemd staat er niet in en gaat gewoon mee. Daarom staat de controlelink er altijd naast, en daarom is die de laatste zekerheid en niet de eerste. Dat het register nu meer weet dan een losse lijst voornamen verandert daar niets aan — het maakt het vangnet fijnmaziger, niet sluitend.
 
 **Tekst die naar een AI-provider gaat, gaat het apparaat af.** Hoe lang die daar blijft hangt af van de provider en van de gemaakte afspraken. Vervangen van namen maakt tekst gepseudonimiseerd, niet anoniem — en gepseudonimiseerde gegevens blijven persoonsgegevens.
 
@@ -144,7 +158,9 @@ Zo min mogelijk gegevens verwerken, en zichtbaar maken wat er wél wordt verwerk
 - Documentatie
 - Mail
 - Agenda
-- Instellingen
+- Instellingen, met daaronder het beheer van leerlingen en groepen
+
+Leerlingen en groepen krijgen geen eigen plek in de hoofdnavigatie. Je beheert ze af en toe, niet dagelijks; ze horen bij de instellingen. De navigatie blijft daarmee vijf items, zoals doc 04 beschrijft.
 
 ---
 
@@ -180,6 +196,17 @@ EduFlow is geen:
 - vervanging van Momento;
 - vervanging van Microsoft 365;
 - mailprogramma.
+
+**Waar die eerste grens nu ligt.** EduFlow kent sinds de invoering van het leerlingenregister wél de namen, geboortedata en groepen van de kinderen. Dat maakt het nog geen leerlingvolgsysteem, en die grens is scherper dan hij lijkt:
+
+| Wel | Niet |
+|---|---|
+| Wie zit er in mijn groep | Hoe gaat het met dit kind |
+| Naam, geboortedatum, groep, actief | Resultaten, toetsen, scores |
+| Een documentatie koppelen aan leerlingen | Observaties of vorderingen per kind vastleggen |
+| Leeftijd afleiden | Signaleren, adviseren of rapporteren |
+
+Het register bestaat om de afscherming te laten werken en om een documentatie te kunnen koppelen. Het moment dat er per kind iets over dat kind wordt bijgehouden, is het moment dat EduFlow wél een leerlingvolgsysteem wordt. Dat gebeurt niet zonder dat deze pagina eerst wordt herschreven.
 
 En EduFlow doet niet:
 

@@ -8,6 +8,65 @@ Verwijzingen hieronder gaan naar hoofdstukken, niet naar regelnummers — die ve
 
 ---
 
+# 5 augustus 2026 — leerlingen en groepen als eigen gegevens
+
+Aanleiding: bij het testen van sprint 2A bleek de namenlijst niet te volstaan. Hij kent geen kinderen die van school gaan, kan twee kinderen met dezelfde voornaam niet uit elkaar houden en kan geen achternamen afschermen. Onderstaande besluiten vervangen de namenlijst door een leerlingenregister.
+
+## B-13 — Een documentatie heeft één groep en optioneel gekoppelde leerlingen
+
+**Probleem.** Het veld leerlingen was één regel vrije tekst ("groep geel"), en doc 04 stelde uitdrukkelijk dat het géén lijst met kinderen was. Met een leerlingenregister moest opnieuw worden bepaald wat dat veld betekent.
+
+**Besluit.** Beide. Een documentatie krijgt **één groep**, die zoals nu in de opmaak verschijnt, en daarnaast **optioneel nul of meer gekoppelde leerlingen**.
+
+**Waarom.** De groep alleen zou de koppeling onmogelijk maken die je bij een documentatie over twee specifieke kinderen wilt. Alleen leerlingen zou van elke documentatie een aanvinkoefening maken, terwijl het merendeel over de hele groep gaat. Optioneel koppelen kost niets wanneer je het niet gebruikt.
+
+**Gevolg.** De koppeling is geen vervanging van de afscherming. Die blijft op de **tekst** werken, want daar staan de namen — zie doc 04, *Namen van kinderen*. Wie je koppelt hoeft dus niet te kloppen met wie er in de tekst wordt genoemd.
+
+## B-14 — Groepen worden een eigen entiteit
+
+**Besluit.** Een groep is een eigen gegeven met een eigen `GroupService`, geen tekstveld op een leerling of documentatie.
+
+**Waarom.** Een groep heeft nu alleen een naam, dus een tekstveld zou vandaag volstaan. Verwacht worden kleur, locatie, schooljaar en mentor, en die kunnen nergens heen als een groep alleen als tekst bestaat. Daarbij raakt hernoemen dan één record in plaats van elke leerling en elke documentatie met die naam erin.
+
+**Gevolg.** Een extra store in IndexedDB. Een opgeruimde groep laat leerlingen en documentaties intact; die raken hun groepsverwijzing kwijt en blijven zichtbaar.
+
+## B-15 — Wat er per leerling wordt vastgelegd
+
+**Besluit.** Voornaam, achternaam, geboortedatum (volledig), groep, en actief of inactief. Voornaam en groep zijn verplicht; de rest mag leeg blijven.
+
+**Waarom niet minder.** Achternaam is nodig om twee kinderen met dezelfde voornaam uit elkaar te houden en om achternamen te kunnen afschermen. De volledige geboortedatum is nodig voor verjaardagen in de agenda; alleen jaar en maand zou genoeg zijn voor de leeftijd, maar niet voor de dag.
+
+**Waarom niet meer.** Er komen geen observaties, resultaten of bijzonderheden bij. Dat is de grens tussen dit register en een leerlingvolgsysteem, en die grens staat nu expliciet in doc 01 onder *Buiten scope*.
+
+**Gevolg.** Dit is een verzwaring van de gegevens die EduFlow bewaart: van losse voornamen zonder context naar een set die een kind direct identificeert. De voorwaarde uit doc 00 verandert niet, maar wat er aan de functionaris gegevensbescherming wordt voorgelegd wél.
+
+## B-16 — Leerlingenbeheer hangt onder Instellingen
+
+**Besluit.** Leerlingen en groepen krijgen een eigen scherm, bereikbaar via Instellingen. De hoofdnavigatie blijft vijf items.
+
+**Waarom.** Doc 04 legt de navigatie vast op vijf, en op de telefoon vijf iconen onderaan. Een zesde maakt die balk krap en geeft een dagelijkse plek aan iets wat je een paar keer per jaar doet.
+
+**Gevolg.** Een eigen module `students/` in de code, maar geen eigen plek in de navigatie. Dat zijn twee verschillende dingen.
+
+## B-17 — Technische besluiten (geen goedkeuring nodig)
+
+| | Besluit | Vervangt |
+|---|---|---|
+| T-11 | `StudentService` kent geen bestandsformaten. CSV en Excel worden gelezen en geschreven door aparte adapters die records in en uit de service brengen. De service verwerkt records in bulk, kan droog draaien en geeft een rapport terug | Zonder deze scheiding zit CSV-kennis in de service en levert Excel erbij een tweede route door dezelfde logica op |
+| T-12 | Naamvervanging werkt op het **volledige** register, inclusief inactieve leerlingen. Codes hangen aan het leerling-id, niet aan de plek in een lijst | Afschermen op alleen actieve leerlingen maakt oudere documentaties stilzwijgend onbeschermd |
+| T-13 | Achternamen vallen ook onder de afscherming. Tussenvoegsels horen bij de achternaam en worden als geheel behandeld. Achternamen van één of twee letters worden overgeslagen | T-04 beschreef alleen voornamen |
+| T-14 | Leerlingen worden op inactief gezet, nooit hard verwijderd. Echt verwijderen kan alleen via *alle gegevens wissen* | Volgt uit T-12 |
+
+**T-04 blijft gelden**, met T-12 en T-13 als uitbreiding: de bron is het register in plaats van een losse lijst, en achternamen doen mee.
+
+## Hoe je oudere besluiten leest
+
+Besluiten van vóór vandaag spreken over de **namenlijst**. Die tekst blijft staan zoals hij is — dit document is een verslag van wat wanneer is besloten, en dat herschrijf je niet achteraf.
+
+Lees daar **leerlingenregister** waar *namenlijst* staat. De onderliggende afspraak verandert niet: T-01 (persoonsgegevens horen in IndexedDB), T-08 (geen AI-aanroep zonder afscherming, tenzij eenmalig bevestigd) en B-11 (de app raadt geen namen, je houdt ze zelf bij) gelden onverkort. Alleen de vorm van de bron is veranderd.
+
+---
+
 # 4 augustus 2026 — review voor sprint 1
 
 Aanleiding: doorloop van doc 00 t/m 04 op conflicten, gaten en gemiste kansen. 53 punten gevonden, waarvan 7 blokkerend. Onderstaande besluiten heffen die blokkers op.
@@ -122,5 +181,6 @@ Aanleiding: doorloop van doc 00 t/m 04 op conflicten, gaten en gemiste kansen. 5
 # Openstaand
 
 - **Stijlvoorbeelden.** Drie of vier paren van "zo maak ik de notitie" en "zo hoort de documentatie eruit te zien", met verzonnen namen. Dit is testmateriaal én de richtlijn voor de AI. Zonder dit is niet vast te stellen of AI het goed doet.
-- **Verzonnen groep.** Twintig namen, om mee te bouwen en te testen zonder dat er een echt kind de deur uit gaat.
-- **Gesprek met de functionaris gegevensbescherming.** Voorwaarde voordat er echte gegevens in gaan. Zie doc 00, *Voorwaarde voor gebruik met echte gegevens* — die staat bewust naast de Definition of Done en niet erin, want hij geldt voor de app als geheel en niet per functionaliteit.
+- **Verzonnen groep.** Twintig leerlingen, nu met voornaam, achternaam en geboortedatum, verdeeld over twee groepen. Om mee te bouwen en te testen zonder dat er een echt kind de deur uit gaat. Met daarin bewust een paar lastige gevallen: twee kinderen met dezelfde voornaam, een naam met een tussenvoegsel, een naam met een diakriet, en een inactieve leerling.
+- **Gesprek met de functionaris gegevensbescherming.** Voorwaarde voordat er echte gegevens in gaan. Zie doc 00, *Voorwaarde voor gebruik met echte gegevens* — die staat bewust naast de Definition of Done en niet erin, want hij geldt voor de app als geheel en niet per functionaliteit. Sinds B-15 gaat dit gesprek over meer dan voornamen; het register is onderdeel van wat er wordt voorgelegd.
+- **Migratie van de bestaande namenlijst** naar het leerlingenregister. De oude lijst kent alleen voornamen, dus groep en geboortedatum kunnen niet worden afgeleid. Uitwerken in de Issue die dit bouwt, niet hier.
