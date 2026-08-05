@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 
@@ -32,6 +33,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
+        {/* Eén keer gemonteerd; hier komen de korte berichten uit doc 04
+            (*Gedeelde patronen*) terecht. */}
+        <Toaster position="bottom-center" />
       </body>
     </html>
   );
