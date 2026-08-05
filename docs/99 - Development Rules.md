@@ -35,6 +35,7 @@ Voor iedere Pull Request voert Claude minimaal uit:
 - npm run build
 - npm run lint
 - npx tsc --noEmit
+- npm test
 
 ---
 
@@ -144,6 +145,7 @@ Voor iedere Pull Request controleert Claude:
 - Build succesvol
 - TypeScript succesvol
 - ESLint succesvol
+- Tests succesvol
 - Responsive gedrag gecontroleerd
 - Accessibility gecontroleerd
 - Geen dubbele componenten

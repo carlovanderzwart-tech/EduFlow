@@ -139,6 +139,8 @@ Aanleiding: beoordeling van de architectuur op houdbaarheid over vijf tot tien j
 
 **Besluit.** Handelingen die veel records tegelijk raken — importeren, exporteren, archiveren, batchbewerkingen en het verwijderen van een documentatie — worden vastgelegd met tijdstip, handeling en aantallen. Geen namen, geen inhoud, geen waarden van vóór en na. Geen scherm.
 
+**Identificaties mogen wel.** Bij een handeling die één record raakt, zoals het verwijderen van een documentatie, wordt de identificatie van dat record vastgelegd. Dat is nodig omdat B-27 daarop leunt: zonder te weten *welk* record is verwijderd valt er later niets te reconstrueren. Een identificatie is geen naam en geen inhoud, en daarmee blijft de regel hierboven overeind.
+
 **Waarom.** Gaat er iets mis in een import van tweehonderd regels, dan is zonder logboek niet te achterhalen wat er is gebeurd. En het is de goedkoopste voorbereiding op synchronisatie: de verwijdering wordt vastgelegd zonder dat er grafstenen nodig zijn.
 
 ## B-27 — Geen grafstenen, wel verwijderingen in het logboek

@@ -105,6 +105,8 @@ Het fundament onder de afscherming richting AI, en de plek waar je vastlegt wie 
 
 Voornaam en groep zijn verplicht. De rest mag leeg blijven — een register met gaten is bruikbaarder dan een register dat je pas mag opslaan als je alles weet.
 
+**Verplicht bij invoer, niet voor altijd.** Je kunt geen leerling opslaan zonder groep te kiezen. Ruim je die groep later op, dan blijft de leerling bestaan en toont hij geen groep meer. Opruimen mag nooit werk weggooien, dus wordt zo'n leerling niet ongeldig en niet verwijderd.
+
 **Waarom een roepnaam.** Een kind dat Jan-Peter heet en JP wordt genoemd, staat als "JP" in je tekst. Zonder dat veld herkent EduFlow die naam niet en gaat hij onafgeschermd naar de AI. Vul hem alleen in als hij afwijkt van de voornaam.
 
 ## Een groep bevat

@@ -135,6 +135,8 @@ Drie aparte stores met verwijzingen ertussen, niet één store met alles erin.
 
 **Een documentatie heeft één groep en optioneel gekoppelde leerlingen** (besluit B-13). De groep bepaalt wat er in de opmaak komt te staan; de koppeling is aanvullend en mag leeg blijven.
 
+**Foto's: eigenaarschap staat op de foto, volgorde op de documentatie.** Een foto verwijst met `documentId` naar de documentatie waar hij bij hoort; dat is de bron van waarheid voor eigenaarschap. De documentatie houdt de volgorde bij als lijst van foto-identificaties; dat is de bron van waarheid voor de volgorde, en de enige plek waar die staat. Doc 04 maakt die volgorde functioneel bindend — hij bepaalt de opmaak — dus hij mag niet uit de opslagvolgorde of het tijdstip van toevoegen worden afgeleid.
+
 **Waarom groepen een eigen store krijgen en geen tekstveld** (besluit B-14). Een groep heeft nu alleen een naam, dus een tekstveld op de leerling zou volstaan. Toch een eigen entiteit, om twee redenen. Er komen eigenschappen bij — kleur, locatie, schooljaar, mentor — en die kunnen nergens heen als een groep alleen als tekst bestaat. En een groep hernoemen raakt dan één record in plaats van elke leerling en elke documentatie die de oude naam bevat. De prijs is een extra store; die is klein en eenmalig.
 
 **Verwijzingen mogen doodlopen.** Een opgeruimde groep laat leerlingen en documentaties staan die er nog naar wijzen. Die blijven zichtbaar en tonen geen groepsnaam. Hetzelfde geldt voor een reeks. Opruimen mag nooit werk weggooien, dus wordt er niet cascaderend verwijderd — behalve bij foto's, die zonder hun documentatie geen betekenis hebben.
