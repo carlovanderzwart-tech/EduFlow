@@ -73,6 +73,27 @@ export function withTransaction<T>(
   });
 }
 
+/**
+ * Hoeveel opslag in gebruik is. Nodig omdat Safari sinds versie 17 niets meer
+ * meldt als het vol raakt (doc 03, *Opslaglimiet*): er komt een
+ * `QuotaExceededError` en verder niets.
+ */
+export async function getStorageEstimate(): Promise<{
+  usage: number;
+  quota: number;
+  ratio: number;
+} | null> {
+  if (typeof navigator === "undefined" || !navigator.storage?.estimate) return null;
+
+  try {
+    const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+    if (quota === 0) return null;
+    return { usage, quota, ratio: usage / quota };
+  } catch {
+    return null;
+  }
+}
+
 /** Alleen voor tests: dwingt een nieuwe verbinding bij de volgende aanroep. */
 export function resetDbForTests(): void {
   dbPromise = null;
