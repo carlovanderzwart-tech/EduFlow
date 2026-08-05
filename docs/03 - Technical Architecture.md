@@ -60,20 +60,90 @@ Dit is de belangrijkste technische keuze van versie 1, want documentatie bestaat
 
 In IndexedDB:
 
-- documentaties, inclusief tekst, citaten, foto's, gekozen template en de vlag of de toestemmingsvraag voor deze documentatie al is beantwoord;
+- documentaties, inclusief tekst, citaten, foto's, gekozen template, de gekoppelde leerlingen en de vlag of de toestemmingsvraag voor deze documentatie al is beantwoord;
 - mailconcepten;
-- **de namenlijst** — de voornamen van de groep;
+- **het leerlingenregister** — voornaam, achternaam, geboortedatum, groep en of de leerling actief is;
+- **de groepen**;
 - **het stijlvoorbeeld** — dat is zelf een documentatie;
-- reeksen, standaardwaarde leerlingen, eerder gebruikte waarden voor leerlingen;
+- reeksen en de standaardgroep;
 - eigen afspraken en aangepaste vakantiedatums.
 
-In localStorage alleen wat over niemand gaat: gekozen regio, standaardtoon, gekozen AI-provider, laatst gekozen weergave, datum van de laatste back-up, en of de eenmalige vragen al zijn beantwoord (lege namenlijst, beginscherm).
+In localStorage alleen wat over niemand gaat: gekozen regio, standaardtoon, gekozen AI-provider, laatst gekozen weergave, datum van de laatste back-up, en of de eenmalige vragen al zijn beantwoord (leeg leerlingenregister, beginscherm).
 
 De toegangscode staat niet in localStorage maar in een cookie die de server zet, want die code moet bij elke aanroep van `/api/ai` mee.
 
-**Niet localStorage voor de rest.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op — één documentatie met zes telefoonfoto's zit daar al overheen. En belangrijker: de namenlijst is het gevoeligste bestand in de app, en persoonsgegevens horen niet in localStorage.
+**Niet localStorage voor de rest.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op — één documentatie met zes telefoonfoto's zit daar al overheen. En belangrijker: het leerlingenregister is het gevoeligste bestand in de app, en persoonsgegevens horen niet in localStorage.
 
-Alle opslag loopt via services, nooit rechtstreeks vanuit een component. Zodra er meerdere gebruikers komen (PostgreSQL, objectopslag voor foto's) is dat één vervanging in plaats van een verbouwing.
+## De repositorylaag
+
+Niet één `StorageService` voor alles, maar **één repository per entiteit**, plus één module die de verbinding en de migraties bezit.
+
+```
+db.ts                    verbinding, schemaversie, migraties
+studentRepository        groepRepository        documentRepository
+photoRepository          settingsRepository     auditRepository
+```
+
+Samen zijn zij de enige laag die IndexedDB aanraakt. Die regel uit dit document blijft dus staan; hij wordt alleen door meerdere bestanden ingevuld.
+
+**Waarom niet één service.** Met leerlingen, groepen, documentaties, foto's, mailconcepten, agenda-items, instellingen en het logboek groeit één opslagservice naar tientallen methoden in één bestand. Dat is het soort bestand dat na twee jaar wordt opengebroken. Met één repository per entiteit heeft elk gegeven één plek, en blijft het aantal methoden per bestand klein.
+
+**Wat een repository wel en niet doet.** Hij leest en schrijft records. Hij bevat geen businesslogica, geen validatie en geen afgeleide waarden — dat is de taak van de service erboven. Omgekeerd bevat een service geen kennis van stores, indexen of transacties.
+
+**Twee regels die de vervangbaarheid bewaken:**
+
+- **Een repository lekt geen IndexedDB naar buiten.** Geen `IDBKeyRange`, geen cursors, geen transactieobjecten in een signatuur. Wat eruit komt zijn gewone objecten en beloftes. Zou de opslag ooit een server worden, dan is dat een andere invulling van dezelfde afspraak en verandert er niets aan de services of de schermen.
+- **Alles is asynchroon**, ook waar het nu direct zou kunnen. Een aanroep die vandaag synchroon is en morgen over het netwerk moet, is een wijziging die door de hele app trekt.
+
+Repositories delen een kleine gemeenschappelijke vorm voor ophalen, opslaan en verwijderen. Wat daarbovenop entiteit-eigen is — leerlingen per groep, foto's per documentatie — staat gewoon op die ene repository. Er komt geen algemene querytaal; dat is een oplossing voor een probleem dat deze app niet heeft.
+
+## Gedeelde velden op elke entiteit
+
+Elk opgeslagen record heeft:
+
+| Veld | Waarvoor |
+|---|---|
+| `id` | Stabiel, uniek, en niet afgeleid van inhoud |
+| `createdAt` | Wanneer het is ontstaan |
+| `updatedAt` | Wanneer het voor het laatst is gewijzigd |
+
+**Waarom tijdstempels op alles, ook waar niets ze vandaag leest.** Ze zijn niet achteraf te maken. Voeg je ze over twee jaar toe, dan hebben alle bestaande records voor altijd een onbekende ontstaansdatum. Ze zijn bovendien de basis voor drie dingen die al op de kaart staan: het importrapport, het logboek, en synchronisatie in een latere fase — dat laatste is zonder `updatedAt` niet te doen.
+
+Dit botst op het eerste gezicht met het uitgangspunt dat elk veld een doel moet hebben. Het doel is hier dat de gegevens onherstelbaar zijn als je ze niet vanaf het begin vastlegt.
+
+**Daarnaast, alleen waar er een reden is:** `externalId` op leerlingen en groepen, voor het herkennen bij een tweede import uit een ander systeem.
+
+## Migraties
+
+Migraties zijn **losse, genummerde stappen** die op volgorde draaien, geen groeiende functie met vertakkingen. De db-module kijkt welke versie er staat en voert alle stappen daarboven uit.
+
+**Waarom.** Een apparaat dat lang niet is geopend springt van versie 1 naar de laatste. Zit dat in één functie met `if`-takken, dan is die na drie versies niet meer te overzien en is de sprong v1 → v4 iets anders dan v1 → v2 → v3 → v4. Als losse stappen is er maar één pad.
+
+**Eén harde regel: een migratie roept geen services aan.** Alleen de gegevens en zijn eigen code. Services veranderen mee met de app; een migratie moet doen wat hij deed toen hij geschreven werd, ook over drie jaar. Een migratie die `StudentService` gebruikt breekt zodra die service verandert, en dan breekt hij bij precies de gebruiker die lang niet heeft geopend.
+
+Bij elke wijziging draait er een test die van versie 1 naar de laatste migreert.
+
+## Datamodel: leerlingen, groepen en documentaties
+
+Drie aparte stores met verwijzingen ertussen, niet één store met alles erin.
+
+| Store | Sleutel | Verwijst naar |
+|---|---|---|
+| `groups` | id | — |
+| `students` | id | `groupId` |
+| `documentations` | id | `groupId`, `studentIds[]` |
+
+**Een documentatie heeft één groep en optioneel gekoppelde leerlingen** (besluit B-13). De groep bepaalt wat er in de opmaak komt te staan; de koppeling is aanvullend en mag leeg blijven.
+
+**Foto's: eigenaarschap staat op de foto, volgorde op de documentatie.** Een foto verwijst met `documentId` naar de documentatie waar hij bij hoort; dat is de bron van waarheid voor eigenaarschap. De documentatie houdt de volgorde bij als lijst van foto-identificaties; dat is de bron van waarheid voor de volgorde, en de enige plek waar die staat. Doc 04 maakt die volgorde functioneel bindend — hij bepaalt de opmaak — dus hij mag niet uit de opslagvolgorde of het tijdstip van toevoegen worden afgeleid.
+
+**Waarom groepen een eigen store krijgen en geen tekstveld** (besluit B-14). Een groep heeft nu alleen een naam, dus een tekstveld op de leerling zou volstaan. Toch een eigen entiteit, om twee redenen. Er komen eigenschappen bij — kleur, locatie, schooljaar, mentor — en die kunnen nergens heen als een groep alleen als tekst bestaat. En een groep hernoemen raakt dan één record in plaats van elke leerling en elke documentatie die de oude naam bevat. De prijs is een extra store; die is klein en eenmalig.
+
+**Verwijzingen mogen doodlopen.** Een opgeruimde groep laat leerlingen en documentaties staan die er nog naar wijzen. Die blijven zichtbaar en tonen geen groepsnaam. Hetzelfde geldt voor een reeks. Opruimen mag nooit werk weggooien, dus wordt er niet cascaderend verwijderd — behalve bij foto's, die zonder hun documentatie geen betekenis hebben.
+
+**Leerlingen worden niet verwijderd maar op inactief gezet.** Dat is een architectuureis en geen instelling: `PrivacyService` schermt af op het volledige register, inclusief inactieve leerlingen, omdat een vertrokken kind nog voorkomt in oudere documentaties. Een harde verwijdering zou die documentaties stilzwijgend onbeschermd maken.
+
+Een component praat nooit rechtstreeks met de opslag. De weg is altijd component → service → repository. Zodra er meerdere gebruikers komen (PostgreSQL, objectopslag voor foto's) worden alleen de repositories vervangen.
 
 ## Foto's
 
@@ -110,7 +180,7 @@ Gevolg: **apparaten synchroniseren niet.** Een documentatie leeft op het apparaa
 
 ## Later
 
-Zodra er meerdere gebruikers komen: PostgreSQL en objectopslag voor de foto's. Daarom loopt alle opslag via `DocumentService` en nooit rechtstreeks vanuit een component — dan is dat één vervanging in plaats van een verbouwing.
+Zodra er meerdere gebruikers komen: PostgreSQL en objectopslag voor de foto's. Dat raakt dan alleen de repositories — services en schermen blijven zoals ze zijn. Zie *De repositorylaag*.
 
 ---
 
@@ -146,9 +216,12 @@ modules/
   mail/
   agenda/
   settings/
+  students/
 ```
 
 Iedere module bevat `components/`, `hooks/`, `services/`, `types/`.
+
+**Leerlingen en groepen zitten in één module `students/`.** Ze worden in hetzelfde scherm beheerd en een groep zonder leerlingen heeft geen betekenis; twee modules zouden dat kunstmatig uit elkaar trekken. De module is bereikbaar via Instellingen en heeft **geen eigen plek in de hoofdnavigatie** — die blijft vijf items (besluit B-16). Een eigen module en een eigen plek in de navigatie zijn twee verschillende dingen.
 
 **Waar hoort een service.** Wordt hij door meer dan één module gebruikt, dan staat hij in `src/services/`. Alleen als hij echt van één module is, staat hij in die module. In de praktijk staan alle services uit de tabel hieronder in `src/services/`, want het dashboard gebruikt documentatie- én agendagegevens.
 
@@ -163,17 +236,177 @@ Alle logica zit in services. Componenten bevatten geen businesslogica.
 | Service | Verantwoordelijkheid |
 |---|---|
 | `AIService` | Enige toegang tot AI. Roept altijd eerst `PrivacyService` aan. |
-| `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. |
-| `StorageService` | De enige laag die IndexedDB en localStorage aanraakt. |
+| `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. Haalt de namen bij `StudentService`. |
+| Repositories | Samen de enige laag die IndexedDB aanraakt; één per entiteit. Zie *De repositorylaag*. |
+| `AuditService` | Handelingen die veel records raken vastleggen. Nooit persoonsgegevens. |
 | `DocumentService` | Documentaties en foto's opslaan, ophalen, verwijderen, zoeken. |
+| `StudentService` | Leerlingen opslaan, ophalen, op inactief zetten, zoeken, batchbewerkingen. Levert de namen voor de afscherming en berekent de leeftijd. |
+| `StudentImporter` | De importpijplijn aan elkaar knopen, droog draaien, rapporteren. |
+| `StudentExporter` | Het exportmodel opbouwen; de schrijvers maken er CSV of Excel van. |
+| `GroupService` | Groepen opslaan, ophalen, hernoemen, opruimen, archiveren. |
 | `RenderService` | Een documentatie omzetten naar pagina's volgens het gekozen template. |
 | `ExportService` | Print-PDF en deelbare afbeelding genereren, delen en kopiëren. Roept `PrivacyService` aan als de initialenschakelaar aan staat. |
 | `BackupService` | Alle gegevens exporteren naar één bestand en terugzetten. |
 | `MailService` | Sjablonen, concepten en zoeken in concepten. |
 | `AgendaService` | Vakantiedata, eigen afspraken, aangepaste vakantiedatums. |
-| `SettingsService` | Instellingen, namenlijst, reeksen. |
+| `SettingsService` | Instellingen en reeksen. |
 
 Services mogen elkaar gebruiken.
+
+## Import en export van leerlingen
+
+Twee dingen worden hier bewust uit elkaar gehouden: **in welk bestandsformaat** iets staat, en **uit welk systeem** het komt. Dat zijn verschillende problemen. ParnasSys levert zowel CSV als Excel, ESIS ook. Zou de systeemkennis in de formaatlezer zitten, dan krijg je voor elke combinatie een eigen route met eigen fouten.
+
+### De importpijplijn
+
+Alle imports lopen langs dezelfde vier stappen, ongeacht formaat of herkomst:
+
+```
+bestand
+  ↓  formaatlezer      CSV · Excel              → ruwe rijen
+  ↓  bronprofiel       EduFlow · ParnasSys …    → toegewezen en genormaliseerde rijen
+  ↓  validatie                                  → geldige rijen + bevindingen
+  ↓  vergelijking                               → nieuw · bijwerken · ongewijzigd
+  ↓  StudentImporter                            → rapport, en pas dan schrijven
+```
+
+| Stap | Verantwoordelijkheid | Weet niets van |
+|---|---|---|
+| Formaatlezer | Bytes omzetten naar rijen en cellen | Leerlingen |
+| Bronprofiel | Welke kolom is welk veld, en hoe ziet een datum eruit in die bron | Bestandsformaten |
+| Validatie | Is deze rij bruikbaar, en zo nee waarom niet | Waar de rij vandaan komt |
+| Vergelijking | Bestaat deze leerling al | Bestanden |
+| `StudentImporter` | De stappen aan elkaar knopen, droog draaien, rapporteren | Formaten en bronnen |
+
+**Bronprofielen zijn gegevens, geen code.** Een profiel is een tabel: welke kolomnaam hoort bij welk veld, welk datumformaat, welke tekstcodering, en aan welke koprij je dit systeem herkent. Een nieuw leerlingadministratiesysteem ondersteunen is een profiel toevoegen — bestaande logica blijft ongemoeid.
+
+Profielen bij oplevering: `eduflow` (onze eigen export) en `handmatig` (de gebruiker wijst zelf kolommen toe). `parnassys` en `esis` worden toegevoegd zodra er een voorbeeldexport beschikbaar is; zonder echt bestand is een profiel giswerk.
+
+**Handmatige toewijzing is niet de uitzondering maar het vangnet.** Zonder die stap werkt de import alleen met bestanden die toevallig onze kolomnamen hebben.
+
+### De exportpijplijn
+
+Spiegelbeeldig, en met dezelfde scheiding:
+
+```
+leerlingen → exportmodel (kolommen + rijen + kenmerken) → CSV-schrijver
+                                                        → Excel-schrijver
+```
+
+Eén plek bepaalt *wat* er in een export staat; de schrijvers bepalen alleen *hoe* het op schijf komt. Een formaat toevoegen raakt de inhoud niet.
+
+**Let op het onderscheid met documentexport.** Een documentatie naar PDF of JPG is iets anders: dat loopt via `RenderService` en `ExportService`, is visueel en niet tabellarisch. De twee delen een woord, geen probleem. Ze worden bewust niet samengevoegd.
+
+### Schema en versiebeheer van bestanden
+
+Een export van vandaag moet over jaren nog te importeren zijn. Elk bestand dat EduFlow maakt draagt daarom kenmerken met zich mee:
+
+| Kenmerk | Waarvoor |
+|---|---|
+| `schemaVersion` | Welke indeling dit bestand heeft |
+| `createdAt` | Wanneer het is gemaakt |
+| `source` | Welk systeem het heeft gemaakt |
+| `createdBy` | Wie het heeft gemaakt — leeg in versie 1, want er zijn geen accounts |
+| `metadata` | Ruimte voor wat later nodig blijkt |
+
+**Niet elk formaat kan dit dragen, en dat wordt niet weggepoetst.** Excel krijgt een apart tabblad met deze kenmerken. Een CSV-bestand is één platte tabel en heeft die ruimte niet; daar staat de versie in de bestandsnaam en wordt de indeling herkend aan de kolommen. Komt er later een back-upbestand in JSON, dan is dat de plek waar de kenmerken volledig passen.
+
+De importzijde leest de versie en kiest de bijbehorende lezing. Zo blijft een oud bestand leesbaar zonder dat de nieuwe indeling erop wordt gewrongen.
+
+### Wat hiervan entiteit-onafhankelijk is
+
+De grens is bewust getrokken, zodat een tweede importsoort later weet wat hij kan hergebruiken:
+
+| Onderdeel | Weet iets van leerlingen? |
+|---|---|
+| Formaatlezers (CSV, Excel) | Nee — herbruikbaar |
+| Bestandskenmerken en versiebeheer | Nee — herbruikbaar |
+| Voorbeeldscherm en rapportvorm | Nee — herbruikbaar |
+| Bronprofielen | Ja |
+| Validatie en vergelijking | Ja |
+| `StudentImporter` | Ja |
+
+Er komt **geen** pijplijn die generiek is over entiteitstypen. Dat zou de types aanzienlijk moeilijker leesbaar maken, en wat je ermee wint is de veertig regels orkestratie die een tweede importsoort overschrijft. De helft die er echt toe doet is al herbruikbaar.
+
+### Praktische randvoorwaarden
+
+- **Excel vraagt een bibliotheek, CSV niet.** Die bibliotheek wordt pas geladen wanneer iemand een Excel-bestand kiest, zodat de app er niet zwaarder van wordt.
+- **Tekstcodering wordt vastgesteld, niet aangenomen.** Een CSV uit een Nederlands schooladministratiesysteem is lang niet altijd UTF-8, en een verminkte naam breekt stilzwijgend de afscherming.
+- **Datums komen in drie vormen binnen:** een Excel-getal, `14-03-2021` uit een Nederlandse bron, en `2021-03-14` uit onze eigen export. Het omzetten hoort in het bronprofiel, niet in de validatie.
+- **Een geïmporteerd bestand is persoonsgegevens.** Het wordt in de browser verwerkt, verlaat het apparaat niet, en wordt na de import niet bewaard.
+
+---
+
+# Validatie
+
+Eén manier van valideren voor het hele systeem, want dezelfde gegevens komen via twee wegen binnen: met de hand ingetypt en uit een importbestand. Zouden die elk hun eigen regels hebben, dan gaan ze uit elkaar lopen en accepteert de import wat het formulier weigert.
+
+Een validatie krijgt ruwe invoer en geeft drie dingen terug: of het bruikbaar is, de opgeschoonde waarde, en een lijst bevindingen.
+
+**Een bevinding heeft een ernst, en dat is het punt.** Niet alles wat afwijkt is een fout:
+
+| Ernst | Betekenis | Voorbeeld |
+|---|---|---|
+| Fout | Rij is onbruikbaar en wordt overgeslagen | Voornaam ontbreekt |
+| Waarschuwing | Rij wordt verwerkt, maar er is iets | Geboortedatum onleesbaar; leerling wordt zonder datum aangemaakt |
+
+Zonder dat onderscheid kan de import alleen accepteren of weigeren, en dan verliest het voorbeeldscherm precies de informatie waarvoor het bestaat.
+
+Elke bevinding draagt een melding in gewone taal én een vervolgstap, net als een `ServiceError`. Zo is een validatiefout in het formulier en in het importvoorbeeld dezelfde soort tekst.
+
+**Geen validatiebibliotheek.** Het gaat om een handvol regels met Nederlandse teksten en een ernstbegrip dat de gangbare bibliotheken niet kennen. Een afhankelijkheid erbij zou hier meer kosten dan opleveren.
+
+---
+
+# Auditlog
+
+Een klein, aanvulbaar logboek van handelingen die veel records tegelijk raken: importeren, exporteren, archiveren en batchbewerkingen. Plus het verwijderen van een documentatie.
+
+Per regel: wanneer, welke handeling, welke entiteitsoort, en aantallen.
+
+**Geen persoonsgegevens. Nooit.** Wel *"import: 23 nieuw, 4 bijgewerkt, 1 overgeslagen"*, niet welke kinderen dat waren. Ook geen waarden van vóór en na een wijziging — dat zou het logboek zelf tot een verzameling persoonsgegevens maken, met alle gevolgen van dien.
+
+**Wat het nu oplevert.** Gaat er iets mis in een import van tweehonderd regels, dan is achteraf vast te stellen wat er is gebeurd. Zonder logboek is dat onbeantwoordbaar.
+
+**Wat het later oplevert.** Het is de plek waar een verwijdering wordt vastgelegd. Dat is de goedkope voorbereiding op synchronisatie — zie hieronder.
+
+**Bewust geen scherm.** Het logboek wordt geschreven en niet getoond. Wie het wil zien opent de ontwikkelaarsgereedschappen. Een scherm bouwen we pas als iemand het nodig heeft.
+
+Het logboek is begrensd: alleen de laatste paar honderd regels blijven bewaard.
+
+---
+
+# Vooruitkijken
+
+Drie dingen die er zeker aankomen en die nu niet gebouwd worden. Wat hier staat is geen plan maar een grens: dit is wat er nu al goed staat, zodat het later geen verbouwing wordt.
+
+## Synchronisatie tussen apparaten
+
+Nodig vanaf versie 3 (doc 01). Wat daarvoor hoe dan ook nodig is en nu al klopt:
+
+- **stabiele, unieke id's** die niet uit de inhoud volgen;
+- **`updatedAt` op elk record**, de basis voor "welke versie is nieuwer";
+- **zacht verwijderen bij leerlingen**, zodat een vertrokken kind niet uit twee apparaten hoeft te verdwijnen.
+
+Wat er ontbreekt: documentaties worden hard verwijderd, en een synchronisatie kan dan niet zien of iets nooit heeft bestaan of juist is weggegooid. De volledige oplossing is een grafsteen per verwijderd record, en die kost vanaf nu een filter in elke query — voor altijd, voor een functie uit fase 3.
+
+**Het besluit is daarom: geen grafstenen, wel de verwijdering in het logboek.** Het gegeven is er dan, en een latere synchronisatie kan de grafstenen daaruit opbouwen. Dat is een dag werk in plaats van een verbouwing, en het kost vandaag niets.
+
+## Van lokale opslag naar een server
+
+De repositorylaag is de naad. Wordt de opslag ooit een server, dan komen er andere repositories met dezelfde afspraken; services en schermen blijven zoals ze zijn. Daarvoor gelden de twee regels uit *De repositorylaag*: geen IndexedDB in de signaturen, en alles asynchroon.
+
+Eén ding dat dan wél verandert en dat je moet weten: `DocumentService` houdt alle documentaties in het geheugen en bouwt daar de zoekindex op. Over een netwerk klopt die aanname niet meer. Dat is bewust — voor een lokale app is het de juiste keuze en doc 03 schrijft hem voor — en het zit achter de service, dus het is te vervangen zonder de schermen te raken.
+
+## Meerdere gebruikers en rechten
+
+Versie 1 heeft geen accounts, geen wachtwoorden en geen rollen. Fase 2 heeft dat wel nodig, samen met gedeelde opslag en een verwerkersovereenkomst — doc 01 noemt dat terecht een ander product.
+
+**Er wordt nu niets voor gebouwd, en dat is een besluit en geen uitstel.** Een `eigenaar`-veld op elk record zou gokken naar wat in fase 2 de eenheid is: de leerkracht, de groep, de school of het bestuur. Dat verkeerd raden is duurder dan het later toevoegen.
+
+Wat er wél geldt, als afspraak zonder code: **services halen nooit een "huidige gebruiker" uit een globale plek.** Heeft iets ooit een gebruiker nodig, dan komt die binnen als parameter. Daarmee blijft de stap naar meerdere gebruikers een uitbreiding en geen zoektocht door de hele app.
+
+Het veld `createdBy` in exportbestanden bestaat al en blijft in versie 1 leeg. Dat is de enige plek waar de toekomstige gebruiker nu al een gaatje heeft.
 
 ---
 
@@ -200,11 +433,11 @@ Foto's worden nooit meegestuurd. `AIService` accepteert geen binaire data — da
 - de instructie aan de AI;
 - bij een vervolgzin: de eerdere documentaties uit dezelfde reeks.
 
-Alle vier gaan door de naamvervanging heen, ook het stijlvoorbeeld — dat is zelf een documentatie en bevat namen, mogelijk van kinderen die niet meer in de huidige namenlijst staan.
+Alle vier gaan door de naamvervanging heen, ook het stijlvoorbeeld — dat is zelf een documentatie en bevat namen, mogelijk van kinderen die inmiddels op inactief staan. Dat die inactieve leerlingen in het register blijven, is precies wat dit geval afdekt.
 
 ## Namen vervangen
 
-De regels, want "voornamen vervangen door codes" is minder simpel dan het klinkt:
+De namen komen uit het leerlingenregister, via `StudentService`. De regels, want "namen vervangen door codes" is minder simpel dan het klinkt:
 
 - alleen hele woorden, zodat een kind dat Roos heet geen rozen in de schooltuin omzet;
 - hoofdletterongevoelig zoeken, maar de hoofdletters van het origineel herstellen bij het terugzetten;
@@ -214,9 +447,17 @@ De regels, want "voornamen vervangen door codes" is minder simpel dan het klinkt
 - twee kinderen met dezelfde voornaam krijgen elk een eigen code, zodat terugzetten klopt;
 - terugvertalen gebeurt op de code, nooit op de naam.
 
+**De roepnaam telt mee, en dat is geen bijzaak.** Een kind dat Jan-Peter heet en JP wordt genoemd, staat als "JP" in de tekst — want een leerkracht schrijft zoals hij praat. Staat alleen de formele voornaam in het register, dan gaat "JP" onafgeschermd de deur uit. De roepnaam is daarom een eigen veld op de leerling en doet mee in de vervanging, met dezelfde code als de andere namen van dat kind.
+
+**Achternamen tellen mee.** Voornaam, roepnaam en achternaam van dezelfde leerling krijgen dezelfde code, zodat "Kjeld", "Kjeld de Vries" en "de Vries" alle drie naar dat ene kind wijzen. Tussenvoegsels horen bij de achternaam en worden als geheel behandeld — "de Vries" is één naam, niet twee woorden. Een achternaam van één of twee letters wordt overgeslagen: dat levert meer valse treffers op in gewone tekst dan het aan bescherming toevoegt.
+
+**Inactieve leerlingen tellen ook mee.** Een kind dat van school is gegaan komt voor in oudere documentaties, en die worden bewerkt en als context meegestuurd bij een vervolgzin. Afschermen op alleen de actieve leerlingen zou die documentaties stilzwijgend onbeschermd maken.
+
+**Codes hangen aan het leerling-id**, niet aan de plek in een lijst. Daardoor krijgt hetzelfde kind bij elke aanroep dezelfde code, ook nadat er leerlingen bij zijn gekomen of op inactief zijn gezet.
+
 Hier hoort een testset bij die bij elke wijziging draait.
 
-**Is de namenlijst leeg, dan wordt er niets afgeschermd.** `AIService` weigert in dat geval de aanroep tot de gebruiker dat één keer bewust heeft bevestigd.
+**Is het leerlingenregister leeg, dan wordt er niets afgeschermd.** `AIService` weigert in dat geval de aanroep tot de gebruiker dat één keer bewust heeft bevestigd.
 
 ---
 
@@ -347,7 +588,7 @@ Zijn de data op, dan toont de agenda dat en blijven eigen afspraken gewoon werke
 
 - Geen secrets in de frontend. API-sleutels uitsluitend via environment variables op de server.
 - De AI-route is afgeschermd met een toegangscode en een snelheidslimiet.
-- Geen persoonsgegevens in localStorage. Documentaties, foto's, mailconcepten, de namenlijst en het stijlvoorbeeld staan in IndexedDB op het eigen apparaat.
+- Geen persoonsgegevens in localStorage. Documentaties, foto's, mailconcepten, het leerlingenregister, de groepen en het stijlvoorbeeld staan in IndexedDB op het eigen apparaat.
 - Foto's verlaten het apparaat niet.
 - Geen externe trackers of analytics.
 
@@ -359,6 +600,8 @@ Zijn de data op, dan toont de agenda dat en blijven eigen afspraken gewoon werke
 - Componenten bevatten geen businesslogica.
 - Services bevatten alle logica.
 - AI loopt altijd via `AIService`, en `AIService` loopt altijd via `PrivacyService`.
-- Opslag loopt altijd via een service, nooit rechtstreeks.
+- Opslag loopt altijd via een repository, en een component bereikt die alleen via een service.
+- Een repository bevat geen businesslogica; een service bevat geen kennis van stores of transacties.
+- Elke entiteit heeft een id, `createdAt` en `updatedAt`.
 - Iedere nieuwe module volgt dezelfde structuur.
 
