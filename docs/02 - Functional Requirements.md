@@ -97,12 +97,15 @@ Het fundament onder de afscherming richting AI, en de plek waar je vastlegt wie 
 ## Een leerling bevat
 
 - voornaam
+- roepnaam (optioneel)
 - achternaam
 - geboortedatum
 - groep (één)
 - actief of inactief
 
 Voornaam en groep zijn verplicht. De rest mag leeg blijven — een register met gaten is bruikbaarder dan een register dat je pas mag opslaan als je alles weet.
+
+**Waarom een roepnaam.** Een kind dat Jan-Peter heet en JP wordt genoemd, staat als "JP" in je tekst. Zonder dat veld herkent EduFlow die naam niet en gaat hij onafgeschermd naar de AI. Vul hem alleen in als hij afwijkt van de voornaam.
 
 ## Een groep bevat
 

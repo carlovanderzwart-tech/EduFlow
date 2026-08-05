@@ -74,6 +74,55 @@ De toegangscode staat niet in localStorage maar in een cookie die de server zet,
 
 **Niet localStorage voor de rest.** Die heeft een limiet van ongeveer 5 MB en slaat alleen tekst op — één documentatie met zes telefoonfoto's zit daar al overheen. En belangrijker: het leerlingenregister is het gevoeligste bestand in de app, en persoonsgegevens horen niet in localStorage.
 
+## De repositorylaag
+
+Niet één `StorageService` voor alles, maar **één repository per entiteit**, plus één module die de verbinding en de migraties bezit.
+
+```
+db.ts                    verbinding, schemaversie, migraties
+studentRepository        groepRepository        documentRepository
+photoRepository          settingsRepository     auditRepository
+```
+
+Samen zijn zij de enige laag die IndexedDB aanraakt. Die regel uit dit document blijft dus staan; hij wordt alleen door meerdere bestanden ingevuld.
+
+**Waarom niet één service.** Met leerlingen, groepen, documentaties, foto's, mailconcepten, agenda-items, instellingen en het logboek groeit één opslagservice naar tientallen methoden in één bestand. Dat is het soort bestand dat na twee jaar wordt opengebroken. Met één repository per entiteit heeft elk gegeven één plek, en blijft het aantal methoden per bestand klein.
+
+**Wat een repository wel en niet doet.** Hij leest en schrijft records. Hij bevat geen businesslogica, geen validatie en geen afgeleide waarden — dat is de taak van de service erboven. Omgekeerd bevat een service geen kennis van stores, indexen of transacties.
+
+**Twee regels die de vervangbaarheid bewaken:**
+
+- **Een repository lekt geen IndexedDB naar buiten.** Geen `IDBKeyRange`, geen cursors, geen transactieobjecten in een signatuur. Wat eruit komt zijn gewone objecten en beloftes. Zou de opslag ooit een server worden, dan is dat een andere invulling van dezelfde afspraak en verandert er niets aan de services of de schermen.
+- **Alles is asynchroon**, ook waar het nu direct zou kunnen. Een aanroep die vandaag synchroon is en morgen over het netwerk moet, is een wijziging die door de hele app trekt.
+
+Repositories delen een kleine gemeenschappelijke vorm voor ophalen, opslaan en verwijderen. Wat daarbovenop entiteit-eigen is — leerlingen per groep, foto's per documentatie — staat gewoon op die ene repository. Er komt geen algemene querytaal; dat is een oplossing voor een probleem dat deze app niet heeft.
+
+## Gedeelde velden op elke entiteit
+
+Elk opgeslagen record heeft:
+
+| Veld | Waarvoor |
+|---|---|
+| `id` | Stabiel, uniek, en niet afgeleid van inhoud |
+| `createdAt` | Wanneer het is ontstaan |
+| `updatedAt` | Wanneer het voor het laatst is gewijzigd |
+
+**Waarom tijdstempels op alles, ook waar niets ze vandaag leest.** Ze zijn niet achteraf te maken. Voeg je ze over twee jaar toe, dan hebben alle bestaande records voor altijd een onbekende ontstaansdatum. Ze zijn bovendien de basis voor drie dingen die al op de kaart staan: het importrapport, het logboek, en synchronisatie in een latere fase — dat laatste is zonder `updatedAt` niet te doen.
+
+Dit botst op het eerste gezicht met het uitgangspunt dat elk veld een doel moet hebben. Het doel is hier dat de gegevens onherstelbaar zijn als je ze niet vanaf het begin vastlegt.
+
+**Daarnaast, alleen waar er een reden is:** `externalId` op leerlingen en groepen, voor het herkennen bij een tweede import uit een ander systeem.
+
+## Migraties
+
+Migraties zijn **losse, genummerde stappen** die op volgorde draaien, geen groeiende functie met vertakkingen. De db-module kijkt welke versie er staat en voert alle stappen daarboven uit.
+
+**Waarom.** Een apparaat dat lang niet is geopend springt van versie 1 naar de laatste. Zit dat in één functie met `if`-takken, dan is die na drie versies niet meer te overzien en is de sprong v1 → v4 iets anders dan v1 → v2 → v3 → v4. Als losse stappen is er maar één pad.
+
+**Eén harde regel: een migratie roept geen services aan.** Alleen de gegevens en zijn eigen code. Services veranderen mee met de app; een migratie moet doen wat hij deed toen hij geschreven werd, ook over drie jaar. Een migratie die `StudentService` gebruikt breekt zodra die service verandert, en dan breekt hij bij precies de gebruiker die lang niet heeft geopend.
+
+Bij elke wijziging draait er een test die van versie 1 naar de laatste migreert.
+
 ## Datamodel: leerlingen, groepen en documentaties
 
 Drie aparte stores met verwijzingen ertussen, niet één store met alles erin.
@@ -92,7 +141,7 @@ Drie aparte stores met verwijzingen ertussen, niet één store met alles erin.
 
 **Leerlingen worden niet verwijderd maar op inactief gezet.** Dat is een architectuureis en geen instelling: `PrivacyService` schermt af op het volledige register, inclusief inactieve leerlingen, omdat een vertrokken kind nog voorkomt in oudere documentaties. Een harde verwijdering zou die documentaties stilzwijgend onbeschermd maken.
 
-Alle opslag loopt via services, nooit rechtstreeks vanuit een component. Zodra er meerdere gebruikers komen (PostgreSQL, objectopslag voor foto's) is dat één vervanging in plaats van een verbouwing.
+Een component praat nooit rechtstreeks met de opslag. De weg is altijd component → service → repository. Zodra er meerdere gebruikers komen (PostgreSQL, objectopslag voor foto's) worden alleen de repositories vervangen.
 
 ## Foto's
 
@@ -129,7 +178,7 @@ Gevolg: **apparaten synchroniseren niet.** Een documentatie leeft op het apparaa
 
 ## Later
 
-Zodra er meerdere gebruikers komen: PostgreSQL en objectopslag voor de foto's. Daarom loopt alle opslag via `DocumentService` en nooit rechtstreeks vanuit een component — dan is dat één vervanging in plaats van een verbouwing.
+Zodra er meerdere gebruikers komen: PostgreSQL en objectopslag voor de foto's. Dat raakt dan alleen de repositories — services en schermen blijven zoals ze zijn. Zie *De repositorylaag*.
 
 ---
 
@@ -186,7 +235,8 @@ Alle logica zit in services. Componenten bevatten geen businesslogica.
 |---|---|
 | `AIService` | Enige toegang tot AI. Roept altijd eerst `PrivacyService` aan. |
 | `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. Haalt de namen bij `StudentService`. |
-| `StorageService` | De enige laag die IndexedDB en localStorage aanraakt. |
+| Repositories | Samen de enige laag die IndexedDB aanraakt; één per entiteit. Zie *De repositorylaag*. |
+| `AuditService` | Handelingen die veel records raken vastleggen. Nooit persoonsgegevens. |
 | `DocumentService` | Documentaties en foto's opslaan, ophalen, verwijderen, zoeken. |
 | `StudentService` | Leerlingen opslaan, ophalen, op inactief zetten, zoeken, batchbewerkingen. Levert de namen voor de afscherming en berekent de leeftijd. |
 | `StudentImporter` | De importpijplijn aan elkaar knopen, droog draaien, rapporteren. |
@@ -261,12 +311,100 @@ Een export van vandaag moet over jaren nog te importeren zijn. Elk bestand dat E
 
 De importzijde leest de versie en kiest de bijbehorende lezing. Zo blijft een oud bestand leesbaar zonder dat de nieuwe indeling erop wordt gewrongen.
 
+### Wat hiervan entiteit-onafhankelijk is
+
+De grens is bewust getrokken, zodat een tweede importsoort later weet wat hij kan hergebruiken:
+
+| Onderdeel | Weet iets van leerlingen? |
+|---|---|
+| Formaatlezers (CSV, Excel) | Nee — herbruikbaar |
+| Bestandskenmerken en versiebeheer | Nee — herbruikbaar |
+| Voorbeeldscherm en rapportvorm | Nee — herbruikbaar |
+| Bronprofielen | Ja |
+| Validatie en vergelijking | Ja |
+| `StudentImporter` | Ja |
+
+Er komt **geen** pijplijn die generiek is over entiteitstypen. Dat zou de types aanzienlijk moeilijker leesbaar maken, en wat je ermee wint is de veertig regels orkestratie die een tweede importsoort overschrijft. De helft die er echt toe doet is al herbruikbaar.
+
 ### Praktische randvoorwaarden
 
 - **Excel vraagt een bibliotheek, CSV niet.** Die bibliotheek wordt pas geladen wanneer iemand een Excel-bestand kiest, zodat de app er niet zwaarder van wordt.
 - **Tekstcodering wordt vastgesteld, niet aangenomen.** Een CSV uit een Nederlands schooladministratiesysteem is lang niet altijd UTF-8, en een verminkte naam breekt stilzwijgend de afscherming.
 - **Datums komen in drie vormen binnen:** een Excel-getal, `14-03-2021` uit een Nederlandse bron, en `2021-03-14` uit onze eigen export. Het omzetten hoort in het bronprofiel, niet in de validatie.
 - **Een geïmporteerd bestand is persoonsgegevens.** Het wordt in de browser verwerkt, verlaat het apparaat niet, en wordt na de import niet bewaard.
+
+---
+
+# Validatie
+
+Eén manier van valideren voor het hele systeem, want dezelfde gegevens komen via twee wegen binnen: met de hand ingetypt en uit een importbestand. Zouden die elk hun eigen regels hebben, dan gaan ze uit elkaar lopen en accepteert de import wat het formulier weigert.
+
+Een validatie krijgt ruwe invoer en geeft drie dingen terug: of het bruikbaar is, de opgeschoonde waarde, en een lijst bevindingen.
+
+**Een bevinding heeft een ernst, en dat is het punt.** Niet alles wat afwijkt is een fout:
+
+| Ernst | Betekenis | Voorbeeld |
+|---|---|---|
+| Fout | Rij is onbruikbaar en wordt overgeslagen | Voornaam ontbreekt |
+| Waarschuwing | Rij wordt verwerkt, maar er is iets | Geboortedatum onleesbaar; leerling wordt zonder datum aangemaakt |
+
+Zonder dat onderscheid kan de import alleen accepteren of weigeren, en dan verliest het voorbeeldscherm precies de informatie waarvoor het bestaat.
+
+Elke bevinding draagt een melding in gewone taal én een vervolgstap, net als een `ServiceError`. Zo is een validatiefout in het formulier en in het importvoorbeeld dezelfde soort tekst.
+
+**Geen validatiebibliotheek.** Het gaat om een handvol regels met Nederlandse teksten en een ernstbegrip dat de gangbare bibliotheken niet kennen. Een afhankelijkheid erbij zou hier meer kosten dan opleveren.
+
+---
+
+# Auditlog
+
+Een klein, aanvulbaar logboek van handelingen die veel records tegelijk raken: importeren, exporteren, archiveren en batchbewerkingen. Plus het verwijderen van een documentatie.
+
+Per regel: wanneer, welke handeling, welke entiteitsoort, en aantallen.
+
+**Geen persoonsgegevens. Nooit.** Wel *"import: 23 nieuw, 4 bijgewerkt, 1 overgeslagen"*, niet welke kinderen dat waren. Ook geen waarden van vóór en na een wijziging — dat zou het logboek zelf tot een verzameling persoonsgegevens maken, met alle gevolgen van dien.
+
+**Wat het nu oplevert.** Gaat er iets mis in een import van tweehonderd regels, dan is achteraf vast te stellen wat er is gebeurd. Zonder logboek is dat onbeantwoordbaar.
+
+**Wat het later oplevert.** Het is de plek waar een verwijdering wordt vastgelegd. Dat is de goedkope voorbereiding op synchronisatie — zie hieronder.
+
+**Bewust geen scherm.** Het logboek wordt geschreven en niet getoond. Wie het wil zien opent de ontwikkelaarsgereedschappen. Een scherm bouwen we pas als iemand het nodig heeft.
+
+Het logboek is begrensd: alleen de laatste paar honderd regels blijven bewaard.
+
+---
+
+# Vooruitkijken
+
+Drie dingen die er zeker aankomen en die nu niet gebouwd worden. Wat hier staat is geen plan maar een grens: dit is wat er nu al goed staat, zodat het later geen verbouwing wordt.
+
+## Synchronisatie tussen apparaten
+
+Nodig vanaf versie 3 (doc 01). Wat daarvoor hoe dan ook nodig is en nu al klopt:
+
+- **stabiele, unieke id's** die niet uit de inhoud volgen;
+- **`updatedAt` op elk record**, de basis voor "welke versie is nieuwer";
+- **zacht verwijderen bij leerlingen**, zodat een vertrokken kind niet uit twee apparaten hoeft te verdwijnen.
+
+Wat er ontbreekt: documentaties worden hard verwijderd, en een synchronisatie kan dan niet zien of iets nooit heeft bestaan of juist is weggegooid. De volledige oplossing is een grafsteen per verwijderd record, en die kost vanaf nu een filter in elke query — voor altijd, voor een functie uit fase 3.
+
+**Het besluit is daarom: geen grafstenen, wel de verwijdering in het logboek.** Het gegeven is er dan, en een latere synchronisatie kan de grafstenen daaruit opbouwen. Dat is een dag werk in plaats van een verbouwing, en het kost vandaag niets.
+
+## Van lokale opslag naar een server
+
+De repositorylaag is de naad. Wordt de opslag ooit een server, dan komen er andere repositories met dezelfde afspraken; services en schermen blijven zoals ze zijn. Daarvoor gelden de twee regels uit *De repositorylaag*: geen IndexedDB in de signaturen, en alles asynchroon.
+
+Eén ding dat dan wél verandert en dat je moet weten: `DocumentService` houdt alle documentaties in het geheugen en bouwt daar de zoekindex op. Over een netwerk klopt die aanname niet meer. Dat is bewust — voor een lokale app is het de juiste keuze en doc 03 schrijft hem voor — en het zit achter de service, dus het is te vervangen zonder de schermen te raken.
+
+## Meerdere gebruikers en rechten
+
+Versie 1 heeft geen accounts, geen wachtwoorden en geen rollen. Fase 2 heeft dat wel nodig, samen met gedeelde opslag en een verwerkersovereenkomst — doc 01 noemt dat terecht een ander product.
+
+**Er wordt nu niets voor gebouwd, en dat is een besluit en geen uitstel.** Een `eigenaar`-veld op elk record zou gokken naar wat in fase 2 de eenheid is: de leerkracht, de groep, de school of het bestuur. Dat verkeerd raden is duurder dan het later toevoegen.
+
+Wat er wél geldt, als afspraak zonder code: **services halen nooit een "huidige gebruiker" uit een globale plek.** Heeft iets ooit een gebruiker nodig, dan komt die binnen als parameter. Daarmee blijft de stap naar meerdere gebruikers een uitbreiding en geen zoektocht door de hele app.
+
+Het veld `createdBy` in exportbestanden bestaat al en blijft in versie 1 leeg. Dat is de enige plek waar de toekomstige gebruiker nu al een gaatje heeft.
 
 ---
 
@@ -307,7 +445,9 @@ De namen komen uit het leerlingenregister, via `StudentService`. De regels, want
 - twee kinderen met dezelfde voornaam krijgen elk een eigen code, zodat terugzetten klopt;
 - terugvertalen gebeurt op de code, nooit op de naam.
 
-**Achternamen tellen mee.** Voornaam en achternaam van dezelfde leerling krijgen dezelfde code, zodat "Kjeld", "Kjeld de Vries" en "de Vries" alle drie naar dat ene kind wijzen. Tussenvoegsels horen bij de achternaam en worden als geheel behandeld — "de Vries" is één naam, niet twee woorden. Een achternaam van één of twee letters wordt overgeslagen: dat levert meer valse treffers op in gewone tekst dan het aan bescherming toevoegt.
+**De roepnaam telt mee, en dat is geen bijzaak.** Een kind dat Jan-Peter heet en JP wordt genoemd, staat als "JP" in de tekst — want een leerkracht schrijft zoals hij praat. Staat alleen de formele voornaam in het register, dan gaat "JP" onafgeschermd de deur uit. De roepnaam is daarom een eigen veld op de leerling en doet mee in de vervanging, met dezelfde code als de andere namen van dat kind.
+
+**Achternamen tellen mee.** Voornaam, roepnaam en achternaam van dezelfde leerling krijgen dezelfde code, zodat "Kjeld", "Kjeld de Vries" en "de Vries" alle drie naar dat ene kind wijzen. Tussenvoegsels horen bij de achternaam en worden als geheel behandeld — "de Vries" is één naam, niet twee woorden. Een achternaam van één of twee letters wordt overgeslagen: dat levert meer valse treffers op in gewone tekst dan het aan bescherming toevoegt.
 
 **Inactieve leerlingen tellen ook mee.** Een kind dat van school is gegaan komt voor in oudere documentaties, en die worden bewerkt en als context meegestuurd bij een vervolgzin. Afschermen op alleen de actieve leerlingen zou die documentaties stilzwijgend onbeschermd maken.
 
@@ -458,6 +598,8 @@ Zijn de data op, dan toont de agenda dat en blijven eigen afspraken gewoon werke
 - Componenten bevatten geen businesslogica.
 - Services bevatten alle logica.
 - AI loopt altijd via `AIService`, en `AIService` loopt altijd via `PrivacyService`.
-- Opslag loopt altijd via een service, nooit rechtstreeks.
+- Opslag loopt altijd via een repository, en een component bereikt die alleen via een service.
+- Een repository bevat geen businesslogica; een service bevat geen kennis van stores of transacties.
+- Elke entiteit heeft een id, `createdAt` en `updatedAt`.
 - Iedere nieuwe module volgt dezelfde structuur.
 

@@ -105,6 +105,68 @@ Aanleiding: bij het testen van sprint 2A bleek de namenlijst niet te volstaan. H
 
 ---
 
+# 5 augustus 2026 — fundament voor de lange termijn
+
+Aanleiding: beoordeling van de architectuur op houdbaarheid over vijf tot tien jaar, met de vraag welke onderdelen anders over twee jaar opnieuw gebouwd zouden worden. Deze besluiten zijn de uitkomst.
+
+## B-23 — Eén repository per entiteit in plaats van één opslagservice
+
+**Besluit.** `StorageService` wordt vervangen door een db-module met de verbinding en de migraties, plus een repository per entiteit. Samen zijn zij de enige laag die IndexedDB aanraakt.
+
+**Waarom.** Met acht entiteiten groeit één opslagservice naar tientallen methoden in één bestand. Nu telt hij er twaalf; dit is het goedkoopste moment om te splitsen.
+
+**Gevolg.** Twee regels bewaken de vervangbaarheid: geen IndexedDB in de signaturen, en alles asynchroon. Daarmee is de repositorylaag ook de naad waar een server ooit in past.
+
+## B-24 — `createdAt` en `updatedAt` op elke entiteit
+
+**Besluit.** Elk opgeslagen record krijgt beide tijdstempels, ook waar niets ze vandaag leest.
+
+**Waarom.** Ze zijn niet met terugwerkende kracht te maken. Later toevoegen betekent dat elk bestaand record voor altijd een onbekende ontstaansdatum heeft.
+
+**Gevolg.** Dit wijkt af van de regel dat elk veld een afnemer moet hebben. Het doel is hier de onherstelbaarheid zelf, en de drie afnemers die er al aankomen: importrapport, logboek en synchronisatie.
+
+## B-25 — `roepnaam` op de leerling, meegenomen in de afscherming
+
+**Probleem.** Een leerkracht schrijft zoals hij praat. Een kind dat Jan-Peter heet en JP wordt genoemd staat als "JP" in de tekst, en die naam staat niet in het register.
+
+**Besluit.** De leerling krijgt een optionele roepnaam, die met dezelfde code wordt vervangen als de andere namen van dat kind.
+
+**Waarom.** Dit dicht een gat in de kernveiligheidsfunctie met één veld. Zonder roepnaam gaat een naam die dagelijks gebruikt wordt gewoon mee naar de AI-provider.
+
+**Afweging.** Het is een persoonsgegeven erbij. Dat is bewust afgewogen tegen wat het oplevert, en hoort in het gesprek met de functionaris gegevensbescherming.
+
+## B-26 — Een minimaal auditlog, zonder persoonsgegevens en zonder scherm
+
+**Besluit.** Handelingen die veel records tegelijk raken — importeren, exporteren, archiveren, batchbewerkingen en het verwijderen van een documentatie — worden vastgelegd met tijdstip, handeling en aantallen. Geen namen, geen inhoud, geen waarden van vóór en na. Geen scherm.
+
+**Waarom.** Gaat er iets mis in een import van tweehonderd regels, dan is zonder logboek niet te achterhalen wat er is gebeurd. En het is de goedkoopste voorbereiding op synchronisatie: de verwijdering wordt vastgelegd zonder dat er grafstenen nodig zijn.
+
+## B-27 — Geen grafstenen, wel verwijderingen in het logboek
+
+**Probleem.** Synchronisatie tussen apparaten moet kunnen zien of iets nooit heeft bestaan of juist is weggegooid. De gangbare oplossing is een grafsteen per verwijderd record.
+
+**Besluit.** Geen grafstenen. De verwijdering gaat in het logboek.
+
+**Waarom.** Grafstenen kosten vanaf nu een filter in elke query, voor altijd, voor een functie uit fase 3. Uit het logboek zijn ze later te reconstrueren: een dag werk in plaats van een verbouwing.
+
+## B-28 — Geen voorbereiding op meerdere gebruikers in het datamodel
+
+**Besluit.** Geen eigenaarsveld op records, geen rollen, geen rechtenmodel. Wel één afspraak: services halen nooit een "huidige gebruiker" uit een globale plek; die komt binnen als parameter zodra iets hem nodig heeft.
+
+**Waarom.** Een eigenaarsveld nu zou gokken naar wat in fase 2 de eenheid is — de leerkracht, de groep, de school of het bestuur. Verkeerd raden is duurder dan later toevoegen. Doc 01 noemt fase 2 terecht een ander product.
+
+## B-29 — Technische besluiten (geen goedkeuring nodig)
+
+| | Besluit | Vervangt |
+|---|---|---|
+| T-20 | Migraties zijn losse, genummerde stappen die op volgorde draaien | Eén groeiende upgrade-functie is na drie versies niet meer te overzien |
+| T-21 | Een migratie roept nooit een service aan | Services veranderen mee met de app; een migratie moet doen wat hij deed toen hij geschreven werd |
+| T-22 | Eén validatiecontract voor formulier én import, met bevindingen die een ernst hebben (fout of waarschuwing) | Twee validatiewegen lopen uit elkaar; zonder ernst kan het importvoorbeeld alleen accepteren of weigeren |
+| T-23 | Geen validatiebibliotheek | Een handvol regels met Nederlandse teksten en een eigen ernstbegrip; een afhankelijkheid kost hier meer dan hij oplevert |
+| T-24 | Geen importpijplijn die generiek is over entiteitstypen | De helft die ertoe doet — formaatlezers, bestandskenmerken, rapportvorm — is al herbruikbaar. De rest is veertig regels orkestratie |
+
+---
+
 ## Hoe je oudere besluiten leest
 
 Besluiten van vóór vandaag spreken over de **namenlijst**. Die tekst blijft staan zoals hij is — dit document is een verslag van wat wanneer is besloten, en dat herschrijf je niet achteraf.

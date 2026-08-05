@@ -295,7 +295,9 @@ Bereikbaar via Instellingen. **Geen zesde icoon in de navigatie:** dit beheer je
 
 **Zodra je iets aanvinkt** verschijnt er een balk met het aantal geselecteerde leerlingen en drie acties: verplaatsen naar een andere groep, op inactief zetten, weer op actief zetten. Geen verwijderknop — leerlingen worden nooit hard verwijderd. Elke actie vraagt bevestiging en noemt het aantal: "23 leerlingen verplaatsen naar groep blauw".
 
-**Een leerling toevoegen of aanpassen** gebeurt in een paneel dat over het scherm schuift, met: voornaam, achternaam, geboortedatum, groep, en actief of inactief. Voornaam en groep zijn verplicht, de rest mag leeg.
+**Een leerling toevoegen of aanpassen** gebeurt in een paneel dat over het scherm schuift, met: voornaam, roepnaam, achternaam, geboortedatum, groep, en actief of inactief. Voornaam en groep zijn verplicht, de rest mag leeg.
+
+Bij roepnaam staat waarom hij er is: *"Alleen invullen als je een andere naam gebruikt dan de voornaam. Zo wordt ook die naam afgeschermd voordat er tekst naar AI gaat."*
 
 Onder de geboortedatum staat de leeftijd zodra die is ingevuld: "4 jaar en 1 maand". Is hij leeg, dan staat er niets — geen streepje en geen schatting.
 
