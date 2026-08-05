@@ -59,6 +59,52 @@ Aanleiding: bij het testen van sprint 2A bleek de namenlijst niet te volstaan. H
 
 **T-04 blijft gelden**, met T-12 en T-13 als uitbreiding: de bron is het register in plaats van een losse lijst, en achternamen doen mee.
 
+## B-18 — Import en export van leerlingen komen in versie 1
+
+**Probleem.** Deze functionaliteit stond eerst gepland maar buiten versie 1. Bij het uitwerken bleek dat onhoudbaar: een groep van dertig leerlingen met achternaam en geboortedatum overtypen is een half uur werk waar niemand aan begint, en dan blijft het register leeg. Een leeg register betekent geen afscherming.
+
+**Besluit.** Importeren uit CSV en Excel, en exporteren naar diezelfde formaten, horen bij versie 1.
+
+**Waarom ook export.** Zolang `BackupService` niet bestaat is een leerlingexport het enige vangnet voor het register. Export is bovendien eenvoudiger dan import — geen kolomtoewijzing, geen voorbeeld — en dus eerder bruikbaar.
+
+## B-19 — Archiveren is een handeling, geen derde status
+
+**Probleem.** Aan het eind van een schooljaar moet een groep uit beeld, maar de leerlingen moeten bewaard blijven voor de afscherming. De verleiding is een status "gearchiveerd" naast actief en inactief.
+
+**Besluit.** Archiveren is een handeling die twee bestaande velden zet: de groep krijgt `archived`, en alle leerlingen erin gaan op inactief.
+
+**Waarom.** Een derde status betekent dat bij elke keuzelijst en elke afschermaanroep opnieuw de vraag is wat hij betekent. Met twee velden die er al zijn blijft dat eenduidig.
+
+**Gevolg.** Gearchiveerde groepen en hun leerlingen tellen onverkort mee bij de naamvervanging. Dearchiveren haalt de groep terug maar laat de leerlingen inactief — massaal activeren zou een vertrokken kind terugzetten in de keuzelijsten.
+
+## B-20 — Bestandsformaat en bronsysteem worden gescheiden
+
+**Besluit.** De importpijplijn scheidt **formaatlezers** (CSV, Excel) van **bronprofielen** (EduFlow, ParnasSys, ESIS). Alle imports lopen langs één `StudentImporter`.
+
+**Waarom.** Een leerlingadministratie levert doorgaans beide formaten. Zou de systeemkennis in de formaatlezer zitten, dan ontstaat er per combinatie een eigen route met eigen fouten. Nu is een nieuw systeem ondersteunen een profiel toevoegen, zonder bestaande logica aan te raken.
+
+**Gevolg.** Bronprofielen zijn declaratieve tabellen, geen code met logica. Handmatige kolomtoewijzing is het vangnet voor onbekende bronnen en dus geen randgeval.
+
+## B-21 — Bestanden dragen hun eigen schemaversie
+
+**Besluit.** Elk bestand dat EduFlow maakt bevat `schemaVersion`, `createdAt`, `source`, `createdBy` en ruimte voor `metadata`. Bij import wordt de versie gelezen en de bijbehorende lezing gekozen.
+
+**Waarom.** Een export van vandaag moet over jaren nog te importeren zijn. Zonder versie in het bestand is er geen manier om een oude indeling te herkennen, en wordt de nieuwe erop gewrongen.
+
+**Eerlijk over de grens.** CSV is één platte tabel en kan die kenmerken niet dragen. Daar staat de versie in de bestandsnaam en wordt de indeling herkend aan de kolommen. Excel krijgt een apart tabblad. `createdBy` blijft leeg in versie 1, want er zijn geen accounts.
+
+## B-22 — Technische besluiten (geen goedkeuring nodig)
+
+| | Besluit | Vervangt |
+|---|---|---|
+| T-15 | Batchbewerkingen kennen geen verwijderen: alleen verplaatsen, op inactief en op actief zetten | Volgt uit T-14 |
+| T-16 | De Excel-bibliotheek wordt pas geladen wanneer iemand een Excel-bestand kiest | Anders wordt de app zwaarder voor iedereen die hem nooit gebruikt |
+| T-17 | Tekstcodering van een CSV wordt vastgesteld, niet aangenomen | Een verminkte naam breekt stilzwijgend de afscherming |
+| T-18 | Datumnormalisatie hoort in het bronprofiel, niet in de validatie | Anders moet de validatie alle vormen van alle bronnen kennen |
+| T-19 | Import verwijdert nooit; wie niet in het bestand staat blijft ongemoeid | Een onvolledige bronexport mag het register niet legen |
+
+---
+
 ## Hoe je oudere besluiten leest
 
 Besluiten van vóór vandaag spreken over de **namenlijst**. Die tekst blijft staan zoals hij is — dit document is een verslag van wat wanneer is besloten, en dat herschrijf je niet achteraf.

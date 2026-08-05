@@ -291,7 +291,9 @@ Bereikbaar via Instellingen. **Geen zesde icoon in de navigatie:** dit beheer je
 
 **Bovenaan:** zoekveld op naam, een keuzelijst voor de groep, en een knop "Leerling toevoegen".
 
-**Daaronder:** de lijst, per regel voornaam en achternaam, de groep, en de leeftijd. Inactieve leerlingen staan er niet tussen tot je ze aanzet met een schakelaar "Toon inactieve leerlingen"; ze zijn dan zichtbaar grijs.
+**Daaronder:** de lijst, per regel een selectievakje, voornaam en achternaam, de groep, en de leeftijd. Inactieve leerlingen staan er niet tussen tot je ze aanzet met een schakelaar "Toon inactieve leerlingen"; ze zijn dan zichtbaar grijs.
+
+**Zodra je iets aanvinkt** verschijnt er een balk met het aantal geselecteerde leerlingen en drie acties: verplaatsen naar een andere groep, op inactief zetten, weer op actief zetten. Geen verwijderknop — leerlingen worden nooit hard verwijderd. Elke actie vraagt bevestiging en noemt het aantal: "23 leerlingen verplaatsen naar groep blauw".
 
 **Een leerling toevoegen of aanpassen** gebeurt in een paneel dat over het scherm schuift, met: voornaam, achternaam, geboortedatum, groep, en actief of inactief. Voornaam en groep zijn verplicht, de rest mag leeg.
 
@@ -301,13 +303,36 @@ Onder de geboortedatum staat de leeftijd zodra die is ingevuld: "4 jaar en 1 maa
 
 ### Groepen
 
-Lijst met de naam van elke groep en hoeveel leerlingen erin zitten. Toevoegen, hernoemen en opruimen.
+Lijst met de naam van elke groep, het schooljaar en hoeveel leerlingen erin zitten. Toevoegen, hernoemen, opruimen en archiveren. Gearchiveerde groepen staan onderaan, gedempt, met een knop om ze terug te halen.
 
 Opruimen vraagt om bevestiging en zegt wat er gebeurt: de leerlingen en documentaties blijven bestaan en raken hun groep kwijt. Er verdwijnt dus niets, en dat staat er ook zo.
 
-### Importeren en exporteren
+**Archiveren** vraagt ook om bevestiging, en zegt wat er gebeurt: *"Groep geel wordt gearchiveerd en de 23 leerlingen erin gaan op inactief. Hun namen blijven afgeschermd in bestaande documentaties."* Dat laatste is geen bijzin — het is de reden dat archiveren geen verwijderen is.
 
-Komt later, niet in versie 1. Wanneer het er is: een knop "Leerlingen importeren" die een CSV- of Excel-bestand accepteert, eerst laat zien wat er gaat gebeuren — hoeveel nieuw, hoeveel bijgewerkt, wat er niet te lezen valt — en pas daarna doorzet. Plus een knop om de huidige leerlingen te exporteren naar dezelfde twee formaten.
+### Exporteren
+
+Knop "Exporteren", met de keuze tussen CSV en Excel. Exporteert wat er op dat moment in de lijst staat, inclusief je filters, zodat je ook één groep kunt exporteren.
+
+### Importeren
+
+Knop "Leerlingen importeren", en dan drie stappen op één scherm.
+
+**1. Bestand kiezen.** CSV of Excel. EduFlow leest de koprij en probeert te herkennen uit welk systeem het komt.
+
+**2. Kolommen controleren.** Herkent EduFlow de bron, dan staat de toewijzing al goed en hoef je alleen te kijken of het klopt. Herkent hij hem niet, dan wijs je zelf aan welke kolom de voornaam is, welke de geboortedatum, enzovoort. Naast elke keuze staat een voorbeeldwaarde uit het bestand, zodat je ziet dat je de goede kolom te pakken hebt.
+
+**3. Voorbeeld en bevestigen.** Een tabel met per regel wat ermee gaat gebeuren:
+
+| | |
+|---|---|
+| **Nieuw** | Wordt toegevoegd |
+| **Bijgewerkt** | Bestaat al; je ziet welke velden veranderen |
+| **Ongewijzigd** | Bestaat al en is identiek |
+| **Overgeslagen** | Met de reden erbij |
+
+Bovenaan de aantallen, onderaan de knop. Wat je ziet is precies wat er gebeurt — er is niets geschreven tot je bevestigt.
+
+Nieuwe groepen die uit het bestand komen staan apart vermeld, zodat een typefout in de bron je geen vijf groepen oplevert zonder dat je het merkt.
 
 ### Lege toestand
 

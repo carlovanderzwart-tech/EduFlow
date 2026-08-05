@@ -107,16 +107,36 @@ Voornaam en groep zijn verplicht. De rest mag leeg blijven — een register met 
 ## Een groep bevat
 
 - naam
+- schooljaar
+- gearchiveerd of niet
 
-Meer niet, in versie 1. Een groep is wél een eigen gegeven en geen los tekstje, zodat er later eigenschappen bij kunnen zonder dat elke documentatie en elke leerling opnieuw moet worden aangeraakt. Verwachte uitbreidingen: kleur, locatie, schooljaar en mentor.
+Een groep is een eigen gegeven en geen los tekstje, zodat er later eigenschappen bij kunnen zonder dat elke documentatie en elke leerling opnieuw moet worden aangeraakt. Verwachte uitbreidingen die er nu nog niet in zitten: kleur, locatie en mentor.
 
 ## De gebruiker kan
 
 - leerlingen toevoegen, aanpassen en op inactief zetten;
 - leerlingen filteren op groep en op actief of inactief;
 - zoeken op naam;
+- meerdere leerlingen tegelijk selecteren en in één keer verplaatsen naar een andere groep, op inactief zetten of weer op actief zetten;
 - groepen toevoegen, hernoemen en opruimen;
+- een groep archiveren aan het eind van een schooljaar;
 - zien hoeveel leerlingen er in een groep zitten.
+
+## Batchbewerkingen
+
+Een jaarovergang is dertig keer dezelfde handeling. Daarom kun je leerlingen aanvinken en in één keer verplaatsen, op inactief zetten of weer activeren.
+
+**Verwijderen zit er niet bij.** Leerlingen worden nooit hard verwijderd, en een massale verwijdering is precies de handeling waarmee je de afscherming stukmaakt.
+
+Elke batchbewerking vraagt om bevestiging en noemt het aantal: "23 leerlingen verplaatsen naar groep blauw".
+
+## Archiveren
+
+Aan het eind van een schooljaar archiveer je een groep. Dat doet twee dingen: de groep verdwijnt uit keuzelijsten, en alle leerlingen erin gaan op inactief.
+
+**Archiveren verwijdert niets en schermt niets minder af.** Een gearchiveerde groep en haar leerlingen tellen onverkort mee bij het vervangen van namen richting AI. Ze zijn alleen uit het zicht.
+
+Terugdraaien kan: een groep dearchiveren haalt hem terug in de lijsten. De leerlingen blijven inactief tot je ze zelf weer aanzet — massaal inactief zetten is veilig, massaal activeren zou een vertrokken kind terugzetten in je keuzelijsten.
 
 **Leerlingen worden niet verwijderd, maar op inactief gezet.** Een kind dat van school gaat komt nog voor in documentaties van eerder dit jaar. Zou het record verdwijnen, dan gaat die naam vanaf dat moment onafgeschermd naar de AI-provider. Inactieve leerlingen tellen dus gewoon mee bij de afscherming, maar verschijnen niet meer in keuzelijsten.
 
@@ -130,18 +150,29 @@ Uit de geboortedatum volgt de leeftijd, getoond in jaren en maanden ("4 jaar en 
 
 ## Import en export
 
-Een groep overtypen is werk dat niemand wil doen, en de gegevens staan al ergens. Daarom moeten leerlingen te importeren zijn uit **CSV** en **Excel**, en te exporteren naar diezelfde twee formaten.
-
-Eisen daaraan:
-
-- importeren toont eerst wat er gaat gebeuren — hoeveel nieuw, hoeveel bijgewerkt, wat er niet te lezen valt — en pas daarna bevestig je;
-- importeren voegt toe en werkt bij, maar verwijdert nooit iets dat niet in het bestand staat;
-- een mislukte regel stopt de rest niet, en wordt benoemd;
-- exporteren levert een bestand dat je ongewijzigd weer kunt importeren.
+Een groep overtypen is werk dat niemand wil doen, en de gegevens staan al ergens. Leerlingen zijn daarom te importeren uit **CSV** en **Excel**, en te exporteren naar diezelfde twee formaten.
 
 Handmatig toevoegen blijft altijd mogelijk en is de standaardweg voor één nieuw kind.
 
-**Deze functionaliteit staat gepland, maar niet voor versie 1.** Wat wél voor versie 1 geldt: de opzet moet dit kunnen dragen zonder verbouwing. Zie doc 03.
+### Importeren
+
+De import leest een bestand uit een ander systeem. EduFlow herkent de indeling van bekende bronnen en laat je bij een onbekende bron zelf aanwijzen welke kolom welk veld is.
+
+- **Eerst zien, dan doen.** De import toont een overzicht per regel — nieuw, bijgewerkt, ongewijzigd of overgeslagen met reden — en schrijft pas na bevestiging. Wat je bevestigt is exact wat er gebeurt.
+- **Importeren verwijdert nooit.** Leerlingen die niet in het bestand staan blijven ongemoeid. Een onvolledige export uit een ander systeem mag nooit je register legen.
+- **Eén mislukte regel stopt de rest niet**, en wordt benoemd.
+- **Een tweede import maakt geen dubbelen.** EduFlow herkent leerlingen die al bestaan.
+- **Onleesbare geboortedatum blokkeert niet.** De leerling wordt aangemaakt zonder datum, met vermelding.
+
+### Exporteren
+
+Exporteren levert een bestand dat je ongewijzigd weer kunt importeren. Zolang er nog geen volledige back-up bestaat, is dit ook het enige vangnet voor het register.
+
+### Uitwisselbaar blijven op termijn
+
+Exportbestanden moeten over jaren nog te lezen zijn. Daarom draagt elk bestand dat EduFlow maakt zijn eigen **schemaversie** met zich mee, plus wanneer en waaruit het is gemaakt. Bij het importeren wordt die versie gelezen, zodat een bestand van vandaag over drie jaar nog werkt.
+
+Zie doc 03 voor hoe dit is opgebouwd.
 
 ---
 

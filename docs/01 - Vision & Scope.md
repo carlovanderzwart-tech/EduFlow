@@ -80,6 +80,7 @@ EduFlow houdt een eigen lijst bij van de kinderen in de groep: voornaam, achtern
 
 - het register verlaat het apparaat niet, net zomin als foto's;
 - een leerling die van school gaat wordt op **inactief** gezet en niet verwijderd. Dat is geen administratieve netheid maar een vereiste: een kind komt voor in documentaties van eerder dit jaar, en zou het record verdwijnen, dan gaat die naam vanaf dat moment onafgeschermd naar de AI-provider;
+- **het register groeit dus mee over de jaren.** Aan het eind van een schooljaar archiveer je een groep: die verdwijnt uit je keuzelijsten, maar blijft bestaan en blijft afschermen. Wat erin staat wordt na verloop van tijd meer, niet minder — dat is een bewuste uitkomst van de vorige regel en hoort in het gesprek met de functionaris gegevensbescherming thuis;
 - ieder veld heeft een reden om te bestaan. Geboortedatum staat er voor de leeftijd en voor verjaardagen in de agenda. Komt een veld nergens terug in de app, dan hoort het er niet.
 
 **Dit is geen dossier.** Er worden geen observaties, resultaten, vorderingen of bijzonderheden per kind vastgelegd. Zie *Buiten scope*.
@@ -158,7 +159,7 @@ Zo min mogelijk gegevens verwerken, en zichtbaar maken wat er wél wordt verwerk
 - Documentatie
 - Mail
 - Agenda
-- Instellingen, met daaronder het beheer van leerlingen en groepen
+- Instellingen, met daaronder het beheer van leerlingen en groepen, inclusief import uit en export naar CSV en Excel
 
 Leerlingen en groepen krijgen geen eigen plek in de hoofdnavigatie. Je beheert ze af en toe, niet dagelijks; ze horen bij de instellingen. De navigatie blijft daarmee vijf items, zoals doc 04 beschrijft.
 

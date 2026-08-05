@@ -188,8 +188,10 @@ Alle logica zit in services. Componenten bevatten geen businesslogica.
 | `PrivacyService` | Namen vervangen door codes en weer terugzetten. Levert ook de volledige inhoud van het controlescherm, en de omzetting naar initialen voor de export. Haalt de namen bij `StudentService`. |
 | `StorageService` | De enige laag die IndexedDB en localStorage aanraakt. |
 | `DocumentService` | Documentaties en foto's opslaan, ophalen, verwijderen, zoeken. |
-| `StudentService` | Leerlingen opslaan, ophalen, op inactief zetten, zoeken. Levert de namen voor de afscherming en berekent de leeftijd. Draagt import en export. |
-| `GroupService` | Groepen opslaan, ophalen, hernoemen, opruimen. |
+| `StudentService` | Leerlingen opslaan, ophalen, op inactief zetten, zoeken, batchbewerkingen. Levert de namen voor de afscherming en berekent de leeftijd. |
+| `StudentImporter` | De importpijplijn aan elkaar knopen, droog draaien, rapporteren. |
+| `StudentExporter` | Het exportmodel opbouwen; de schrijvers maken er CSV of Excel van. |
+| `GroupService` | Groepen opslaan, ophalen, hernoemen, opruimen, archiveren. |
 | `RenderService` | Een documentatie omzetten naar pagina's volgens het gekozen template. |
 | `ExportService` | Print-PDF en deelbare afbeelding genereren, delen en kopiëren. Roept `PrivacyService` aan als de initialenschakelaar aan staat. |
 | `BackupService` | Alle gegevens exporteren naar één bestand en terugzetten. |
@@ -201,27 +203,70 @@ Services mogen elkaar gebruiken.
 
 ## Import en export van leerlingen
 
-Deze functionaliteit komt niet in versie 1. De opzet moet hem wel kunnen dragen zonder verbouwing, en dat stelt één eis aan de architectuur.
+Twee dingen worden hier bewust uit elkaar gehouden: **in welk bestandsformaat** iets staat, en **uit welk systeem** het komt. Dat zijn verschillende problemen. ParnasSys levert zowel CSV als Excel, ESIS ook. Zou de systeemkennis in de formaatlezer zitten, dan krijg je voor elke combinatie een eigen route met eigen fouten.
 
-**`StudentService` kent geen bestandsformaten.** Hij werkt met leerlingrecords, niet met CSV-regels of Excel-cellen. Het lezen en schrijven van bestanden gebeurt in een aparte laag die records in en uit die service brengt:
+### De importpijplijn
+
+Alle imports lopen langs dezelfde vier stappen, ongeacht formaat of herkomst:
 
 ```
-CSV-adapter  ─┐
-              ├─→  rijen  ─→  StudentService.import(rijen) → rapport
-Excel-adapter ─┘
+bestand
+  ↓  formaatlezer      CSV · Excel              → ruwe rijen
+  ↓  bronprofiel       EduFlow · ParnasSys …    → toegewezen en genormaliseerde rijen
+  ↓  validatie                                  → geldige rijen + bevindingen
+  ↓  vergelijking                               → nieuw · bijwerken · ongewijzigd
+  ↓  StudentImporter                            → rapport, en pas dan schrijven
 ```
 
-**Waarom die scheiding.** Zonder scheiding zit CSV-kennis in de service, en dan levert Excel erbij een tweede route door dezelfde logica op — met twee plekken waar dubbele leerlingen en ontbrekende velden worden afgehandeld, die uit elkaar gaan lopen. Met de scheiding is een formaat toevoegen één adapter, en verandert er niets aan de service.
+| Stap | Verantwoordelijkheid | Weet niets van |
+|---|---|---|
+| Formaatlezer | Bytes omzetten naar rijen en cellen | Leerlingen |
+| Bronprofiel | Welke kolom is welk veld, en hoe ziet een datum eruit in die bron | Bestandsformaten |
+| Validatie | Is deze rij bruikbaar, en zo nee waarom niet | Waar de rij vandaan komt |
+| Vergelijking | Bestaat deze leerling al | Bestanden |
+| `StudentImporter` | De stappen aan elkaar knopen, droog draaien, rapporteren | Formaten en bronnen |
 
-Wat `StudentService` daarvoor moet kunnen, ook al bouwen we het later:
+**Bronprofielen zijn gegevens, geen code.** Een profiel is een tabel: welke kolomnaam hoort bij welk veld, welk datumformaat, welke tekstcodering, en aan welke koprij je dit systeem herkent. Een nieuw leerlingadministratiesysteem ondersteunen is een profiel toevoegen — bestaande logica blijft ongemoeid.
 
-- **records in bulk verwerken**, niet één voor één. Een klas is één handeling, geen dertig;
-- **een rapport teruggeven** in plaats van alleen slagen of falen: hoeveel nieuw, hoeveel bijgewerkt, welke regels overgeslagen en waarom;
-- **droog draaien** — dezelfde verwerking zonder op te slaan, zodat het scherm vooraf kan tonen wat er gaat gebeuren;
-- **herkennen wat al bestaat**, zodat een tweede import geen dubbele leerlingen oplevert. Dat vraagt een sleutel: voornaam, achternaam en geboortedatum samen. Ontbreekt de geboortedatum, dan is er geen betrouwbare sleutel en wordt de regel als nieuw behandeld en gemeld;
-- **records exporteren** als platte gegevens, zonder opmaak.
+Profielen bij oplevering: `eduflow` (onze eigen export) en `handmatig` (de gebruiker wijst zelf kolommen toe). `parnassys` en `esis` worden toegevoegd zodra er een voorbeeldexport beschikbaar is; zonder echt bestand is een profiel giswerk.
 
-Twee dingen om bij het bouwen rekening mee te houden. Excel vraagt een bibliotheek en CSV niet; die bibliotheek wordt pas geladen op het moment dat iemand een Excel-bestand kiest, zodat de app er niet zwaarder van wordt. En een geïmporteerd bestand met leerlinggegevens is persoonsgegevens: het wordt in de browser verwerkt en gaat nergens heen.
+**Handmatige toewijzing is niet de uitzondering maar het vangnet.** Zonder die stap werkt de import alleen met bestanden die toevallig onze kolomnamen hebben.
+
+### De exportpijplijn
+
+Spiegelbeeldig, en met dezelfde scheiding:
+
+```
+leerlingen → exportmodel (kolommen + rijen + kenmerken) → CSV-schrijver
+                                                        → Excel-schrijver
+```
+
+Eén plek bepaalt *wat* er in een export staat; de schrijvers bepalen alleen *hoe* het op schijf komt. Een formaat toevoegen raakt de inhoud niet.
+
+**Let op het onderscheid met documentexport.** Een documentatie naar PDF of JPG is iets anders: dat loopt via `RenderService` en `ExportService`, is visueel en niet tabellarisch. De twee delen een woord, geen probleem. Ze worden bewust niet samengevoegd.
+
+### Schema en versiebeheer van bestanden
+
+Een export van vandaag moet over jaren nog te importeren zijn. Elk bestand dat EduFlow maakt draagt daarom kenmerken met zich mee:
+
+| Kenmerk | Waarvoor |
+|---|---|
+| `schemaVersion` | Welke indeling dit bestand heeft |
+| `createdAt` | Wanneer het is gemaakt |
+| `source` | Welk systeem het heeft gemaakt |
+| `createdBy` | Wie het heeft gemaakt — leeg in versie 1, want er zijn geen accounts |
+| `metadata` | Ruimte voor wat later nodig blijkt |
+
+**Niet elk formaat kan dit dragen, en dat wordt niet weggepoetst.** Excel krijgt een apart tabblad met deze kenmerken. Een CSV-bestand is één platte tabel en heeft die ruimte niet; daar staat de versie in de bestandsnaam en wordt de indeling herkend aan de kolommen. Komt er later een back-upbestand in JSON, dan is dat de plek waar de kenmerken volledig passen.
+
+De importzijde leest de versie en kiest de bijbehorende lezing. Zo blijft een oud bestand leesbaar zonder dat de nieuwe indeling erop wordt gewrongen.
+
+### Praktische randvoorwaarden
+
+- **Excel vraagt een bibliotheek, CSV niet.** Die bibliotheek wordt pas geladen wanneer iemand een Excel-bestand kiest, zodat de app er niet zwaarder van wordt.
+- **Tekstcodering wordt vastgesteld, niet aangenomen.** Een CSV uit een Nederlands schooladministratiesysteem is lang niet altijd UTF-8, en een verminkte naam breekt stilzwijgend de afscherming.
+- **Datums komen in drie vormen binnen:** een Excel-getal, `14-03-2021` uit een Nederlandse bron, en `2021-03-14` uit onze eigen export. Het omzetten hoort in het bronprofiel, niet in de validatie.
+- **Een geïmporteerd bestand is persoonsgegevens.** Het wordt in de browser verwerkt, verlaat het apparaat niet, en wordt na de import niet bewaard.
 
 ---
 
