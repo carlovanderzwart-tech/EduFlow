@@ -85,7 +85,7 @@ export function DocumentEditorForm({
     }
   }
 
-  const { state, flush } = useAutosave({
+  const { state, saveNow } = useAutosave({
     value: { document: draft, seriesName },
     // Een documentatie zonder tekst én zonder foto's wordt niet bewaard (doc 02).
     enabled: isWorthSaving(draft),
@@ -210,7 +210,7 @@ export function DocumentEditorForm({
       </FieldGroup>
 
       <div className="flex items-center gap-2 border-t border-border pt-4">
-        <Button onClick={() => void flush()} disabled={!isWorthSaving(draft)}>
+        <Button onClick={() => void saveNow()} disabled={!isWorthSaving(draft)}>
           Opslaan
         </Button>
         <p className="text-sm text-muted-foreground">
