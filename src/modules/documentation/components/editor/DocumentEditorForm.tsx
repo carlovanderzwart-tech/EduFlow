@@ -2,6 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,6 +25,13 @@ import { PhotoGrid } from "./PhotoGrid";
 import { QuoteList } from "./QuoteList";
 import { SeriesField } from "./SeriesField";
 import { StudentPicker } from "./StudentPicker";
+
+/**
+ * Hoe lang de bevestiging blijft staan. Gelijk aan de tijd die `SaveStatus`
+ * aanhoudt, zodat opslaan overal even lang nawerkt. Sonner houdt een melding
+ * standaard vier seconden vast; dat is voor een bevestiging aan de lange kant.
+ */
+const CONFIRMATION_MS = 2000;
 
 interface DocumentEditorFormProps {
   /** Al ingelezen; de beginstand voor het automatisch opslaan. */
@@ -52,6 +60,7 @@ export function DocumentEditorForm({
   groups,
   students,
 }: DocumentEditorFormProps) {
+  const router = useRouter();
   const [draft, setDraft] = useState<Documentation>(initialDocument);
   const [series, setSeries] = useState(initialSeries);
   const [seriesName, setSeriesName] = useState(initialSeriesName);
@@ -105,21 +114,32 @@ export function DocumentEditorForm({
   }
 
   /**
-   * De knop Opslaan bevestigt met een melding, `SaveStatus` blijft voor het
-   * automatisch opslaan.
+   * De knop Opslaan bevestigt met een melding en brengt je daarna terug naar
+   * het overzicht. `SaveStatus` blijft voor het automatisch opslaan.
    *
    * De reden dat het niet bij `SaveStatus` alleen kan blijven: die staat
    * bovenaan het formulier en de knop staat onderaan, ruim een schermhoogte
    * lager. Wie naar de knop scrolt om te klikken, heeft de statusregel niet in
    * beeld en ziet dus niets. Doc 04 vraagt een kort bericht *in beeld*.
    *
-   * Automatisch opslaan krijgt bewust géén melding: dat vuurt na elke seconde
-   * stilte tijdens het typen en zou een stroom meldingen opleveren.
+   * De melding overleeft het navigeren: de `Toaster` hangt in de root-layout en
+   * gaat niet mee met het scherm dat je verlaat. Je ziet de bevestiging dus op
+   * het overzicht, zonder dat je op een timer hoeft te wachten voordat er iets
+   * gebeurt.
+   *
+   * Automatisch opslaan krijgt bewust géén melding en navigeert niet: dat vuurt
+   * na elke seconde stilte tijdens het typen, en zou je dan midden in een zin
+   * het scherm uit sturen.
    */
   async function handleSaveClick() {
     const confirmed = await saveNow();
-    // Bij een mislukte schrijfactie heeft `onSave` al een foutmelding getoond.
-    if (confirmed) toast.success("Opgeslagen.");
+
+    // Mislukt: op de editor blijven. `onSave` heeft de foutmelding al getoond,
+    // en wegnavigeren zou het werk uit beeld halen dat juist niet bewaard is.
+    if (!confirmed) return;
+
+    toast.success("Opgeslagen.", { duration: CONFIRMATION_MS });
+    router.push("/documentation");
   }
 
   /** Foto's gaan buiten het automatisch opslaan om: elke foto is direct een schrijfactie. */
