@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ImageIcon, Printer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -20,6 +20,7 @@ import { isWorthSaving } from "@/types/documentation";
 import type { Group } from "@/types/group";
 import type { Student } from "@/types/student";
 
+import { ExportPanel, type ExportDestination } from "../export/ExportPanel";
 import { GroupField } from "./GroupField";
 import { PhotoGrid } from "./PhotoGrid";
 import { QuoteList } from "./QuoteList";
@@ -65,11 +66,24 @@ export function DocumentEditorForm({
   const [series, setSeries] = useState(initialSeries);
   const [seriesName, setSeriesName] = useState(initialSeriesName);
   const [photoProgress, setPhotoProgress] = useState<string>();
+  /** Welk exportpaneel openstaat, of `null` als het dicht is. */
+  const [destination, setDestination] = useState<ExportDestination | null>(null);
 
   // Alleen de leerlingen uit de gekozen groep zijn te koppelen (doc 04).
   const studentsInGroup = useMemo(
     () => (draft.groupId ? students.filter((student) => student.groupId === draft.groupId) : []),
     [students, draft.groupId],
+  );
+
+  // Wat de opmaak nodig heeft: de groepsnaam en de voornamen van de gekoppelde
+  // leerlingen (doc 04, *Regels voor alle templates*).
+  const groupName = groups.find((group) => group.id === draft.groupId)?.name;
+  const studentNames = useMemo(
+    () =>
+      draft.studentIds
+        .map((id) => students.find((student) => student.id === id)?.firstName)
+        .filter((name): name is string => Boolean(name)),
+    [draft.studentIds, students],
   );
 
   /**
@@ -247,14 +261,44 @@ export function DocumentEditorForm({
         />
       </FieldGroup>
 
-      <div className="flex items-center gap-2 border-t border-border pt-4">
+      {/* Doc 04, *Onderaan*: "Opslaan · Print-PDF · Deelbare afbeelding". */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button onClick={() => void handleSaveClick()} disabled={!isWorthSaving(draft)}>
           Opslaan
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setDestination("pdf")}
+          disabled={!isWorthSaving(draft)}
+        >
+          <Printer aria-hidden="true" />
+          Print-PDF
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setDestination("afbeelding")}
+          disabled={!isWorthSaving(draft)}
+        >
+          <ImageIcon aria-hidden="true" />
+          Deelbare afbeelding
         </Button>
         <p className="text-sm text-muted-foreground">
           Opslaan gaat ook automatisch tijdens het typen.
         </p>
       </div>
+
+      {destination ? (
+        <ExportPanel
+          destination={destination}
+          onOpenChange={(open) => {
+            if (!open) setDestination(null);
+          }}
+          document={draft}
+          seriesName={seriesName}
+          groupName={groupName}
+          studentNames={studentNames}
+        />
+      ) : null}
     </div>
   );
 }
