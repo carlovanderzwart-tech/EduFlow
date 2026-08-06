@@ -71,17 +71,36 @@ export function ExportPanel({
 
   return (
     <Sheet open onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[92vh] gap-0">
-        <SheetHeader>
+      {/*
+        `max-h` en niet `h`: het paneel zet voor deze kant zelf `height: auto`
+        via een attribuutselector, en die wint van een gewone hoogteklasse. Een
+        hoogte meegeven had dus geen effect — het paneel groeide mee met de
+        inhoud en schoof met de bovenkant het scherm uit, want het hangt aan de
+        onderrand. Een maximumhoogte botst niet met `height: auto` en begrenst
+        hem wél.
+      */}
+      <SheetContent side="bottom" className="max-h-[92dvh] gap-0">
+        <SheetHeader className="mx-auto w-full max-w-4xl">
           <SheetTitle>{TITLES[destination]}</SheetTitle>
           <SheetDescription>
             {loading ? "Voorbeeld wordt opgebouwd…" : pageLabel(pages.length)}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
-          <TemplatePicker value={templateId} onChange={setTemplateId} />
-          <ExportPreview pages={pages} images={images} loading={loading} />
+        {/*
+          `min-h-0` is wat het schuiven mogelijk maakt: een flexkind mag zonder
+          dat niet kleiner worden dan zijn inhoud, en dan schuift er niets maar
+          groeit het paneel alsnog.
+
+          `max-w-4xl` houdt het voorbeeld op een breed scherm leesbaar. Zonder
+          die grens wordt een liggende A4 op 1920 px zo hoog dat de knoppen
+          erboven wegvallen.
+        */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-4xl space-y-4 px-4 pb-4">
+            <TemplatePicker value={templateId} onChange={setTemplateId} />
+            <ExportPreview pages={pages} images={images} loading={loading} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

@@ -330,6 +330,75 @@ describe("RenderService.layout", () => {
     });
   });
 
+  /**
+   * De opmaak moet bij elk aantal foto's geldige vakken opleveren. Een
+   * documentatie met meer foto's dan een template aankan mag geen blok buiten
+   * de pagina zetten en geen foto laten vallen.
+   */
+  describe("robuust bij elk aantal foto's", () => {
+    const AANTALLEN = [0, 1, 2, 3, 4, 6, 10];
+
+    it.each(
+      ["a", "b", "c", "d"].flatMap((id) => AANTALLEN.map((aantal) => [id, aantal] as const)),
+    )("template %s met %i foto's blijft binnen de pagina", (id, aantal) => {
+      const pages = layout(
+        {
+          document: makeDocument({ photoIds: photos(aantal), text: "Tekst bij de foto's." }),
+          templateId: id,
+        },
+        measure,
+      );
+
+      expect(pages.length).toBeGreaterThanOrEqual(1);
+
+      for (const page of pages) {
+        expect(page.totalPages).toBe(pages.length);
+
+        for (const block of page.blocks) {
+          const { x, y, width, height } = block.rect;
+          expect(Number.isFinite(x) && Number.isFinite(y)).toBe(true);
+          expect(width).toBeGreaterThan(0);
+          expect(height).toBeGreaterThan(0);
+          expect(x).toBeGreaterThanOrEqual(A4_LANDSCAPE_300DPI.margin - 1);
+          expect(x + width).toBeLessThanOrEqual(
+            A4_LANDSCAPE_300DPI.width - A4_LANDSCAPE_300DPI.margin + 1,
+          );
+          expect(y).toBeGreaterThanOrEqual(A4_LANDSCAPE_300DPI.margin - 1);
+        }
+      }
+    });
+
+    it.each(
+      ["a", "b", "c", "d"].flatMap((id) => AANTALLEN.map((aantal) => [id, aantal] as const)),
+    )("template %s met %i foto's verliest er geen", (id, aantal) => {
+      const pages = layout(
+        { document: makeDocument({ photoIds: photos(aantal) }), templateId: id },
+        measure,
+      );
+
+      const geplaatst = pages.flatMap((page) =>
+        photoBlocks(page.blocks).map((block) => (block.kind === "photo" ? block.photoId : "")),
+      );
+
+      expect(geplaatst).toEqual(photos(aantal));
+    });
+
+    it.each(["a", "b", "c", "d"])(
+      "template %s zet nooit meer foto's op een pagina dan het aankan",
+      (id) => {
+        const template = getTemplate(id);
+        const pages = layout(
+          { document: makeDocument({ photoIds: photos(10) }), templateId: id },
+          measure,
+        );
+
+        for (const page of pages) {
+          expect(photoBlocks(page.blocks).length).toBeLessThanOrEqual(template.photosPerPage);
+        }
+      },
+    );
+  });
+
   it("valt terug op template A bij een onbekend template", () => {
     const onbekend = layout(
       { document: makeDocument({ photoIds: photos(6) }), templateId: "bestaat-niet" },

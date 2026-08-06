@@ -74,25 +74,64 @@ describe("templates", () => {
   );
 
   /**
-   * De miniaturen in het exportpaneel vragen dezelfde templates om hun vakken
-   * op een pagina van honderd eenheden breed. Met een vaste tussenruimte in
-   * pixels leverde dat negatieve vakken op — de browser klaagde, de tests niet.
+   * Templates worden op twee heel verschillende formaten gebruikt: het
+   * exportformaat en de miniaturen in het paneel. Met een vaste tussenruimte in
+   * pixels werden de vakken op miniatuurformaat negatief — de browser klaagde
+   * over `<rect> attribute width: A negative value is not valid ("-13")`,
+   * terwijl build, lint, typecheck en alle tests groen waren.
+   *
+   * Daarom hier niet één formaat maar een reeks, van miniatuur tot export.
    */
-  it.each(TEMPLATES.map((template) => [template.id]))(
-    "template %s levert ook op miniatuurformaat bruikbare vakken",
-    (id) => {
-      const klein = { width: 100, height: 70.7, margin: 3.4, headerHeight: 8.5 };
-      const frame = getTemplate(id).frame(klein);
-      const boxes = [...frame.photoSlots, ...(frame.text ? [frame.text] : [])];
+  const FORMATEN = [
+    ["miniatuur", { width: 100, height: 70.7, margin: 3.4, headerHeight: 8.5 }],
+    ["klein", { width: 400, height: 283, margin: 13, headerHeight: 34 }],
+    ["middel", { width: 1200, height: 848, margin: 40, headerHeight: 103 }],
+    ["export", A4_LANDSCAPE_300DPI],
+  ] as const;
 
-      for (const box of boxes) {
-        expect(box.width).toBeGreaterThan(0);
-        expect(box.height).toBeGreaterThan(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(klein.width - klein.margin + 0.01);
-        expect(box.y + box.height).toBeLessThanOrEqual(klein.height - klein.margin + 0.01);
+  it.each(
+    TEMPLATES.flatMap((template) =>
+      FORMATEN.map(([naam, formaat]) => [template.id, naam, formaat] as const),
+    ),
+  )("template %s levert op formaat %s bruikbare vakken", (id, _naam, formaat) => {
+    const frame = getTemplate(id).frame(formaat);
+    const boxes = [...frame.photoSlots, ...(frame.text ? [frame.text] : [])];
+
+    expect(boxes.length).toBeGreaterThan(0);
+
+    for (const box of boxes) {
+      expect(Number.isFinite(box.x)).toBe(true);
+      expect(Number.isFinite(box.y)).toBe(true);
+      expect(box.width).toBeGreaterThan(0);
+      expect(box.height).toBeGreaterThan(0);
+      expect(box.x).toBeGreaterThanOrEqual(formaat.margin - 0.01);
+      expect(box.y).toBeGreaterThanOrEqual(formaat.margin + formaat.headerHeight - 0.01);
+      expect(box.x + box.width).toBeLessThanOrEqual(formaat.width - formaat.margin + 0.01);
+      expect(box.y + box.height).toBeLessThanOrEqual(formaat.height - formaat.margin + 0.01);
+    }
+  });
+
+  it.each(
+    TEMPLATES.flatMap((template) =>
+      FORMATEN.map(([naam, formaat]) => [template.id, naam, formaat] as const),
+    ),
+  )("template %s laat op formaat %s niets overlappen", (id, _naam, formaat) => {
+    const frame = getTemplate(id).frame(formaat);
+    const boxes = [...frame.photoSlots, ...(frame.text ? [frame.text] : [])];
+
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        const a = boxes[i];
+        const b = boxes[j];
+        const overlapt =
+          a.x < b.x + b.width - 0.01 &&
+          b.x < a.x + a.width - 0.01 &&
+          a.y < b.y + b.height - 0.01 &&
+          b.y < a.y + a.height - 0.01;
+        expect(overlapt).toBe(false);
       }
-    },
-  );
+    }
+  });
 
   it("geeft template C een grotere eerste foto dan tweede", () => {
     // "één dominante foto rechts, eventueel één kleinere eronder" (doc 04).
