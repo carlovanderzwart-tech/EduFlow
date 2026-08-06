@@ -60,22 +60,26 @@ export function useAutosave<T>({ value, onSave, enabled = true }: UseAutosaveOpt
    * Stil opslaan: schrijft alleen weg als er iets gewijzigd is, en zwijgt
    * anders. Dit is wat de debounce, `pagehide` en het verlaten van het scherm
    * nodig hebben — die horen niets te melden wanneer er niets te doen viel.
+   *
+   * Geeft terug of er daadwerkelijk is weggeschreven.
    */
   const flush = useCallback(async () => {
-    if (!enabledRef.current) return;
+    if (!enabledRef.current) return false;
 
     const serialized = JSON.stringify(valueRef.current);
-    if (serialized === savedSnapshot.current) return; // niets gewijzigd
+    if (serialized === savedSnapshot.current) return false; // niets gewijzigd
 
     setState("saving");
     try {
       await onSaveRef.current(valueRef.current);
       savedSnapshot.current = serialized;
       confirmSaved();
+      return true;
     } catch {
       // De melding komt van de aanroeper; hier alleen de indicator terugzetten,
       // zodat er niet ten onrechte "Opgeslagen." blijft staan.
       setState("idle");
+      return false;
     }
   }, [confirmSaved]);
 
@@ -89,16 +93,21 @@ export function useAutosave<T>({ value, onSave, enabled = true }: UseAutosaveOpt
    * schrijfactie: een tweede keer wegschrijven zou `updatedAt` verzetten en de
    * documentatie in het overzicht laten verspringen, dat op laatst gewijzigd
    * sorteert. Bevestigen mag de volgorde van je overzicht niet veranderen.
+   *
+   * Geeft terug of er bevestigd mag worden: `true` bij een geslaagde
+   * schrijfactie én wanneer er niets te schrijven viel, `false` wanneer het
+   * opslaan mislukte. De aanroeper hangt daar zijn melding aan, zodat er nooit
+   * "Opgeslagen." verschijnt boven een mislukte poging.
    */
   const saveNow = useCallback(async () => {
-    if (!enabledRef.current) return;
+    if (!enabledRef.current) return false;
 
     if (JSON.stringify(valueRef.current) === savedSnapshot.current) {
       confirmSaved();
-      return;
+      return true;
     }
 
-    await flush();
+    return flush();
   }, [flush, confirmSaved]);
 
   // Debounce op wijzigingen.

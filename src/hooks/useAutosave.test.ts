@@ -31,12 +31,15 @@ describe("useAutosave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined);
       const { result } = renderHook(() => useAutosave({ value: { text: "hallo" }, onSave }));
 
+      let confirmed: boolean | undefined;
       await act(async () => {
-        await result.current.saveNow();
+        confirmed = await result.current.saveNow();
       });
 
       expect(onSave).not.toHaveBeenCalled();
       expect(result.current.state).toBe("saved");
+      // De aanroeper hangt hier zijn melding aan.
+      expect(confirmed).toBe(true);
     });
 
     it("schrijft wél weg wanneer er iets gewijzigd is", async () => {
@@ -47,13 +50,15 @@ describe("useAutosave", () => {
       );
 
       rerender({ text: "hallo wereld" });
+      let confirmed: boolean | undefined;
       await act(async () => {
-        await result.current.saveNow();
+        confirmed = await result.current.saveNow();
       });
 
       expect(onSave).toHaveBeenCalledOnce();
       expect(onSave).toHaveBeenCalledWith({ text: "hallo wereld" });
       expect(result.current.state).toBe("saved");
+      expect(confirmed).toBe(true);
     });
 
     it("schrijft niet nog een keer weg bij een tweede klik", async () => {
@@ -83,12 +88,15 @@ describe("useAutosave", () => {
       );
 
       rerender({ text: "hallo wereld" });
+      let confirmed: boolean | undefined;
       await act(async () => {
-        await result.current.saveNow();
+        confirmed = await result.current.saveNow();
       });
 
       // Geen valse bevestiging; de melding zelf komt van de aanroeper.
       expect(result.current.state).toBe("idle");
+      // Hierop hangt dat er geen "Opgeslagen." boven een mislukte poging komt.
+      expect(confirmed).toBe(false);
     });
 
     it("doet niets zolang er nog niets te bewaren is", async () => {
@@ -97,12 +105,14 @@ describe("useAutosave", () => {
         useAutosave({ value: { text: "" }, onSave, enabled: false }),
       );
 
+      let confirmed: boolean | undefined;
       await act(async () => {
-        await result.current.saveNow();
+        confirmed = await result.current.saveNow();
       });
 
       expect(onSave).not.toHaveBeenCalled();
       expect(result.current.state).toBe("idle");
+      expect(confirmed).toBe(false);
     });
 
     it("laat de melding opnieuw staan bij een tweede bevestiging", async () => {
@@ -150,6 +160,22 @@ describe("useAutosave", () => {
 
       expect(onSave).toHaveBeenCalledOnce();
       expect(result.current.state).toBe("saved");
+    });
+
+    it("meldt zich niet buiten `SaveStatus` om", async () => {
+      // De hook kent geen meldingen: hij levert alleen een status en een
+      // uitkomst. Automatisch opslaan kan daardoor onmogelijk een toast tonen —
+      // die hangt in het formulier aan de knop, niet hieraan.
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const { result, rerender } = renderHook(
+        ({ text }) => useAutosave({ value: { text }, onSave }),
+        { initialProps: { text: "hallo" } },
+      );
+
+      rerender({ text: "hallo wereld" });
+      await letAutosaveRun();
+
+      expect(Object.keys(result.current).sort()).toEqual(["saveNow", "state"]);
     });
 
     it("schrijft niets weg bij het enkel openen van een documentatie", async () => {

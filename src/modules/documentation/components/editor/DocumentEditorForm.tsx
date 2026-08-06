@@ -104,6 +104,24 @@ export function DocumentEditorForm({
     setDraft((current) => ({ ...current, ...patch }));
   }
 
+  /**
+   * De knop Opslaan bevestigt met een melding, `SaveStatus` blijft voor het
+   * automatisch opslaan.
+   *
+   * De reden dat het niet bij `SaveStatus` alleen kan blijven: die staat
+   * bovenaan het formulier en de knop staat onderaan, ruim een schermhoogte
+   * lager. Wie naar de knop scrolt om te klikken, heeft de statusregel niet in
+   * beeld en ziet dus niets. Doc 04 vraagt een kort bericht *in beeld*.
+   *
+   * Automatisch opslaan krijgt bewust géén melding: dat vuurt na elke seconde
+   * stilte tijdens het typen en zou een stroom meldingen opleveren.
+   */
+  async function handleSaveClick() {
+    const confirmed = await saveNow();
+    // Bij een mislukte schrijfactie heeft `onSave` al een foutmelding getoond.
+    if (confirmed) toast.success("Opgeslagen.");
+  }
+
   /** Foto's gaan buiten het automatisch opslaan om: elke foto is direct een schrijfactie. */
   async function handleAddPhotos(files: File[]) {
     let working = draft;
@@ -210,7 +228,7 @@ export function DocumentEditorForm({
       </FieldGroup>
 
       <div className="flex items-center gap-2 border-t border-border pt-4">
-        <Button onClick={() => void saveNow()} disabled={!isWorthSaving(draft)}>
+        <Button onClick={() => void handleSaveClick()} disabled={!isWorthSaving(draft)}>
           Opslaan
         </Button>
         <p className="text-sm text-muted-foreground">
