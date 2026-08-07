@@ -1,4 +1,5 @@
-import type { Documentation } from "@/types/documentation";
+import type { Quote } from "@/types/documentation";
+import { formatAgeShort } from "@/utils/age";
 
 import type { PageSize, Rect } from "./render/templates";
 import { getTemplate } from "./render/templates/registry";
@@ -47,19 +48,44 @@ export interface RenderedPage {
   size: PageSize;
   /** Met de reeks als voorvoegsel wanneer die is ingevuld (doc 04). */
   title: string;
-  /** `Leerling(en): groep geel — Kjeld, Roos`. Leeg als er niets te melden valt. */
+  /** `Groep: Geel | Leerlingen: Geert (2,1)`. Leeg als er niets te melden valt. */
   meta: string;
   blocks: RenderBlock[];
 }
 
-export interface RenderInput {
-  document: Documentation;
-  seriesName?: string;
-  /** Leeg wanneer de groep is opgeruimd; die verwijzing mag doodlopen (doc 02). */
-  groupName?: string;
-  /** Voornamen van de gekoppelde leerlingen, in de volgorde van `studentIds`. */
-  studentNames?: string[];
+/** Een gekoppelde leerling zoals de kop hem toont. */
+export interface RenderStudent {
+  name: string;
+  /** `YYYY-MM-DD`. Ontbreekt hij, dan komt er geen leeftijd achter de naam. */
+  dateOfBirth?: string;
+}
+
+/**
+ * De inhoud van één pagina.
+ *
+ * Dit is de vorm waar de documentatie in fase 2 uit gaat bestaan: eigen tekst,
+ * eigen citaten, eigen foto's en een eigen template per pagina. Vandaag levert
+ * de aanroeper er precies één, opgebouwd uit de documentvelden. `layout()`
+ * loopt er hoe dan ook overheen, dus fase 2 vult alleen de lijst voller.
+ */
+export interface PageContent {
   templateId?: string;
+  text: string;
+  quotes: Quote[];
+  photoIds: string[];
+}
+
+export interface RenderInput {
+  title: string;
+  seriesName?: string;
+  /**
+   * Namen van de groepen, ongesorteerd. Leeg wanneer de groep is opgeruimd;
+   * die verwijzing mag doodlopen (doc 02).
+   */
+  groupNames?: string[];
+  /** De gekoppelde leerlingen, ongesorteerd. */
+  students?: RenderStudent[];
+  pages: PageContent[];
   size?: PageSize;
 }
 
@@ -71,28 +97,57 @@ interface FlowLine {
 
 // ---- Kop ------------------------------------------------------------------
 
-function buildTitle(doc: Documentation, seriesName?: string): string {
-  const title = doc.title.trim() || "Zonder titel";
+function buildTitle(title: string, seriesName?: string): string {
+  const trimmed = title.trim() || "Zonder titel";
   const series = seriesName?.trim();
-  return series ? `${series} — ${title}` : title;
+  return series ? `${series} — ${trimmed}` : trimmed;
 }
 
 /**
- * Doc 04: *"Daaronder in kleiner grijs: `Leerling(en): [groep]`. Zijn er
- * leerlingen gekoppeld, dan komen hun voornamen erachter."*
+ * Groepen heten in de app "groep geel", en de kop zegt zelf al "Groep:". Het
+ * voorvoegsel eraf halen voorkomt "Groep: groep geel".
  *
- * Is de groep opgeruimd én zijn er geen leerlingen gekoppeld, dan valt de regel
- * weg. Een regel met alleen het woord "Leerling(en):" erop zegt niets.
+ * Aanname: alleen een letterlijk voorvoegsel "groep " wordt weggehaald. Een
+ * groep die "3A" of "Grijs" heet blijft ongemoeid.
  */
-function buildMeta(groupName?: string, studentNames: string[] = []): string {
-  const group = groupName?.trim();
-  const names = studentNames.map((name) => name.trim()).filter(Boolean);
+function groupLabel(name: string): string {
+  const trimmed = name.trim().replace(/^groep\s+/i, "");
+  if (!trimmed) return "";
+  return trimmed[0].toUpperCase() + trimmed.slice(1);
+}
 
-  if (!group && names.length === 0) return "";
-  if (!group) return `Leerling(en): ${names.join(", ")}`;
-  if (names.length === 0) return `Leerling(en): ${group}`;
+/** "Geert (2,1)", of alleen "Geert" wanneer de geboortedatum ontbreekt. */
+function studentLabel(student: RenderStudent): string {
+  const name = student.name.trim();
+  const age = formatAgeShort(student.dateOfBirth);
+  return age ? `${name} (${age})` : name;
+}
 
-  return `Leerling(en): ${group} — ${names.join(", ")}`;
+/**
+ * De kopregel onder de titel: `Groep: Grijs & Geel | Leerlingen: Geert (2,1)`.
+ *
+ * Groepen en leerlingen staan allebei alfabetisch, zodat dezelfde documentatie
+ * er twee keer hetzelfde uitziet, ongeacht de volgorde waarin er is gekoppeld.
+ *
+ * Elke helft valt weg zodra hij leeg is, inclusief het scheidingsteken. Een
+ * regel met alleen "Groep:" erop zegt niets.
+ */
+function buildMeta(groupNames: string[] = [], students: RenderStudent[] = []): string {
+  const groups = groupNames
+    .map(groupLabel)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "nl"));
+
+  const leerlingen = students
+    .filter((student) => student.name.trim())
+    .sort((a, b) => a.name.trim().localeCompare(b.name.trim(), "nl"))
+    .map(studentLabel);
+
+  const delen: string[] = [];
+  if (groups.length > 0) delen.push(`Groep: ${groups.join(" & ")}`);
+  if (leerlingen.length > 0) delen.push(`Leerlingen: ${leerlingen.join(", ")}`);
+
+  return delen.join(" | ");
 }
 
 // ---- Tekst ----------------------------------------------------------------
@@ -102,20 +157,20 @@ function buildMeta(groupName?: string, studentNames: string[] = []): string {
  * los van elkaar: *"Citaten krijgen een eigen plek in de opmaak."*
  */
 function buildLines(
-  doc: Documentation,
+  content: PageContent,
   box: Rect,
   measure: TextMeasurer,
 ): FlowLine[] {
   const lines: FlowLine[] = [];
 
-  for (const paragraph of doc.text.split("\n")) {
+  for (const paragraph of content.text.split("\n")) {
     if (!paragraph.trim()) continue;
     for (const text of wrap(paragraph, box.width, STYLES.body, measure)) {
       lines.push({ kind: "text", text, style: STYLES.body });
     }
   }
 
-  for (const quote of doc.quotes) {
+  for (const quote of content.quotes) {
     const text = quote.text.trim();
     if (!text) continue;
     for (const line of wrap(`“${text}”`, box.width, STYLES.quote, measure)) {
@@ -178,53 +233,77 @@ function toBlocks(lines: FlowLine[], box: Rect): RenderBlock[] {
 
 // ---- Opmaak ---------------------------------------------------------------
 
-/**
- * Verdeelt de documentatie over pagina's.
- *
- * Het aantal pagina's is het hoogste van twee dingen: hoeveel pagina's de
- * foto's nodig hebben bij dit template, en hoeveel de tekst nodig heeft. Zes
- * foto's zijn daardoor één pagina in template A en drie in template C
- * (besluit B-07).
- */
-export function layout(input: RenderInput, measure: TextMeasurer): RenderedPage[] {
-  const size = input.size ?? A4_LANDSCAPE_300DPI;
-  const template = getTemplate(input.templateId);
-  const frame = template.frame(size);
+/** De pagina's die één `PageContent` oplevert, nog zonder doorlopende nummering. */
+function layoutPage(
+  content: PageContent,
+  size: PageSize,
+  measure: TextMeasurer,
+): RenderBlock[][] {
+  const template = getTemplate(content.templateId);
+  const photoIds = content.photoIds;
 
-  const title = buildTitle(input.document, input.seriesName);
-  const meta = buildMeta(input.groupName, input.studentNames);
+  // Hoeveel vellen de foto's nodig hebben bij dit template (besluit B-07).
+  const photoSheets = Math.ceil(photoIds.length / template.photosPerPage);
 
-  const textPages = frame.text
-    ? paginate(buildLines(input.document, frame.text, measure), frame.text.height)
+  // De tekst wordt gemeten tegen het tekstvak van een volle pagina. Bij een
+  // wisselend fotoraster blijft dat vak gelijk, dus dat mag één keer.
+  const textBox = template.frame(size, template.photosPerPage).text;
+  const textSheets = textBox
+    ? paginate(buildLines(content, textBox, measure), textBox.height)
     : [[]];
 
-  const photoIds = input.document.photoIds;
-  const photoPages = Math.ceil(photoIds.length / template.photosPerPage);
-  const totalPages = Math.max(1, textPages.length, photoPages);
+  const sheets = Math.max(1, textSheets.length, photoSheets);
+  const result: RenderBlock[][] = [];
 
-  const pages: RenderedPage[] = [];
-
-  for (let index = 0; index < totalPages; index += 1) {
+  for (let index = 0; index < sheets; index += 1) {
     const blocks: RenderBlock[] = [];
 
-    if (frame.text) {
-      blocks.push(...toBlocks(textPages[index] ?? [], frame.text));
-    }
+    if (textBox) blocks.push(...toBlocks(textSheets[index] ?? [], textBox));
 
-    // Minder foto's dan het template aankan: de rest schuift op, er blijven
-    // geen lege vakken staan (doc 04).
-    const onThisPage = photoIds.slice(
+    const onThisSheet = photoIds.slice(
       index * template.photosPerPage,
       (index + 1) * template.photosPerPage,
     );
-    onThisPage.forEach((photoId, slot) => {
-      blocks.push({ kind: "photo", photoId, rect: frame.photoSlots[slot] });
+
+    // Het template krijgt het werkelijke aantal foto's van dít vel en levert
+    // precies zoveel vakken. Er kan dus geen leeg vak overblijven.
+    const slots = template.frame(size, onThisSheet.length).photoSlots;
+    onThisSheet.forEach((photoId, slot) => {
+      blocks.push({ kind: "photo", photoId, rect: slots[slot] });
     });
 
-    pages.push({ pageNumber: index + 1, totalPages, size, title, meta, blocks });
+    result.push(blocks);
   }
 
-  return pages;
+  return result;
+}
+
+/**
+ * Verdeelt de documentatie over pagina's.
+ *
+ * Loopt over de pagina's uit de invoer en legt elke pagina op volgens haar
+ * eigen template. Past de inhoud van één pagina niet op één vel, dan loopt zij
+ * door met de titel erboven herhaald (besluit B-07).
+ *
+ * Vandaag levert de aanroeper één pagina; de nummering telt hoe dan ook over
+ * het geheel door, zodat meerdere pagina's straks niets anders vragen.
+ */
+export function layout(input: RenderInput, measure: TextMeasurer): RenderedPage[] {
+  const size = input.size ?? A4_LANDSCAPE_300DPI;
+  const title = buildTitle(input.title, input.seriesName);
+  const meta = buildMeta(input.groupNames, input.students);
+
+  const sheets = input.pages.flatMap((content) => layoutPage(content, size, measure));
+  const totalPages = Math.max(1, sheets.length);
+
+  return sheets.map((blocks, index) => ({
+    pageNumber: index + 1,
+    totalPages,
+    size,
+    title,
+    meta,
+    blocks,
+  }));
 }
 
 // ---- Tekenen --------------------------------------------------------------

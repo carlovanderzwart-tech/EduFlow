@@ -1,5 +1,34 @@
 import { describe, expect, it } from "vitest";
 
+import { formatAgeShort } from "./age";
+
+/** Doc 04, documentkop: `2,1` · `2,11` · `3,0`. */
+describe("formatAgeShort", () => {
+  const op = (datum: string) => formatAgeShort(datum, new Date("2026-08-07T12:00:00.000Z"));
+
+  it.each([
+    ["2024-07-06", "2,1"],
+    ["2023-09-06", "2,11"],
+    ["2023-08-06", "3,0"],
+    ["2026-08-06", "0,0"],
+  ])("maakt van %s de notatie %s", (geboren, verwacht) => {
+    expect(op(geboren)).toBe(verwacht);
+  });
+
+  it("toont niets zonder geboortedatum", () => {
+    // Doc 02: geen streepje en geen schatting.
+    expect(formatAgeShort(undefined)).toBe("");
+  });
+
+  it("toont niets bij een onleesbare datum", () => {
+    expect(formatAgeShort("geen datum")).toBe("");
+  });
+
+  it("toont niets bij een datum in de toekomst", () => {
+    expect(op("2027-01-01")).toBe("");
+  });
+});
+
 import { calculateAge, formatAge } from "./age";
 
 /**

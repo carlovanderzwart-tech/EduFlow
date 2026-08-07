@@ -64,7 +64,7 @@ function renderPanel(destination: ExportDestination = "pdf", doc = makeDocument(
       onOpenChange={() => {}}
       document={doc}
       groupName="groep geel"
-      studentNames={["Kjeld"]}
+      students={[{ name: "Kjeld", dateOfBirth: "2021-07-05" }]}
       onExported={onExported}
     />,
   );

@@ -43,7 +43,14 @@ export interface Template {
   description: string;
   /** Hoeveel foto's er op één pagina passen; bepaalt mede het aantal pagina's (B-07). */
   photosPerPage: number;
-  frame(page: PageSize): TemplateFrame;
+  /**
+   * De vakken voor precies dit aantal foto's.
+   *
+   * Het aantal is een invoer en geen bovengrens: een template levert exact
+   * zoveel vakken als er foto's zijn. Daardoor kan er geen leeg vak overblijven
+   * en geen witruimte ontstaan waar een foto had moeten staan.
+   */
+  frame(page: PageSize, photoCount: number): TemplateFrame;
 }
 
 /**
@@ -71,21 +78,61 @@ export function contentRect(page: PageSize): Rect {
   };
 }
 
-/** Verdeelt een gebied in gelijke vakken, rij voor rij. */
-export function grid(area: Rect, columns: number, rows: number, gap: number): Rect[] {
-  const cellWidth = (area.width - gap * (columns - 1)) / columns;
-  const cellHeight = (area.height - gap * (rows - 1)) / rows;
+/**
+ * Verdeelt een gebied in rijen met per rij een eigen aantal vakken.
+ *
+ * `[1, 2]` levert één breed vak boven twee smallere. Alle rijen zijn even hoog;
+ * binnen een rij zijn de vakken even breed. Het gebied wordt volledig gevuld —
+ * dat is precies wat lege plekken voorkomt.
+ */
+export function rowsLayout(area: Rect, rows: number[], gap: number): Rect[] {
+  const rowCount = rows.length;
+  if (rowCount === 0) return [];
 
-  const slots: Rect[] = [];
-  for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < columns; column += 1) {
-      slots.push({
-        x: area.x + column * (cellWidth + gap),
-        y: area.y + row * (cellHeight + gap),
-        width: cellWidth,
-        height: cellHeight,
-      });
-    }
+  const rowHeight = (area.height - gap * (rowCount - 1)) / rowCount;
+
+  return rows.flatMap((columns, rowIndex) => {
+    const cellWidth = (area.width - gap * (columns - 1)) / columns;
+    const y = area.y + rowIndex * (rowHeight + gap);
+
+    return Array.from({ length: columns }, (_, column) => ({
+      x: area.x + column * (cellWidth + gap),
+      y,
+      width: cellWidth,
+      height: rowHeight,
+    }));
+  });
+}
+
+/**
+ * De rijverdeling die bij een aantal foto's hoort.
+ *
+ * Gekozen op hoe een pagina eruitziet, niet op wiskundige netheid:
+ *
+ * | foto's | rijen | resultaat |
+ * |---|---|---|
+ * | 1 | `[1]` | één grote foto |
+ * | 2 | `[2]` | twee gelijke foto's naast elkaar |
+ * | 3 | `[1, 2]` | één dominante boven, twee kleinere eronder |
+ * | 4 | `[2, 2]` | een vierkant raster |
+ * | 5 | `[2, 3]` | twee grotere boven, drie kleinere eronder |
+ * | 6 | `[3, 3]` | het klassieke raster |
+ */
+export function balancedRows(count: number): number[] {
+  switch (count) {
+    case 0:
+      return [];
+    case 1:
+      return [1];
+    case 2:
+      return [2];
+    case 3:
+      return [1, 2];
+    case 4:
+      return [2, 2];
+    case 5:
+      return [2, 3];
+    default:
+      return [3, 3];
   }
-  return slots;
 }

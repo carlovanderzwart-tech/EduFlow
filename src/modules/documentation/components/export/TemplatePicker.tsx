@@ -10,8 +10,10 @@ import { TEMPLATES } from "@/services/render/templates/registry";
  */
 const THUMBNAIL: PageSize = { width: 100, height: 70.7, margin: 3.4, headerHeight: 8.5 };
 
-function Thumbnail({ template }: { template: Template }) {
-  const frame = template.frame(THUMBNAIL);
+function Thumbnail({ template, photoCount }: { template: Template; photoCount: number }) {
+  // Het werkelijke aantal foto's, zodat de miniatuur laat zien wat je krijgt en
+  // niet een raster dat straks half gevuld is.
+  const frame = template.frame(THUMBNAIL, Math.min(photoCount, template.photosPerPage));
 
   return (
     <svg
@@ -40,13 +42,15 @@ function Thumbnail({ template }: { template: Template }) {
 interface TemplatePickerProps {
   value: TemplateId;
   onChange: (id: TemplateId) => void;
+  /** Bepaalt hoe de miniaturen hun raster tekenen. */
+  photoCount: number;
 }
 
 /**
  * De vier miniaturen bovenaan het exportpaneel (doc 04, *Opmaak*). Wisselen kan
  * altijd; de inhoud verandert niet mee.
  */
-export function TemplatePicker({ value, onChange }: TemplatePickerProps) {
+export function TemplatePicker({ value, onChange, photoCount }: TemplatePickerProps) {
   return (
     <fieldset className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <legend className="sr-only">Opmaak</legend>
@@ -70,7 +74,7 @@ export function TemplatePicker({ value, onChange }: TemplatePickerProps) {
               onChange={() => onChange(template.id)}
               className="sr-only"
             />
-            <Thumbnail template={template} />
+            <Thumbnail template={template} photoCount={photoCount} />
             <span className="text-xs font-medium">{template.name}</span>
           </label>
         );

@@ -75,14 +75,15 @@ export function DocumentEditorForm({
     [students, draft.groupId],
   );
 
-  // Wat de opmaak nodig heeft: de groepsnaam en de voornamen van de gekoppelde
-  // leerlingen (doc 04, *Regels voor alle templates*).
+  // Wat de kop nodig heeft: de groepsnaam, en per gekoppelde leerling de
+  // voornaam met de geboortedatum waar de leeftijd uit volgt (doc 04).
   const groupName = groups.find((group) => group.id === draft.groupId)?.name;
-  const studentNames = useMemo(
+  const linkedStudents = useMemo(
     () =>
       draft.studentIds
-        .map((id) => students.find((student) => student.id === id)?.firstName)
-        .filter((name): name is string => Boolean(name)),
+        .map((id) => students.find((student) => student.id === id))
+        .filter((student): student is Student => Boolean(student))
+        .map((student) => ({ name: student.firstName, dateOfBirth: student.dateOfBirth })),
     [draft.studentIds, students],
   );
 
@@ -296,7 +297,7 @@ export function DocumentEditorForm({
           document={draft}
           seriesName={seriesName}
           groupName={groupName}
-          studentNames={studentNames}
+          students={linkedStudents}
           // Alleen na een geslaagde export. Het wegschrijven loopt via het
           // automatisch opslaan dat er al is: dat vergelijkt op inhoud, dus dit
           // levert één schrijfactie op in plaats van twee die elkaar overschrijven.

@@ -32,6 +32,23 @@ export function calculateAge(dateOfBirth: string, today: Date = new Date()): Age
   return { years, months };
 }
 
+/**
+ * Korte notatie voor de documentkop: `2,1` is twee jaar en één maand, `2,11`
+ * twee jaar en elf maanden, `3,0` precies drie jaar.
+ *
+ * Rekent niet zelf, maar leest `calculateAge` — anders zouden twee notaties van
+ * dezelfde leeftijd uit elkaar kunnen lopen. Leeg zonder geboortedatum: doc 02
+ * wil dan niets tonen, geen streepje en geen schatting.
+ */
+export function formatAgeShort(dateOfBirth: string | undefined, today: Date = new Date()): string {
+  if (!dateOfBirth) return "";
+
+  const age = calculateAge(dateOfBirth, today);
+  if (!age) return "";
+
+  return `${age.years},${age.months}`;
+}
+
 /** "4 jaar en 1 maand", "5 jaar", "3 maanden". Leeg bij geen geboortedatum. */
 export function formatAge(dateOfBirth: string | undefined, today: Date = new Date()): string {
   if (!dateOfBirth) return "";

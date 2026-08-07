@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DocumentService } from "@/services/DocumentService";
-import { RenderService, type RenderedPage } from "@/services/RenderService";
-import type { Documentation } from "@/types/documentation";
+import { RenderService, type RenderedPage, type RenderInput } from "@/services/RenderService";
 
 /**
  * Hoe breed foto's voor het voorbeeld worden ingelezen. Ruim boven het grootste
@@ -16,11 +15,8 @@ import type { Documentation } from "@/types/documentation";
 const PREVIEW_PHOTO_WIDTH = 900;
 
 interface UseRenderedPagesInput {
-  document: Documentation;
-  seriesName?: string;
-  groupName?: string;
-  studentNames: string[];
-  templateId: string;
+  /** Wat er gerenderd moet worden; opgebouwd door de aanroeper. */
+  input: RenderInput;
   /** Uit zolang het paneel dicht is: dan hoeft er niets ingelezen te worden. */
   enabled: boolean;
 }
@@ -41,14 +37,7 @@ function closeAll(images: Map<string, ImageBitmap>): void {
  * - **Elke `ImageBitmap` wordt weer vrijgegeven.** Die vallen buiten de
  *   opruiming van de browser en blijven anders staan tot het tabblad sluit.
  */
-export function useRenderedPages({
-  document: doc,
-  seriesName,
-  groupName,
-  studentNames,
-  templateId,
-  enabled,
-}: UseRenderedPagesInput) {
+export function useRenderedPages({ input, enabled }: UseRenderedPagesInput) {
   const [images, setImages] = useState<Map<string, ImageBitmap>>(() => new Map());
   const [loading, setLoading] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
@@ -56,10 +45,10 @@ export function useRenderedPages({
   /** Wat er op dit moment in gebruik is; alleen deze map mag worden gesloten. */
   const inUse = useRef<Map<string, ImageBitmap>>(new Map());
 
-  // Uit elkaar getrokken, zodat een nieuw array met dezelfde inhoud niet
-  // opnieuw inleest.
-  const photoKey = doc.photoIds.join(",");
-  const namesKey = studentNames.join(",");
+  // Op inhoud vergelijken en niet op objectidentiteit: de aanroeper bouwt de
+  // invoer bij elke render opnieuw op.
+  const signature = JSON.stringify(input);
+  const photoKey = input.pages.flatMap((page) => page.photoIds).join(",");
 
   /**
    * Tekst op canvas tekent met een vervangend lettertype zolang het echte nog
@@ -133,19 +122,8 @@ export function useRenderedPages({
 
   const pages: RenderedPage[] = useMemo(() => {
     if (!enabled || !fontsReady) return [];
-
-    return RenderService.layout(
-      {
-        document: doc,
-        seriesName,
-        groupName,
-        studentNames: namesKey ? namesKey.split(",") : [],
-        templateId,
-      },
-      RenderService.createMeasurer(),
-    );
-    // `namesKey` staat hier in plaats van `studentNames`: zie hierboven.
-  }, [enabled, fontsReady, doc, seriesName, groupName, namesKey, templateId]);
+    return RenderService.layout(JSON.parse(signature) as RenderInput, RenderService.createMeasurer());
+  }, [enabled, fontsReady, signature]);
 
   return { pages, images, loading: loading || !fontsReady };
 }

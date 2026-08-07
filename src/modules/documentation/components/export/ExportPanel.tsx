@@ -20,6 +20,7 @@ import { ExportService, toFileName } from "@/services/ExportService";
 import { PrivacyService, type TextMasker } from "@/services/PrivacyService";
 import type { TemplateId } from "@/services/render/templates";
 import { DEFAULT_TEMPLATE_ID } from "@/services/render/templates/registry";
+import type { RenderInput, RenderStudent } from "@/services/RenderService";
 import { ServiceError, toServiceError } from "@/services/ServiceError";
 import type { Documentation } from "@/types/documentation";
 
@@ -51,7 +52,8 @@ interface ExportPanelProps {
   document: Documentation;
   seriesName?: string;
   groupName?: string;
-  studentNames: string[];
+  /** De gekoppelde leerlingen; de kop toont hun naam en leeftijd. */
+  students: RenderStudent[];
   /** Alleen aangeroepen na een geslaagde export. */
   onExported: (patch: ExportedPatch) => void;
 }
@@ -100,7 +102,7 @@ export function ExportPanel({
   document: doc,
   seriesName,
   groupName,
-  studentNames,
+  students,
   onExported,
 }: ExportPanelProps) {
   const [templateId, setTemplateId] = useState<TemplateId>(
@@ -135,32 +137,40 @@ export function ExportPanel({
 
   const masked = useInitials && masker ? masker : null;
 
-  const displayDocument = useMemo(() => {
-    if (!masked) return doc;
-    return {
-      ...doc,
-      text: masked(doc.text),
-      quotes: doc.quotes.map((quote) => ({ ...quote, text: masked(quote.text) })),
-    };
-  }, [doc, masked]);
-
-  const namesKey = studentNames.join(",");
-  const displayStudentNames = useMemo(
-    () => {
-      const names = namesKey ? namesKey.split(",") : [];
-      return masked ? names.map(masked) : names;
-    },
-    [namesKey, masked],
+  /**
+   * De invoer voor de renderlaag. Eén pagina, opgebouwd uit de documentvelden;
+   * `layout()` loopt over een lijst, dus meerdere pagina's vragen hier straks
+   * alleen een langere lijst.
+   *
+   * De initialen worden hier toegepast en niet bij het exporteren. Doc 02 eist
+   * dat het voorbeeld toont wat je krijgt, en dat kan alleen als de vervanging
+   * vóór het opmaken gebeurt.
+   */
+  const renderInput: RenderInput = useMemo(
+    () => ({
+      title: doc.title,
+      seriesName,
+      groupNames: groupName ? [groupName] : [],
+      students: students.map((student) => ({
+        name: masked ? masked(student.name) : student.name,
+        dateOfBirth: student.dateOfBirth,
+      })),
+      pages: [
+        {
+          templateId,
+          text: masked ? masked(doc.text) : doc.text,
+          quotes: doc.quotes.map((quote) => ({
+            ...quote,
+            text: masked ? masked(quote.text) : quote.text,
+          })),
+          photoIds: doc.photoIds,
+        },
+      ],
+    }),
+    [doc, seriesName, groupName, students, templateId, masked],
   );
 
-  const { pages, images, loading } = useRenderedPages({
-    document: displayDocument,
-    seriesName,
-    groupName,
-    studentNames: displayStudentNames,
-    templateId,
-    enabled: true,
-  });
+  const { pages, images, loading } = useRenderedPages({ input: renderInput, enabled: true });
 
   const needsConsent = isImage && !doc.photoConsentConfirmedAt && !consentGiven;
 
@@ -265,7 +275,11 @@ export function ExportPanel({
         */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-4xl space-y-4 px-4 pb-4">
-            <TemplatePicker value={templateId} onChange={setTemplateId} />
+            <TemplatePicker
+              value={templateId}
+              onChange={setTemplateId}
+              photoCount={doc.photoIds.length}
+            />
 
             {isImage ? (
               <div className="flex items-center gap-2">
