@@ -297,6 +297,10 @@ export function DocumentEditorForm({
           seriesName={seriesName}
           groupName={groupName}
           studentNames={studentNames}
+          // Alleen na een geslaagde export. Het wegschrijven loopt via het
+          // automatisch opslaan dat er al is: dat vergelijkt op inhoud, dus dit
+          // levert één schrijfactie op in plaats van twee die elkaar overschrijven.
+          onExported={(patch) => update(patch)}
         />
       ) : null}
     </div>
