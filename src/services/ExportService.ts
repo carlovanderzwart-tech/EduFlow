@@ -3,25 +3,25 @@ import { RenderService, type RenderedPage } from "./RenderService";
 import { toServiceError } from "./ServiceError";
 
 /**
- * Print-PDF en deelbare afbeelding maken, delen en kopiëren (doc 03,
+ * Print-PDF en deelbare afbeelding maken, delen en kopiëren (docs/archief/03,
  * *Services*).
  *
  * Deze service maakt geen opmaak. Hij krijgt de pagina's die `RenderService`
  * al heeft berekend en zet die om naar bestanden — dat is de scheiding uit
- * doc 03: *"`RenderService` bouwt de documentatie op tot pagina's;
+ * docs/archief/03: *"`RenderService` bouwt de documentatie op tot pagina's;
  * `ExportService` zet die om."*
  *
  * Het tekenen zelf loopt ook hier via `RenderService.paint()`. Er is dus één
  * renderlaag: wat in het voorbeeld staat is wat in het bestand komt.
  */
 
-/** Doc 04: de deelbare afbeelding is ongeveer 1600 pixels breed. */
+/** docs/archief/04: de deelbare afbeelding is ongeveer 1600 pixels breed. */
 const SHARE_IMAGE_WIDTH = 1600;
 
 /** Genoeg om drukwerk niet zichtbaar te laten inleveren, zonder onnodig grote bestanden. */
 const JPEG_QUALITY = 0.92;
 
-/** A4 liggend in millimeters. De marge zit al in de getekende pagina (doc 04). */
+/** A4 liggend in millimeters. De marge zit al in de getekende pagina (docs/archief/04). */
 const A4_LANDSCAPE_MM = { width: 297, height: 210 };
 
 function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
@@ -84,7 +84,7 @@ export function toFileName(title: string, extension: string, page?: number): str
 
 export const ExportService = {
   /**
-   * Print-PDF: A4 liggend, alle pagina's, foto's op 300 dpi (doc 04, T-03).
+   * Print-PDF: A4 liggend, alle pagina's, foto's op 300 dpi (docs/archief/04, T-03).
    *
    * De pagina's worden op ware grootte getekend (3508 × 2480) en als afbeelding
    * op een A4 gezet. De veilige marge van 10 mm zit al in het getekende beeld,
@@ -126,7 +126,7 @@ export const ExportService = {
     }
   },
 
-  /** Eén JPG per pagina, ongeveer 1600 pixels breed (doc 04). */
+  /** Eén JPG per pagina, ongeveer 1600 pixels breed (docs/archief/04). */
   async toImages(pages: RenderedPage[]): Promise<Blob[]> {
     if (pages.length === 0) throw new Error("geen pagina's om te exporteren");
 

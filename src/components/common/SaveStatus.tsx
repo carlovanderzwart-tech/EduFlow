@@ -7,7 +7,7 @@ export type SaveState = "idle" | "saving" | "saved";
 /**
  * Terugkoppeling van automatisch opslaan.
  *
- * Doc 04 (*Gedeelde patronen*): *"Opslaan. Automatisch tijdens het typen. Kort
+ * docs/archief/04 (*Gedeelde patronen*): *"Opslaan. Automatisch tijdens het typen. Kort
  * bericht in beeld: 'Opgeslagen.'"*
  *
  * Bewust geen toast: automatisch opslaan gebeurt na elke seconde stilte tijdens

@@ -35,7 +35,7 @@ interface StudentSheetProps {
   onOpenChange: (open: boolean) => void;
   /** `null` voor een nieuwe leerling. */
   student: Student | null;
-  /** Alleen niet-gearchiveerde groepen; gearchiveerde horen niet in keuzelijsten (B-19). */
+  /** Alleen niet-gearchiveerde groepen; gearchiveerde horen niet in keuzelijsten. */
   groups: Group[];
   onSave: (draft: StudentDraft) => void;
 }
@@ -52,11 +52,11 @@ function toDraft(student: Student | null): StudentDraft {
 }
 
 /**
- * Een leerling toevoegen of aanpassen (doc 04, scherm 7). Schuift over het
+ * Een leerling toevoegen of aanpassen (docs/archief/04, scherm 7). Schuift over het
  * scherm, met voornaam, roepnaam, achternaam, geboortedatum, groep, en actief
  * of inactief.
  *
- * **Voornaam en groep zijn verplicht, de rest mag leeg** (doc 02): een register
+ * **Voornaam en groep zijn verplicht, de rest mag leeg** (docs/archief/02): een register
  * met gaten is bruikbaarder dan een register dat je pas mag opslaan als je
  * alles weet.
  *
@@ -151,7 +151,7 @@ export function StudentSheet({
                 onChange={(event) => set("dateOfBirth", event.target.value)}
               />
               {/* Staat er geen geboortedatum, dan staat hier niets — geen
-                  streepje en geen schatting (doc 02, *Leeftijd*). */}
+                  streepje en geen schatting (docs/archief/02, *Leeftijd*). */}
               {age ? <FieldDescription>{age}</FieldDescription> : null}
             </Field>
 
@@ -190,7 +190,7 @@ export function StudentSheet({
               />
               <div className="space-y-0.5">
                 <Label htmlFor="student-active">Actief</Label>
-                {/* Geen verwijderknop, en in gewone taal waarom (doc 04). */}
+                {/* Geen verwijderknop, en in gewone taal waarom (docs/archief/04). */}
                 <FieldDescription>
                   Een leerling die van school gaat zet je op inactief. De naam blijft dan
                   afgeschermd in documentaties van eerder dit jaar.

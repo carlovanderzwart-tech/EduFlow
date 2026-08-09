@@ -6,7 +6,7 @@ import { GroupService } from "@/services/GroupService";
 import { ServiceError, toServiceError } from "@/services/ServiceError";
 import type { Group } from "@/types/group";
 
-/** Een groep met het aantal leerlingen erin, zoals doc 04 de lijst beschrijft. */
+/** Een groep met het aantal leerlingen erin, zoals docs/archief/04 de lijst beschrijft. */
 export interface GroupWithCount {
   group: Group;
   studentCount: number;
@@ -14,7 +14,7 @@ export interface GroupWithCount {
 
 /**
  * Laadt alle groepen met hun aantal leerlingen, inclusief de gearchiveerde —
- * die staan onderaan in de lijst en zijn terug te halen (doc 04, scherm 7).
+ * die staan onderaan in de lijst en zijn terug te halen (docs/archief/04, scherm 7).
  *
  * Eén laadpad, net als bij de leerlingen. Het tellen gebeurt in `GroupService`.
  */
@@ -38,7 +38,7 @@ export function useGroups() {
         );
         if (!active) return;
 
-        // Gearchiveerde groepen onderaan, de rest op naam (doc 04).
+        // Gearchiveerde groepen onderaan, de rest op naam (docs/archief/04).
         setGroups(
           counted.sort((a, b) => {
             if (a.group.archived !== b.group.archived) return a.group.archived ? 1 : -1;

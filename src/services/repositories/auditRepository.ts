@@ -7,7 +7,7 @@ const MAX_ENTRIES = 300;
 
 /**
  * Alleen toevoegen en opruimen; er is geen wijzigen. Het logboek is een verslag
- * (besluit B-26).
+ * (§16.2).
  */
 export const auditRepository = {
   async add(entry: AuditEntry): Promise<void> {

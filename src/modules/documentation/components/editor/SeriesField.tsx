@@ -12,10 +12,10 @@ interface SeriesFieldProps {
 }
 
 /**
- * De reeks: kiezen uit bestaande reeksen of een nieuwe aanmaken (doc 04).
+ * De reeks: kiezen uit bestaande reeksen of een nieuwe aanmaken (docs/archief/04).
  *
  * Een gewoon tekstveld met een `datalist`, geen keuzelijst met eigen
- * toetsenbordafhandeling. Dat is wat doc 03 vraagt onder *Invoervelden blijven
+ * toetsenbordafhandeling. Dat is wat docs/archief/03 vraagt onder *Invoervelden blijven
  * saai*: vrije invoer blijft mogelijk — een nieuwe reeks aanmaken is hetzelfde
  * handelingspatroon als een bestaande kiezen — en dicteren blijft werken.
  */

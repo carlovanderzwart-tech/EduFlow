@@ -25,8 +25,8 @@ export interface MaskableName {
 }
 
 /**
- * Leerlingen beheren (doc 03). Import en export lopen niet via deze service —
- * die kent geen bestandsformaten (besluit T-11).
+ * Leerlingen beheren (docs/archief/03). Import en export lopen niet via deze service —
+ * die kent geen bestandsformaten.
  */
 export const StudentService = {
   async list(filter: StudentFilter = {}): Promise<Student[]> {
@@ -88,7 +88,7 @@ export const StudentService = {
 
   /**
    * Zet een leerling op inactief. Er is geen verwijderen: de afscherming werkt
-   * op het volledige register (besluit T-12, T-14).
+   * op het volledige register (DR-26).
    */
   deactivate(id: string): Promise<Student> {
     return this.update(id, { active: false });
@@ -102,7 +102,7 @@ export const StudentService = {
 
   /**
    * Verplaatst leerlingen naar een andere groep. Een jaarovergang is dertig keer
-   * dezelfde handeling (doc 02).
+   * dezelfde handeling (docs/archief/02).
    */
   async moveToGroup(ids: string[], groupId: string): Promise<number> {
     return this.applyToMany(ids, { groupId }, "verplaatst");
@@ -140,7 +140,7 @@ export const StudentService = {
 
   /**
    * Alle namen die afgeschermd moeten worden, **inclusief inactieve
-   * leerlingen** (besluit T-12).
+   * leerlingen**.
    *
    * Bewust niet `getActiveStudents` genoemd: een vertrokken kind komt voor in
    * documentaties van eerder dit jaar, en die worden bewerkt en als context

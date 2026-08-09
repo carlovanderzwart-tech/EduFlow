@@ -18,11 +18,11 @@ interface SearchFieldProps {
 /**
  * Zoekveld met wisknop.
  *
- * Gedeeld omdat doc 02 zoeken eist in documentaties én in mailconcepten — twee
- * modules, en modules mogen niet van elkaar lenen (doc 03).
+ * Gedeeld omdat docs/archief/02 zoeken eist in documentaties én in mailconcepten — twee
+ * modules, en modules mogen niet van elkaar lenen (docs/archief/03).
  *
  * Een gewoon tekstveld zonder eigen toetsenbordafhandeling, zodat de
- * dicteerknop blijft werken (doc 03, *Invoervelden blijven saai*).
+ * dicteerknop blijft werken (docs/archief/03, *Invoervelden blijven saai*).
  */
 export function SearchField({
   value,

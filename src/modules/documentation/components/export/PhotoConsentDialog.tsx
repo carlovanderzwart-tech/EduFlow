@@ -15,7 +15,7 @@ interface PhotoConsentDialogProps {
  * vragen leidt tot wegklikken zonder lezen; één keer ooit is als controle
  * waardeloos. Daarom precies één keer per documentatie.
  *
- * De tekst staat letterlijk zo in doc 04 (*Exporteren*).
+ * De tekst staat letterlijk zo in docs/archief/04 (*Exporteren*).
  */
 export function PhotoConsentDialog({ open, onOpenChange, onConfirm }: PhotoConsentDialogProps) {
   return (

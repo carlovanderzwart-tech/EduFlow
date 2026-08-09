@@ -11,7 +11,8 @@ interface GroupFieldProps {
 }
 
 /**
- * Eén groep, gekozen uit je eigen groepen (besluit B-13, doc 04 scherm 3).
+ * Eén groep, gekozen uit je eigen groepen. De Bible schrijft meerdere groepen per
+ * documentatie voor (B-17); dat volgt bij implementatiestap 11.
  *
  * Een native keuzelijst, zodat je op de telefoon het keuzemenu van het apparaat
  * zelf krijgt en er geen eigen toetsenbordafhandeling overheen ligt.

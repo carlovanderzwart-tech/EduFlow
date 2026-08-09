@@ -51,7 +51,7 @@ describe("PrivacyService.getInitialsMasker", () => {
   });
 
   it("neemt de roepnaam mee", async () => {
-    // Precies het geval waarvoor de roepnaam bestaat (besluit B-25).
+    // Precies het geval waarvoor de roepnaam bestaat.
     list.mockResolvedValue([student({ firstName: "Jan-Peter", callName: "JP" })]);
     const masker = await PrivacyService.getInitialsMasker();
 
@@ -80,7 +80,7 @@ describe("PrivacyService.getInitialsMasker", () => {
   });
 
   it("laat de achternaam staan", async () => {
-    // Doc 02 spreekt van voornamen; het productbesluit bevestigt dat de
+    // docs/archief/02 spreekt van voornamen; het productbesluit bevestigt dat de
     // achternaam er niet in meegaat.
     list.mockResolvedValue([student({ firstName: "Kjeld", lastName: "de Vries" })]);
     const masker = await PrivacyService.getInitialsMasker();
@@ -104,7 +104,7 @@ describe("PrivacyService.getInitialsMasker", () => {
 
   it("neemt inactieve leerlingen mee", async () => {
     // Een vertrokken kind komt nog voor in documentaties van eerder dit jaar
-    // (besluit T-12).
+    //.
     list.mockResolvedValue([student({ firstName: "Sanne", active: false })]);
     const masker = await PrivacyService.getInitialsMasker();
 

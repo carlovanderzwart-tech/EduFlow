@@ -18,12 +18,12 @@ const WITHOUT_SERIES = "__zonder_reeks__";
 
 /**
  * Gegroepeerd per reeks, met de documentaties in tijdsvolgorde eronder, zodat je
- * een project van begin tot eind ziet (doc 04, *Reeksen*).
+ * een project van begin tot eind ziet (docs/archief/04, *Reeksen*).
  *
  * Documentaties zonder reeks komen onderaan onder één kopje. Een reeks die is
  * opgeruimd terwijl documentaties er nog naar verwijzen valt daar ook onder; die
  * documentaties blijven dus zichtbaar in plaats van uit het overzicht te
- * verdwijnen (doc 03: verwijzingen mogen doodlopen).
+ * verdwijnen (docs/archief/03: verwijzingen mogen doodlopen).
  */
 export function SeriesGroupList({
   documents,

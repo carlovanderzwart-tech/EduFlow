@@ -15,7 +15,7 @@ interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  /** Zegt wat er verdwijnt. Doc 04 eist dat expliciet. */
+  /** Zegt wat er verdwijnt. docs/archief/04 eist dat expliciet. */
   description: string;
   confirmLabel: string;
   cancelLabel?: string;
@@ -26,7 +26,7 @@ interface ConfirmDialogProps {
 /**
  * Bevestiging voor onomkeerbare acties.
  *
- * Doc 04 (*Gedeelde patronen*): *"Verwijderen. Vraagt altijd om bevestiging en
+ * docs/archief/04 (*Gedeelde patronen*): *"Verwijderen. Vraagt altijd om bevestiging en
  * zegt wat er verdwijnt."* Die tweede eis is hier een verplichte prop, zodat een
  * vage "Weet je het zeker?" met dit component niet gebouwd kan worden.
  */

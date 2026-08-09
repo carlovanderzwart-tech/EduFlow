@@ -9,7 +9,7 @@ import { studentRepository } from "./repositories/studentRepository";
 import { serviceError } from "./ServiceError";
 
 /**
- * Groepen beheren: toevoegen, hernoemen, opruimen, archiveren (doc 03).
+ * Groepen beheren: toevoegen, hernoemen, opruimen, archiveren (docs/archief/03).
  */
 export const GroupService = {
   getAll(): Promise<Group[]> {
@@ -66,7 +66,7 @@ export const GroupService = {
 
   /**
    * Ruimt een groep op. Leerlingen en documentaties blijven bestaan en raken
-   * hun groepsverwijzing kwijt (doc 03) — opruimen mag nooit werk weggooien.
+   * hun groepsverwijzing kwijt (docs/archief/03) — opruimen mag nooit werk weggooien.
    */
   async remove(id: string): Promise<void> {
     await groupRepository.delete(id);
@@ -74,7 +74,7 @@ export const GroupService = {
 
   /**
    * Archiveert een groep: de groep verdwijnt uit keuzelijsten en alle
-   * leerlingen erin gaan op inactief (besluit B-19).
+   * leerlingen erin gaan op inactief.
    *
    * Verwijdert niets en schermt niets minder af — gearchiveerde groepen en hun
    * leerlingen tellen onverkort mee bij de naamvervanging.
@@ -107,8 +107,7 @@ export const GroupService = {
 
   /**
    * Haalt een groep terug uit het archief. De leerlingen blijven inactief:
-   * massaal activeren zou een vertrokken kind terugzetten in de keuzelijsten
-   * (besluit B-19).
+   * massaal activeren zou een vertrokken kind terugzetten in de keuzelijsten.
    */
   async unarchive(id: string): Promise<Group> {
     const group = await groupRepository.get(id);
@@ -121,7 +120,7 @@ export const GroupService = {
     return next;
   },
 
-  /** Hoeveel leerlingen er in een groep zitten (doc 02). */
+  /** Hoeveel leerlingen er in een groep zitten (docs/archief/02). */
   async countStudents(groupId: string): Promise<number> {
     const students = await studentRepository.getByGroup(groupId);
     return students.length;

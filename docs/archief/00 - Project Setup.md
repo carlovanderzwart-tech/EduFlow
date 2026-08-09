@@ -1,3 +1,16 @@
+> **HISTORISCH — NIET MEER LEIDEND**
+>
+> Dit document beschrijft de architectuur van vóór 8 augustus 2026 en is bewaard voor
+> historische context. Het mag niet meer als normatieve bron worden gebruikt.
+>
+> `docs/EduFlow - Product Bible v1.0.md` blijft de actuele bron van waarheid.
+>
+> Let op bij het teruglezen: de besluitnummers in dit document (`B-…`, `T-…`) hebben
+> een andere betekenis dan dezelfde nummers in hoofdstuk 19 van de Product Bible.
+> Zie §19.2 van de Bible voor de nummerbotsingen.
+
+---
+
 # Project Setup
 
 ## Projectnaam

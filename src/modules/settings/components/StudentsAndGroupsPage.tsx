@@ -12,7 +12,7 @@ import { GroupsTab } from "./groups/GroupsTab";
 import { StudentsTab } from "./students/StudentsTab";
 
 /**
- * Scherm 7 uit doc 04: leerlingen en groepen, met twee tabbladen.
+ * Scherm 7 uit docs/archief/04: leerlingen en groepen, met twee tabbladen.
  *
  * Bereikbaar via Instellingen en **geen zesde icoon in de navigatie** — dit
  * beheer je een paar keer per jaar, niet dagelijks.

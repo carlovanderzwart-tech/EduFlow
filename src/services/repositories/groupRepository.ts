@@ -8,7 +8,7 @@ import { withDb } from "../db";
  *
  * Lekt geen IndexedDB naar buiten: wat eruit komt zijn gewone objecten, en
  * alles is asynchroon. Daardoor is dit de plek die vervangen wordt zodra de
- * opslag ooit een server is (doc 03, *De repositorylaag*).
+ * opslag ooit een server is (docs/archief/03, *De repositorylaag*).
  */
 export const groupRepository = {
   getAll(): Promise<Group[]> {

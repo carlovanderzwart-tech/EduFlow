@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 
 /**
- * Instellingen (doc 04, scherm 6). Leerlingen en groepen zijn hiervandaan
+ * Instellingen (docs/archief/04, scherm 6). Leerlingen en groepen zijn hiervandaan
  * bereikbaar en hebben bewust geen eigen plek in de hoofdnavigatie: dat beheer
  * je een paar keer per jaar, en de balk onderaan blijft op vijf.
  *

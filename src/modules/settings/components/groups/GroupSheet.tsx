@@ -29,9 +29,9 @@ interface GroupSheetProps {
 }
 
 /**
- * Een groep toevoegen of hernoemen (doc 04, scherm 7).
+ * Een groep toevoegen of hernoemen (docs/archief/04, scherm 7).
  *
- * Een groep bevat een naam en een schooljaar (doc 02). Laat je het schooljaar
+ * Een groep bevat een naam en een schooljaar (docs/archief/02). Laat je het schooljaar
  * leeg, dan vult `GroupService` het lopende schooljaar in — de service bepaalt
  * dat, niet dit scherm.
  */

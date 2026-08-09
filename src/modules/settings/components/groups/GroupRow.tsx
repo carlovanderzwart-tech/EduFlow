@@ -24,7 +24,7 @@ interface GroupRowProps {
 }
 
 /**
- * Eén groep in de lijst (doc 04, scherm 7): naam, schooljaar en hoeveel
+ * Eén groep in de lijst (docs/archief/04, scherm 7): naam, schooljaar en hoeveel
  * leerlingen erin zitten.
  *
  * Gearchiveerde groepen staan gedempt en hebben één knop om ze terug te halen;

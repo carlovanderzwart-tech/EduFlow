@@ -26,7 +26,7 @@ interface EmptyStateProps {
 /**
  * Preset boven de `Empty`-primitive.
  *
- * Doc 04 (*Gedeelde patronen*) schrijft voor lege schermen een vaste vorm voor:
+ * docs/archief/04 (*Gedeelde patronen*) schrijft voor lege schermen een vaste vorm voor:
  * *"Nooit alleen leegte. Altijd één zin die uitlegt wat hier komt te staan,
  * plus één knop."* De primitive is vrij samen te stellen; deze wrapper legt die
  * vorm vast zodat elk leeg scherm in EduFlow er hetzelfde uitziet.

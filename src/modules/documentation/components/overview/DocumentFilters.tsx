@@ -29,7 +29,7 @@ interface DocumentFiltersProps {
 }
 
 /**
- * Filteren op reeks, groep, leerling en periode (doc 04, scherm 2). Meer niet.
+ * Filteren op reeks, groep, leerling en periode (docs/archief/04, scherm 2). Meer niet.
  *
  * In een `details`/`summary` ingeklapt, zodat de lijst op een telefoon in beeld
  * blijft. Dat is de native manier: geen JavaScript, en toetsenbord en

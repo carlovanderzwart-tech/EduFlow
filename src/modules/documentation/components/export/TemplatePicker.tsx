@@ -43,7 +43,7 @@ interface TemplatePickerProps {
 }
 
 /**
- * De vier miniaturen bovenaan het exportpaneel (doc 04, *Opmaak*). Wisselen kan
+ * De vier miniaturen bovenaan het exportpaneel (docs/archief/04, *Opmaak*). Wisselen kan
  * altijd; de inhoud verandert niet mee.
  */
 export function TemplatePicker({ value, onChange }: TemplatePickerProps) {

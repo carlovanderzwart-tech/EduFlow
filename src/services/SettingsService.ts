@@ -7,7 +7,7 @@ import { seriesRepository } from "./repositories/seriesRepository";
 import { settingsRepository } from "./repositories/settingsRepository";
 
 /**
- * Instellingen en reeksen (doc 03, *Services*). Sinds het leerlingenregister
+ * Instellingen en reeksen (docs/archief/03, *Services*). Sinds het leerlingenregister
  * bestaat, beheert deze service geen namen meer — dat doet `StudentService`.
  */
 export const SettingsService = {

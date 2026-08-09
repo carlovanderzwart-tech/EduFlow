@@ -22,7 +22,7 @@ interface DocumentCardProps {
 }
 
 /**
- * Eén regel in het overzicht (doc 04, scherm 2): titel, reeks, datum, groep,
+ * Eén regel in het overzicht (docs/archief/04, scherm 2): titel, reeks, datum, groep,
  * of er foto's bij zitten, en de status.
  *
  * De titel is een link die over de hele regel uitrekt, zodat de hele regel een

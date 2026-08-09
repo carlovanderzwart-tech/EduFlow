@@ -16,13 +16,13 @@ interface StudentBatchBarProps {
 }
 
 /**
- * Verschijnt zodra er leerlingen zijn aangevinkt (doc 04, scherm 7). Drie
+ * Verschijnt zodra er leerlingen zijn aangevinkt (docs/archief/04, scherm 7). Drie
  * acties: verplaatsen naar een andere groep, op inactief zetten, weer op actief
  * zetten.
  *
- * **Geen verwijderknop.** Leerlingen worden nooit hard verwijderd (T-14), en een
+ * **Geen verwijderknop.** Leerlingen worden nooit hard verwijderd (DR-26), en een
  * massale verwijdering is precies de handeling waarmee de afscherming stukgaat
- * (doc 02, *Batchbewerkingen*).
+ * (docs/archief/02, *Batchbewerkingen*).
  *
  * Het bevestigen gebeurt niet hier maar bij de aanroeper: die kent de namen van
  * de groepen en kan de vraag daardoor voluit stellen.

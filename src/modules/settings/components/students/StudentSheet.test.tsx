@@ -32,7 +32,7 @@ function renderSheet(student: Student | null, onSave = vi.fn()) {
   return onSave;
 }
 
-/** Doc 04, scherm 7: het paneel om een leerling toe te voegen of aan te passen. */
+/** docs/archief/04, scherm 7: het paneel om een leerling toe te voegen of aan te passen. */
 describe("StudentSheet", () => {
   it("toont alle gedocumenteerde velden", () => {
     renderSheet(null);
@@ -85,7 +85,7 @@ describe("StudentSheet", () => {
   it("toont de leeftijd zodra er een geboortedatum staat", () => {
     renderSheet(null);
 
-    // Doc 02: "4 jaar en 1 maand", en niets wanneer het veld leeg is.
+    // docs/archief/02: "4 jaar en 1 maand", en niets wanneer het veld leeg is.
     expect(screen.queryByText(/^\d+ jaar/)).not.toBeInTheDocument();
 
     const fourYearsAgo = new Date();

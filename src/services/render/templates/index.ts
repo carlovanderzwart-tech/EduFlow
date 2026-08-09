@@ -1,8 +1,8 @@
 /**
- * De vier opmaaktemplates uit doc 04 (*Opmaak*), afgeleid uit de bestaande
+ * De vier opmaaktemplates uit docs/archief/04 (*Opmaak*), afgeleid uit de bestaande
  * pagina's van maart en mei.
  *
- * Een template beschrijft **één pagina** en wordt herhaald (doc 03, *Pagina's*).
+ * Een template beschrijft **één pagina** en wordt herhaald (docs/archief/03, *Pagina's*).
  * Ze zijn losse modules met dezelfde props, zodat een template toevoegen geen
  * bestaande documentaties raakt.
  *
@@ -22,7 +22,7 @@ export interface Rect {
 export interface PageSize {
   width: number;
   height: number;
-  /** Veilige marge rondom, zodat een kantoorprinter niets afsnijdt (doc 04). */
+  /** Veilige marge rondom, zodat een kantoorprinter niets afsnijdt (docs/archief/04). */
   margin: number;
   /** Ruimte voor titel en Leerling(en)-regel. Die staan op élke pagina (B-07). */
   headerHeight: number;
@@ -39,7 +39,7 @@ export interface Template {
   id: TemplateId;
   /** Het label onder de miniatuur in het exportpaneel. */
   name: string;
-  /** Waar dit template voor bedoeld is (doc 04). */
+  /** Waar dit template voor bedoeld is (docs/archief/04). */
   description: string;
   /** Hoeveel foto's er op één pagina passen; bepaalt mede het aantal pagina's (B-07). */
   photosPerPage: number;

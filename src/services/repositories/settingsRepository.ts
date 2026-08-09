@@ -4,7 +4,7 @@ import { withDb } from "../db";
 
 /**
  * Instellingen zijn één record onder een vaste sleutel, dus zonder `id` en
- * zonder tijdstempels (doc 03, *Gedeelde velden*).
+ * zonder tijdstempels (docs/archief/03, *Gedeelde velden*).
  */
 const KEY = "settings";
 

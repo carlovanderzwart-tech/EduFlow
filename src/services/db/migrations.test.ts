@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DB_VERSION, MIGRATIONS } from "./migrations";
 
 /**
- * Doc 03 (*Migraties*) eist een test die van versie 1 naar de laatste migreert.
+ * docs/archief/03 (*Migraties*) eist een test die van versie 1 naar de laatste migreert.
  * Een apparaat dat lang niet is geopend springt die versies in één keer door, en
  * dat pad is met de hand niet te controleren.
  */

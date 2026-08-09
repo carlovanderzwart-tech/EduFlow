@@ -3,14 +3,14 @@ import type { AuditAction, AuditEntry } from "@/types/audit";
 import { createId } from "@/utils/id";
 
 /**
- * Legt handelingen vast die veel records tegelijk raken (besluit B-26).
+ * Legt handelingen vast die veel records tegelijk raken (§16.2).
  *
  * **Nooit persoonsgegevens.** Wel aantallen en de identificatie van het geraakte
- * record; geen namen, geen inhoud, geen waarden van vóór en na. Die
- * identificatie is er omdat B-27 erop leunt: zonder te weten welk record is
- * verwijderd valt er later geen grafsteen uit te reconstrueren.
+ * record; geen namen, geen inhoud, geen waarden van vóór en na (DR-44).
  *
- * Schrijft alleen; er is bewust geen scherm.
+ * Schrijft alleen; er is hier nog geen scherm. De Bible vraagt dat wel:
+ * Instellingen → Over → Logboek, doorzoekbaar en te exporteren als CSV, en niet
+ * te wissen (§16.2). Dat volgt bij implementatiestap 6.
  */
 export const AuditService = {
   async record(

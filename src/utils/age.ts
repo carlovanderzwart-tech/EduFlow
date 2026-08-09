@@ -1,9 +1,9 @@
 import { parseISODate } from "./date";
 
 /**
- * Leeftijd in jaren en maanden, zoals doc 02 vraagt: "4 jaar en 1 maand".
+ * Leeftijd in jaren en maanden, zoals docs/archief/02 vraagt: "4 jaar en 1 maand".
  *
- * Geeft `null` bij een ontbrekende of onleesbare geboortedatum. Doc 04 is daar
+ * Geeft `null` bij een ontbrekende of onleesbare geboortedatum. docs/archief/04 is daar
  * expliciet over: dan toont EduFlow niets — geen streepje en geen schatting.
  */
 export interface Age {

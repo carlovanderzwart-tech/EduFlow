@@ -456,7 +456,8 @@ hoofdstuk 19.
     - [Agenda, leerlingen en groepen](#agenda-leerlingen-en-groepen)
     - [Proces, rollen en verantwoording](#proces-rollen-en-verantwoording)
     - [Technische besluiten](#technische-besluiten)
-  - [19.5 Openstaand](#195-openstaand)
+  - [19.5 Besluiten van 8 augustus 2026 — architectuurreview](#195-besluiten-van-8-augustus-2026--architectuurreview)
+  - [19.6 Openstaand](#196-openstaand)
 - [20. Ontwikkelregels voor AI-programmeurs](#20-ontwikkelregels-voor-ai-programmeurs)
   - [20.1 Lees dit eerst](#201-lees-dit-eerst)
   - [20.2 De regels](#202-de-regels)
@@ -688,7 +689,11 @@ De belofte is dat de mediaan van de documentatieketen met 40% daalt. Om die belo
 
 #### 1.6.1 De nulmeting
 
-De nulmeting bestaat uit twaalf documentaties die de maker met de hand tijdt, in de eerste vier schoolweken van 2026-2027, van 24 augustus tot en met 18 september 2026. Pas als die twaalf metingen compleet zijn, begint sprint 1. Dat kost vier weken bouwtijd en dat is de prijs van een getal dat je achteraf niet kunt wegredeneren.
+De nulmeting bestaat uit twaalf documentaties die de maker met de hand tijdt, in de eerste vier schoolweken van 2026-2027, van 24 augustus tot en met 18 september 2026.
+
+**De meting loopt parallel aan de eerste bouwstappen en houdt sprint 1 niet tegen** (T-44). Dat kan omdat de stappen 0 tot en met 9 van de implementatievolgorde — governance, bouwstraat, `lib/`, domeintypen, `StorageService`, de gebeurtenissenbus, `AuditService` en `SettingsService`, de leerlingen- en groepenservices, `PrivacyService` en `BackupService` — geen enkel bruikbaar documentatiescherm opleveren. De maker documenteert in die weken dus nog volledig op de oude manier, en de meting wordt niet beïnvloed door wat er gebouwd wordt. Vanaf stap 11, waar `DocumentationService` en `PageService` een werkend schrijfscherm mogelijk maken, moeten de twaalf metingen compleet en vastgelegd zijn.
+
+De doelwaarde van veertig procent blijft onveranderd, en de nulmeting moet volledig zijn vastgelegd vóór de nameting begint. Een nulmeting die je aanpast nadat je het resultaat kent, is geen meting.
 
 Per documentatie worden vijf fasen apart geklokt: overzetten, kiezen, schrijven, opmaken en uitleveren. De klok start bij de eerste handeling na het moment in de groep en stopt bij het bestand dat verstuurd kan worden. Genoteerd worden de tijd per fase, het aantal foto's, het aantal woorden en of er een reeks in het spel was. De uitkomst is één getal: de mediaan over twaalf documentaties, niet het gemiddelde, want één avond waarin de laptop vastliep verpest een gemiddelde. De ruwe metingen worden bewaard en gepubliceerd, ook als ze onwelgevallig zijn.
 
@@ -2007,8 +2012,9 @@ afspraak en na het aanzetten van een correctieregel.
 **B-39 uitgewerkt.** Tik je op **Overnemen** en staat er al tekst in je veld, dan verschijnt onder
 het voorstel één regel met twee knoppen: **Onder mijn tekst plakken** (gevuld, de standaard) en
 **Mijn tekst vervangen**. Is je veld leeg, dan komt die vraag niet: een vraag met één zinnig
-antwoord is geen vraag. Vóór de wijziging schrijft `DocumentationService` de vorige inhoud weg als
-`ChangeLogEntry`, zodat automatisch opslaan hem niet overschrijft. Daarna staat er zes seconden
+antwoord is geen vraag. Vóór de wijziging schrijft `DocumentationService` de vorige inhoud weg in
+`aiUndoSnapshot` op de documentatie (T-43), zodat automatisch opslaan hem niet overschrijft en de
+ongedaanmaakstap een herlaadactie overleeft. Daarna staat er zes seconden
 **Overgenomen. Ongedaan maken** in de onderbalk, en de sneltoets blijft werken zolang het scherm
 open is.
 
@@ -2131,7 +2137,7 @@ Drie visuele hoofdregels leggen dat vast. Ze gelden voor elk scherm en voor elke
 
 **Hoofdregel 3 — Ruimte boven rand, rand boven schaduw.** Scheiding maak je eerst met witruimte. Lukt dat niet, dan met een lijn van 1 px. Pas als iets werkelijk boven de pagina zweeft, mag er een schaduw onder. Er zijn precies vier schaduwtekens en drie daarvan zijn gereserveerd voor lagen die over de pagina liggen: menu, inschuifpaneel, dialoogvenster. Een kaart in een lijst krijgt geen schaduw, een kaart onder de muisaanwijzer ook niet. Dit houdt het scherm plat, en plat is rustig.
 
-Wat hieruit volgt en wat niet: dit deel gaat over vorm. Hoe schermen zich gedragen, wat er gebeurt bij een handeling en welke schermen er zijn, staat in hoofdstuk 4. Hoe de componenten technisch in elkaar zitten, waar ze in de mappenstructuur wonen en hoe Radix en Tailwind zich tot elkaar verhouden, staat in hoofdstuk 11. Hier staan de maten, de kleuren, de letters en de sloten.
+Wat hieruit volgt en wat niet: dit deel gaat over vorm. Hoe schermen zich gedragen, wat er gebeurt bij een handeling en welke schermen er zijn, staat in hoofdstuk 4. Hoe de componenten technisch in elkaar zitten, waar ze in de mappenstructuur wonen en hoe Base UI en Tailwind zich tot elkaar verhouden, staat in hoofdstuk 11. Hier staan de maten, de kleuren, de letters en de sloten.
 
 ### 5.2 Het raster
 
@@ -2439,7 +2445,7 @@ De regel eromheen is hard: **geen enkele component bevat een waarde die niet uit
 
 ### 5.7 Componentbibliotheek
 
-Versie 1.0 heeft eenentwintig componenten. Ze staan op Radix waar Radix een primitief levert (zie hoofdstuk 11); dit deel beschrijft hun vorm en gedrag, niet hun code. Elke component kent dezelfde zeven toestanden waar ze van toepassing zijn: rust, zweven, focus, actief, uitgeschakeld, laden en fout. Toestanden die voor een component geen betekenis hebben, bestaan niet — een kaart heeft geen foutstand.
+Versie 1.0 heeft eenentwintig componenten. Ze staan op Base UI waar Base UI een primitief levert (zie hoofdstuk 11, T-39); dit deel beschrijft hun vorm en gedrag, niet hun code. Elke component kent dezelfde zeven toestanden waar ze van toepassing zijn: rust, zweven, focus, actief, uitgeschakeld, laden en fout. Toestanden die voor een component geen betekenis hebben, bestaan niet — een kaart heeft geen foutstand.
 
 Eerst de maten van de bedieningselementen, want die zijn gedeeld:
 
@@ -2456,13 +2462,13 @@ Op de laptop is het klikbare vlak van elk bedieningselement minstens 24 × 24 px
 | **Knop** | Hoofd (gevuld accent), tweede (rand `gray-300`, witte vulling), rustig (geen rand, tekst `gray-700`), gevaarlijk (gevuld `danger-500`), alleen-pictogram | Rust `accent-500`; zweven `accent-600`; actief `accent-700` plus 1 px verschuiving omlaag zonder schaduw; focus ring; uitgeschakeld `gray-100` met `gray-400` tekst en geen aanwijzer; laden toont een draaiend pictogram van 16 px links van de tekst en houdt de breedte vast | Echt `<button>`, `aria-busy` bij laden, `aria-disabled` in plaats van `disabled` als de knop nog een uitlegballon moet kunnen tonen | Navigatie naar een ander scherm — dat is een koppeling |
 | **Invoerveld** | Tekst, e-mail, getal, met voorvoegsel, met pictogram rechts | Hoogte 40 px, rand 1 px `border-input`, straal `radius-md`; zweven rand `gray-700`; focus rand `accent-500` plus ring; fout rand `danger-500` plus foutregel eronder; uitgeschakeld vulling `gray-50`; laden bestaat niet | Zichtbaar `<label>` boven het veld, nooit alleen een plaatshouder; `aria-describedby` naar hulptekst en foutregel; `aria-invalid` bij fout | Een zoekopdracht — daar is het zoekveld voor |
 | **Tekstvlak** | Vast, groeiend, schrijfveld | Minimaal 3 regels, groeit tot 20 regels en gaat dan schuiven; het schrijfveld is een eigen variant zonder rand, breedte `measure-read`, met een tekenteller rechtsonder in `text-xs` | Zelfde als het invoerveld; de tekenteller is `aria-live="polite"` en meldt alleen bij de laatste 50 tekens | Opgemaakte tekst — er is in 1.0 geen vet of cursief in een tekstblok |
-| **Keuzelijst** | Enkel, met zoekregel, gegroepeerd | Ziet eruit als een invoerveld met een pijltje van 16 px; open toont een lijst met `shadow-2` en `radius-lg`; de gekozen regel heeft `surface-selected` en een vinkje | Radix Select: toetsenbordnavigatie, typen om te springen, `aria-expanded`, focus keert terug naar de knop | Meer dan twaalf opties zonder zoekregel, en nooit voor twee opties — dan is het een schakelaar of een radiopaar |
-| **Schakelaar** | Standaard, klein | Spoor 40 × 24 px, knop 20 px, straal `radius-full`; uit is `gray-300`, aan is `accent-500`; de knop schuift in `duration-1`; focus ring om het hele spoor | Radix Switch met `role="switch"` en `aria-checked`; het label staat links en is zelf klikbaar | Iets wat pas werkt na opslaan — een schakelaar belooft directe werking |
-| **Selectievakje** | Enkel, onbepaald, in een lijst | 20 × 20 px, straal `radius-sm`, rand `border-input`; aangevinkt is `accent-500` met een wit vinkje; onbepaald toont een streep; fout kleurt de rand `danger-500` | Radix Checkbox, `aria-checked="mixed"` voor onbepaald, het label is aanklikbaar via `<label>` | Elkaar uitsluitende keuzes — dat is een radiogroep |
+| **Keuzelijst** | Enkel, met zoekregel, gegroepeerd | Ziet eruit als een invoerveld met een pijltje van 16 px; open toont een lijst met `shadow-2` en `radius-lg`; de gekozen regel heeft `surface-selected` en een vinkje | Base UI Select: toetsenbordnavigatie, typen om te springen, `aria-expanded`, focus keert terug naar de knop | Meer dan twaalf opties zonder zoekregel, en nooit voor twee opties — dan is het een schakelaar of een radiopaar |
+| **Schakelaar** | Standaard, klein | Spoor 40 × 24 px, knop 20 px, straal `radius-full`; uit is `gray-300`, aan is `accent-500`; de knop schuift in `duration-1`; focus ring om het hele spoor | Base UI Switch met `role="switch"` en `aria-checked`; het label staat links en is zelf klikbaar | Iets wat pas werkt na opslaan — een schakelaar belooft directe werking |
+| **Selectievakje** | Enkel, onbepaald, in een lijst | 20 × 20 px, straal `radius-sm`, rand `border-input`; aangevinkt is `accent-500` met een wit vinkje; onbepaald toont een streep; fout kleurt de rand `danger-500` | Base UI Checkbox, `aria-checked="mixed"` voor onbepaald, het label is aanklikbaar via `<label>` | Elkaar uitsluitende keuzes — dat is een radiogroep |
 | **Kaart** | Rustig (rand `gray-200`, geen schaduw), aanklikbaar, met kop | Straal `radius-lg`, binnenruimte 24 px op de laptop en 16 px op de telefoon; aanklikbaar krijgt bij zweven `surface-hover` en bij focus de ring om de hele kaart | Is de hele kaart klikbaar, dan zit de koppeling op de titel en dekt een onzichtbaar vlak de rest; nooit `onClick` op een `<div>` | Een lijst van gelijksoortige regels — dat is een lijstrij |
 | **Lijstrij** | Enkelvoudig, tweeregelig, met miniatuur, met reeksstaaf | Hoogte 56 px enkel, 72 px tweeregelig; binnenruimte 12 px verticaal en 20 px horizontaal; scheidingslijn `gray-200`; zweven `surface-hover`; geselecteerd `surface-selected` met een linkerstaaf van 3 px in `accent-500`; de reeksstaaf van 3 px zit links en gebruikt een `series`-teken | De rij is een `<a>` of `<button>`; de driepuntsknop (B-33) is een aparte knop met de naam "Meer acties voor <titel>" | Meer dan drie gegevens per regel — dan is het een tabel |
-| **Tabblad** | Onderstreept, gesegmenteerd | Onderstreept: tekst `gray-700`, actief `gray-900` met een onderstreep van 2 px in `accent-500`; gesegmenteerd: vulling `gray-100` met een witte actieve pil en `shadow-1` | Radix Tabs: pijltjestoetsen wisselen, `aria-selected`, het paneel heeft `tabindex="0"` als het schuift | Stappen in een proces — dat is een stappenbalk, en die heeft 1.0 niet |
-| **Paneel dat inschuift** | Rechts 400 px, schermvullend onder 768 px, onderblad op de telefoon | Schuift in 240 ms met `easing-enter`, met een waas van `color-scrim` eronder; `shadow-3`; een kop van 56 px met titel en sluitknop; de inhoud schuift, de kop niet | Radix Dialog met `modal`; focus springt naar de kop, Escape sluit, focus keert terug naar de knop die hem opende; achterliggende inhoud krijgt `aria-hidden` | Een bevestiging van één zin — dat is een dialoogvenster |
+| **Tabblad** | Onderstreept, gesegmenteerd | Onderstreept: tekst `gray-700`, actief `gray-900` met een onderstreep van 2 px in `accent-500`; gesegmenteerd: vulling `gray-100` met een witte actieve pil en `shadow-1` | Base UI Tabs: pijltjestoetsen wisselen, `aria-selected`, het paneel heeft `tabindex="0"` als het schuift | Stappen in een proces — dat is een stappenbalk, en die heeft 1.0 niet |
+| **Paneel dat inschuift** | Rechts 400 px, schermvullend onder 768 px, onderblad op de telefoon | Schuift in 240 ms met `easing-enter`, met een waas van `color-scrim` eronder; `shadow-3`; een kop van 56 px met titel en sluitknop; de inhoud schuift, de kop niet | Base UI Dialog met `modal`; focus springt naar de kop, Escape sluit, focus keert terug naar de knop die hem opende; achterliggende inhoud krijgt `aria-hidden` | Een bevestiging van één zin — dat is een dialoogvenster |
 | **Dialoogvenster** | Bevestiging, invoer, vernietigend | Breedte 480 px, straal `radius-xl`, `shadow-4`, binnenruimte 24 px; knoppen rechtsonder met de bevestigende knop rechts; op de telefoon een onderblad met een greep van 32 × 4 px | Zelfde als het paneel; de vernietigende variant zet de standaardfocus op Annuleren, niet op Verwijderen | Iets wat je ook naast het werk kunt tonen — een dialoogvenster blokkeert |
 | **Melding** | Bevestiging, waarschuwing, fout, informatie; als strook of als zwevend bericht | Strook: volle breedte, achtergrond `*-bg`, linkerrand 3 px in de semantische kleur, pictogram 20 px, titel `text-sm` 600, tekst `text-sm` 400. Zwevend: rechtsonder, breedte 360 px, `shadow-3`, verdwijnt na 6 seconden, blijft staan bij zweven of focus | `role="status"` voor bevestiging en informatie, `role="alert"` voor fout; een zwevende melding met een handeling verdwijnt nooit vanzelf | Een fout in een formulierveld — die hoort onder het veld |
 | **Voortgangsbalk** | Bepaald, onbepaald | Hoogte 4 px, straal `radius-full`, spoor `gray-200`, vulling `accent-500`; de bepaalde variant toont rechts een percentage in `text-xs`; de onbepaalde variant schuift een blok van 30% heen en weer in 1200 ms | `role="progressbar"` met `aria-valuenow`, `aria-valuemin`, `aria-valuemax`; bij onbepaald alleen `aria-label` | Iets korter dan 500 ms — dan gebeurt er niets zichtbaars |
@@ -4609,7 +4615,7 @@ Een documentatie leeft op één apparaat (B-01). Er is geen synchronisatie en er
 | # | Wat de gebruiker doet | Wat de app doet | Wat de gebruiker ziet |
 |---|---|---|---|
 | 1 | Op de schoollaptop: Instellingen → Back-up maken | Vraagt naar de omvang | Twee knoppen: Alles, inclusief foto's, ongeveer 1,4 GB en Zonder foto's, ongeveer 6 MB, met onder allebei één zin over waar je hem voor gebruikt |
-| 2 | Kiest Alles | Schrijft een `.efb`-bestand: een archief met `manifest.json`, `records.ndjson` en een map met de fotobestanden, elk met een controlegetal | Een voortgangsbalk per tabel, met de teller "612 van 1.480 records" |
+| 2 | Kiest Alles | Schrijft een `.efb`-bestand met de structuur uit §8.7: `manifest.json`, één `data/<tabel>.json` per tabel en `blobs/<hash>` voor de foto's, elk met een controlegetal | Een voortgangsbalk per tabel, met de teller "612 van 1.480 records" |
 | 3 | Zet het bestand op de geheugenstick | Doet niets; het bestand is van jou | De download in de browser |
 | 4 | Op de thuislaptop: opent het webadres, typt de toegangscode | Zet de cookie | Het scherm uit F-01 stap 1 |
 | 5 | Tikt Ik heb een back-upbestand | Slaat de rest van de eerste-keer-ervaring over | Een scherm met één knop: Kies bestand |
@@ -4690,7 +4696,7 @@ Dit is de flow waar het product op staat of valt. Alles wat er in de app zit, di
 | 10 | Drukt `Cmd + Enter` of tikt Laat AI meeschrijven | Start de keten uit F-08: pseudonimiseren, opdracht opbouwen, controlescherm | Het controlescherm schuift over het scherm (zie F-08) |
 | 11 | Leest het controlescherm en tikt Versturen | Roept `AIService.run()` aan via de eigen server en zet de codes daarna terug om in namen | Een wachtindicator met de verstreken tijd in hele seconden, en de knop Annuleren |
 | 12 | Leest het voorstel | Toont het voorstel onder haar eigen tekst, niet in een apart paneel | Ongeveer 160 woorden lopende tekst met haar eigen woorden erin, en drie knoppen: Overnemen, Opnieuw, Weggooien |
-| 13 | Tikt Overnemen en kiest Vervangen | Vraagt eerst aanvullen of vervangen (B-39), legt de oude tekst vast als `ChangeLogEntry` en zet dan de nieuwe tekst in het tekstblok | Een dialoog met twee knoppen en één zin uitleg per knop; daarna de nieuwe tekst met een gele rand die na drie seconden vervaagt, en de regel "Ongedaan maken" rechtsboven |
+| 13 | Tikt Overnemen en kiest Vervangen | Vraagt eerst aanvullen of vervangen (B-39), legt de oude tekst vast in `aiUndoSnapshot` (T-43) en zet dan de nieuwe tekst in het tekstblok | Een dialoog met twee knoppen en één zin uitleg per knop; daarna de nieuwe tekst met een gele rand die na drie seconden vervaagt, en de regel "Ongedaan maken" rechtsboven |
 | 14 | Leest de tekst door en past twee woorden aan | Slaat op na één seconde stilte en telt de wijzigingen mee voor de correctieregels (zie §6.5.4) | De tekst met de aanwijzer erin, "Opgeslagen 15:47" rechtsboven |
 | 15 | Drukt `Cmd + E` of tikt Print-PDF | Opent het exportpaneel dat over het schrijfscherm schuift (B-06) | Vier miniaturen met de layouts A tot en met D, een voorbeeld van de eerste pagina en de regel "2 pagina's" |
 | 16 | Kiest layout A-fotoraster | Laat `LayoutService` de blokken over de sloten verdelen; zes foto's en de tekst passen niet op één A4 liggend, dus maakt `PageService` een tweede `Page` met layout E-vervolg (B-07, B-15) | Het voorbeeld wisselt, en onder het voorbeeld staan twee paginaminiaturen met de titel op allebei |
@@ -4760,7 +4766,7 @@ De flow splitst zich op zes plekken, en op vijf daarvan is doorlopen zonder keuz
 | Na stap 2 | Een documentatie met alleen een titel, status concept | De regel in de lijst met de titel en de datum |
 | Na stap 7 | Een documentatie met foto's zonder tekst; die foto's tellen mee in de opslag | De regel in de lijst met een fotomarkering en de telling "6 foto's" |
 | Na stap 11, vóór stap 13 | Alleen een `AIInteraction` met uitkomst "afgebroken". Het voorstel zelf wordt niet bewaard | Haar eigen tekst, ongewijzigd, zonder voorstel |
-| Na stap 13, vóór stap 18 | De overgenomen tekst en de `ChangeLogEntry` met de vorige versie | De documentatie met status concept, en 30 dagen lang de mogelijkheid de vorige tekst terug te halen |
+| Na stap 13, vóór stap 18 | De overgenomen tekst en de `aiUndoSnapshot` met de vorige versie | De documentatie met status concept, en de mogelijkheid de vorige tekst terug te halen zolang de momentopname er staat |
 | Na stap 18 | Alles, en de status staat op gedeeld | De documentatie in de lijst met het groene label |
 
 Een documentatie die je halverwege verlaat is nooit stuk. Er is geen tussentoestand waarin blokken naar pagina's verwijzen die niet bestaan, want `PageService` maakt pagina's pas bij het openen van het exportpaneel en berekent ze opnieuw bij elke wijziging.
@@ -5264,7 +5270,7 @@ flowchart TD
 
 **Beslispunten.** Bij stap 2 mag zij de initiaal weigeren; dan krijgen beide Noa's bij afscherming een eigen code en meldt het controlescherm dat expliciet.
 
-**Foutpaden.** **F-22.E1** — overlappend lidmaatschap in dezelfde groep: geblokkeerd met het voorstel het bestaande te verlengen (FR-INS-08, INV-04). **F-22.E2** — ingangsdatum vóór het begin van het schooljaar: toegestaan met een opmerking.
+**Foutpaden.** **F-22.E1** — overlappend lidmaatschap in dezelfde groep: geblokkeerd met het voorstel het bestaande te verlengen (FR-INS-08, INV-25). **F-22.E2** — ingangsdatum vóór het begin van het schooljaar: toegestaan met een opmerking.
 
 **Meetpunt.** Of oude documentaties van vóór 3 november ongewijzigd blijven. Lidmaatschap met een looptijd is er precies om dat te garanderen.
 
@@ -5609,7 +5615,7 @@ Faalt de validatie bij lezen, dan gooit `StorageService` het record niet weg. Hi
 opzij in een quarantainelijst, schrijft een `auditEvent` van het type `validatie-mislukt`, en
 laat de rest van de lijst gewoon zien. Eén kapot record maakt geen scherm onbruikbaar.
 
-De database heet `eduflow`. Er is er één per oorsprong. `navigator.storage.persist()` wordt
+De database heet `eduflow-v1` (T-40). De naam wijkt bewust af van de `eduflow`-database uit de ontwikkelversie van vóór deze Bible: die had een ander recordmodel, en een nieuwe naam is de eenvoudigste manier om ze naast elkaar te laten bestaan zonder migratieketen. De oude database wordt niet gelezen, niet gewijzigd en niet verwijderd; er is één eenmalige uitleesroute die hem als `.efb`-bestand wegschrijft. Er is één database per oorsprong. `navigator.storage.persist()` wordt
 bij de eerste start aangevraagd; wordt hij geweigerd of genegeerd, dan geldt de
 back-upherinnering uit B-02 en het opslagbeleid uit §8.9.
 
@@ -5772,7 +5778,7 @@ interface Student extends BaseRecord {
 | `schoolYearId` | verwijzing | ja | bestaand schooljaar |
 | `colour` | opsomming | ja | een van acht |
 
-Er is geen `studentIds` op een groep en geen `groupId` op een leerling. Beide richtingen lopen uitsluitend via `groupMemberships` (U-07, B-16, INV-01).
+Er is geen `studentIds` op een groep en geen `groupId` op een leerling. Beide richtingen lopen uitsluitend via `groupMemberships` (U-07, B-16, INV-23).
 
 #### 8.3.3 `groupMemberships`
 
@@ -5801,7 +5807,7 @@ const groupMembership = baseRecord.extend({
 });
 ```
 
-Overlap binnen dezelfde combinatie leerling-groep is verboden (INV-04). Die controle staat in `GroupService`, niet in Zod, want hij vraagt om andere records.
+Overlap binnen dezelfde combinatie leerling-groep is verboden (INV-25). Die controle staat in `GroupService`, niet in Zod, want hij vraagt om andere records.
 
 #### 8.3.4 `series`
 
@@ -5881,7 +5887,7 @@ interface PhotoBlock extends BlockBase {
 interface QuoteBlock extends BlockBase {
   kind: "quote";
   text: string;                       // ≤ 400 tekens
-  studentId: Uuid | null;             // hoogstens één (INV-09)
+  studentId: Uuid | null;             // hoogstens één (INV-14)
   attributionStyle: "roepnaam" | "initiaal" | "geen";
 }
 
@@ -5918,7 +5924,7 @@ Gescheiden om één reden: metagegevens worden vaak gelezen (elke lijst, elke zo
 | `hash` | tekst | SHA-256 over de oorspronkelijke bytes; herkent dubbelen bij terugzetten (FR-INS-31) |
 | `capturedAt` | datumtijd of null | uit EXIF, vóór het strippen |
 | `orientation` | geheel getal | al toegepast bij het verkleinen; hier alleen ter informatie |
-| `refCount` | geheel getal | aantal `PhotoBlock`s dat verwijst; 0 betekent verweesd (T-22) |
+| `refCount` | geheel getal | aantal `PhotoBlock`s dat verwijst; 0 betekent verweesd (T-38) |
 
 `photoVariants`:
 
@@ -6040,7 +6046,7 @@ erDiagram
 |---|---|---|---|---|
 | Documentation | Page | 1 : n | Page (`documentationId`) én Documentation (`pageIds`, volgorde) | meeverwijderen |
 | Page | Block | 1 : n | ingebed | meeverwijderen |
-| Block | Photo | n : 0..1 | Block (`photoId`) | `refCount` verlagen; op 0 opruimen (T-22) |
+| Block | Photo | n : 0..1 | Block (`photoId`) | `refCount` verlagen; op 0 opruimen (T-38) |
 | Photo | PhotoVariant | 1 : 3 | PhotoVariant | meeverwijderen |
 | Documentation | Student | n : m | Documentation (`studentIds`) | losmaken, aanduiding "verwijderde leerling" |
 | Documentation | Group | n : m | Documentation (`groupIds`) | losmaken |
@@ -6105,9 +6111,11 @@ Omkering, beschreven maar niet uitgevoerd: `groupId = groupIds[0] ?? null`, waar
 
 Vóór elke migratie die gegevens weggooit, maakt de app automatisch een onversleutelde back-up in het geheugen en biedt hij die als bestand aan als de migratie mislukt.
 
+**Er is geen migratieketen van de ontwikkelversie van vóór deze Bible naar versie 1.0** (T-40). Die versie draaide op de database `eduflow` met een ander recordmodel: sleutels als UUIDv4, geen `deletedAt`, `rev`, `origin` of `schemaVersion`, één tekstveld in plaats van pagina's met blokken, en één groep per leerling. Versie 1.0 begint op `eduflow-v1` en telt vanaf schemaversie 1 van dat schema. De reden is dat er nul echte records bestaan: een migratie die precies één keer draait op nul records, maar daarna jarenlang onderhouden en getoetst moet worden, is complexiteit zonder opbrengst (U-05, DR-02). Wat er wél is: één eenmalige uitleesroute die een bestaande `eduflow`-database als `.efb`-bestand wegschrijft, zodat er niets verdampt. De oude database wordt daarbij niet gewist.
+
 ### 8.7 Het back-upbestand
 
-Eén zip-bestand. Naam: `eduflow-backup-2026-08-07-pc-carlo.zip`, met `-onversleuteld` erachter als er geen wachtwoord is gebruikt.
+Eén archiefbestand met de extensie `.efb` (T-42). Naam: `eduflow-backup-2026-08-07-pc-carlo.efb`, met `-onversleuteld` erachter als er geen wachtwoord is gebruikt. Het archief is een zip; de eigen extensie bestaat zodat de bestandskiezer en de foutmeldingen één woord hebben voor "een EduFlow-back-up" en niet voor "een willekeurig zipbestand".
 
 ```
 manifest.json
@@ -6160,7 +6168,7 @@ Terugzetten:
 |---|---|---|
 | `mailMessages` | 7 dagen na `cachedAt` | opruimronde bij elke start en elk uur |
 | Prullenbak (alle tabellen met `deletedAt`) | 30 dagen | opruimronde bij elke start |
-| `photos` met `refCount` 0 | tot en met de eerstvolgende start (T-22) | opruimronde bij elke start |
+| `photos` met `refCount` 0 | tot en met de eerstvolgende start (T-38) | opruimronde bij elke start |
 | `changeLog` | 5.000 regels, ingekort tot 500 na een geslaagde back-up | ringbuffer |
 | `aiInteractions` | 365 dagen | opruimronde bij elke start |
 | `feedback` | volgt de bijbehorende `aiInteraction` | idem |
@@ -6616,7 +6624,7 @@ De vier soorten handhaving in de kolom *Afgedwongen in* betekenen het volgende. 
 | INV-12 | Twee blokken op dezelfde pagina staan nooit in hetzelfde slot, en een blok staat in hoogstens één slot. | Anders tekenen twee blokken over elkaar heen in de PDF. | `LayoutService` | De toewijzing wordt geweigerd; `PageService` maakt een vervolgpagina. |
 | INV-13 | Een `PhotoBlock` verwijst naar een `Photo` die bestaat en niet verwijderd is. | Een fotoblok zonder foto levert een lege plek in een geëxporteerde PDF, en dat merk je pas bij de ouder. | `DocumentationService` bij schrijven, `PhotoService` bij de opruimronde | Het blok toont een melding in het scherm; exporteren is geblokkeerd tot je het blok verwijdert of vervangt. |
 | INV-14 | Een `QuoteBlock` verwijst naar hoogstens één leerling. | Een citaat is één uitspraak van één kind, of van niemand in het bijzonder (B-37). | Type | Meer dan één verwijzing is niet uit te drukken; het type laat het niet toe. |
-| INV-15 | Een documentatie met status `gedeeld` heeft minstens één geslaagde exportregistratie. | De status is afgeleid, niet gezet (B-13). Zonder deze regel kan hij liegen. | `DocumentationService` (de status is een functie, geen veld) | De situatie kan niet ontstaan: de status wordt berekend uit de registraties. |
+| INV-15 | Een documentatie met status `gedeeld` heeft `firstExportedAt` gevuld met het moment van de eerste geslaagde export. | De status is afgeleid en wordt niet door de gebruiker gezet (B-13, T-41). Zonder deze regel kan hij liegen. | `DocumentationService` is de enige schrijver van het veld; hij leidt de waarde af uit `firstExportedAt` | Het veld is opgeslagen en geïndexeerd, maar geen enkel scherm en geen enkele andere service schrijft eraan; een afwijking tussen `status` en `firstExportedAt` wordt bij het lezen gecorrigeerd en gelogd. |
 | INV-16 | De datum van een documentatie ligt niet in de toekomst en niet vóór het begin van het oudste schooljaar in de opslag. | Je documenteert wat gebeurd is. Een datum in de toekomst breekt sortering, filters en de reeksvolgorde. | Zod, `DocumentationService` | Opslaan faalt met de melding dat de datum niet klopt; het veld krijgt de nadruk. |
 | INV-17 | Een foto waarnaar geen enkel `PhotoBlock` verwijst, bestaat hoogstens tot en met de eerstvolgende start van de app. | Losse blobs vullen de opslag met materiaal dat niemand meer kan zien en dat er wel toe doet (T-09). | `PhotoService`, opruimronde bij starten | De opruimronde verwijdert de foto en zijn varianten en schrijft één `AuditEvent`. |
 | INV-18 | Van elke beschikbare foto bestaan precies drie varianten: 480, 1280 en 3300 pixels op de lange zijde. | Zonder de drukversie is 300 dpi op een A4 liggend niet haalbaar (T-02). | `PhotoService` | De foto komt niet in de toestand `beschikbaar` en is niet te kiezen. |
@@ -7221,7 +7229,13 @@ Autosave (T-09, C10 uit de review):
 4. Mislukt de schrijfactie door ruimtegebrek, dan blijft de toestand in het geheugen, blijft het scherm bewerkbaar, en probeert de app elke tien seconden opnieuw (F-24.E2).
 5. De opslagindicator kent drie standen: "Opgeslagen", "Wijzigingen worden bewaard", "Niet opgeslagen — er is een probleem". Nooit een draaiend rondje zonder tekst.
 
-**Ongedaan maken** (T-07, B-39) is een stapel in het geheugen van hoogstens vijftig stappen, per documentatie, per sessie. Hij overleeft een herlaadactie niet, en dat is een bewuste beperking: een ongedaan-maken-stapel die de opslag in gaat, is een tweede geschiedenis naast `changeLog`.
+**Ongedaan maken** (T-07, B-39) kent twee vormen, en het verschil zit in wat er op het spel staat.
+
+Gewone bewerkingen — typen, herordenen, een foto verwijderen — hebben een stapel in het geheugen van hoogstens vijftig stappen, per documentatie, per sessie. Die overleeft een herlaadactie niet, en dat is een bewuste beperking: een volledige ongedaan-maken-geschiedenis die de opslag in gaat, is een tweede geschiedenis naast `changeLog`.
+
+**Het terugdraaien van een AI-bewerking is de uitzondering en wordt wél bewaard** (T-43). Vóór **Overnemen** legt `DocumentationService` de vorige inhoud vast in `aiUndoSnapshot` op de documentatie: één stap, met de vorige tekst, het tijdstip en de gebruikte opdracht. Die momentopname overleeft een herlaadactie en het sluiten van het tabblad. De reden is U-10: een AI-bewerking is de enige handeling waarbij een machine je woorden vervangt, en dan is "je had het tabblad niet moeten sluiten" geen aanvaardbaar antwoord.
+
+`changeLog` speelt hierin geen rol. Die tabel bevat uitsluitend `table`, `recordId`, `rev`, `op`, `at` en `origin` en **nooit veldwaarden** (§8.3.13); hij kan een tekst dus niet teruggeven.
 
 ### 10.8 Gelijktijdigheid en twee tabbladen
 
@@ -7369,7 +7383,7 @@ DocumentationEditor
 WCAG 2.2 AA is de vloer (§4.9). Wat dat in de bouw betekent:
 
 - Elk interactief element is een echt element: `button`, `a`, `input`. Geen `div` met een klikafhandelaar.
-- Panelen en dialoogvensters komen uit Radix, met focusopsluiting, `aria-modal`, Esc en het herstellen van de focus op het element dat het paneel opende. Zelf bouwen is hier een bekende bron van fouten.
+- Panelen en dialoogvensters komen uit Base UI (T-39), met focusopsluiting, `aria-modal`, Esc en het herstellen van de focus op het element dat het paneel opende. Zelf bouwen is hier een bekende bron van fouten.
 - Focus is altijd zichtbaar: een omtrek van 2 px in de accentkleur met 2 px afstand, ook op donkere achtergronden.
 - Elke wijziging die niet op de plek van de focus zichtbaar is, wordt gemeld in een `aria-live="polite"`-gebied: "Opgeslagen", "Voorstel klaar", "Foto toegevoegd", "3 van 11 treffers".
 - Iconen zonder tekst hebben een `aria-label` in het Nederlands.
@@ -7410,7 +7424,7 @@ Ter afsluiting, één handeling helemaal uitgeschreven — een citaat toevoegen 
 
 1. **Scherm.** `QuoteList` toont een leeg veld; de gebruiker typt en kiest een leerling. Het component weet niets van opslag.
 2. **Hook.** `useDocumentationEditor.addQuote(text, studentId)` roept de service aan. De hook weet niets van regels.
-3. **Service.** `PageService.addBlock(pageId, { kind: "quote", text, studentId })` valideert met Zod, controleert INV-09 (hoogstens één leerling), bepaalt het slot via `LayoutService`, en schrijft in één transactie de pagina weg met een verhoogde `rev`.
+3. **Service.** `PageService.addBlock(pageId, { kind: "quote", text, studentId })` valideert met Zod, controleert INV-14 (hoogstens één leerling), bepaalt het slot via `LayoutService`, en schrijft in één transactie de pagina weg met een verhoogde `rev`.
 4. **Opslag.** `StorageService` zet `updatedAt`, `rev` en `origin`, schrijft een regel in `changeLog`, en voert de transactie uit.
 5. **Gebeurtenis.** `DocumentationContentChanged` gaat de bus op.
 6. **Abonnees.** `SearchService` werkt de index bij, `StyleService` neemt de tekst mee in de volgende meting, `LayoutService` herberekent of er een vervolgpagina nodig is.
@@ -7928,7 +7942,7 @@ Bestanden zijn de onderschatte integratie. Ze vragen geen overeenkomst, geen tok
 
 | Bestand | Formaat | Richting | Beschreven in |
 |---|---|---|---|
-| Back-up | zip met JSON en JPEG's, optioneel versleuteld | beide | §8.7 |
+| Back-up | `.efb`: archief met JSON per tabel en JPEG's, optioneel versleuteld | beide | §8.7 |
 | Print-PDF | PDF/A-compatibel, A4 liggend | uit | §6.1.12 |
 | Deelbare afbeelding | JPEG 2480 × 1754 | uit | §5.12 |
 | Agenda | ICS | beide | §6.2.7 |
@@ -8351,19 +8365,26 @@ Wie zou wat kunnen willen, en wat is de maatregel.
 
 De regel: **elke afhankelijkheid is een besluit dat je opschrijft.** Voor versie 1.0 is de lijst kort en elk onderdeel heeft een reden die niet "handig" is.
 
+De volledige toegestane lijst voor versie 1.0 is vastgelegd in T-45. Een pakket dat er niet op staat, komt er niet in zonder een nieuw `T-`besluit (DR-18).
+
 | Pakket | Waarvoor | Waarom niet zelf |
 |---|---|---|
 | `next`, `react` | framework en weergave | — |
 | `dexie` | IndexedDB | de ruwe koppeling is foutgevoelig bij transacties en migraties |
+| `dexie-react-hooks` | `useLiveQuery` (§11.2) | de opslag is de bron; handmatige ongeldigverklaring is een tweede waarheid |
 | `zod` | validatie | één schema voor typen en controle |
 | `zustand` | schermtoestand | 3 kB, geen aanbieder om de app heen |
-| Radix UI | dialoogvensters, panelen, keuzelijsten | toegankelijkheid die je zelf niet betrouwbaar bouwt (§11.6) |
+| `@base-ui/react` | dialoogvensters, panelen, keuzelijsten | toegankelijkheid die je zelf niet betrouwbaar bouwt (§11.6, T-39) |
 | `pdf-lib` | PDF genereren | T-14 |
 | `pdfjs-dist` | rasteren naar JPEG | B-27 |
 | `tailwindcss` | opmaak | tokens uit hoofdstuk 5 |
+| `lucide-react` | iconen | een icoonset tekenen is werk zonder opbrengst |
+| `clsx`, `tailwind-merge`, `cva` | klassenamen samenstellen | kleine hulpmiddelen, geen componentbibliotheek |
+| `sonner` | de meldbalk onderin uit §4.7 | zes seconden, met **Ongedaan maken**, zonder eigen toestandsbeheer |
+| `tw-animate-css` | de in- en uitschuifanimaties van panelen en dialoogvensters | levert `animate-in`, `fade-in-0`, `zoom-in-95` en `slide-in-from-*`, die Tailwind v4 zelf niet heeft; zonder dit pakket verschijnen panelen zonder overgang |
 | `vitest`, `@playwright/test`, `axe-core` | toetsen | T-19 |
 
-Er is geen pakket voor datums (de standaardfuncties van de browser volstaan voor één tijdzone), geen pakket voor toestandsmachines, geen pakket voor formulieren en geen componentbibliotheek buiten Radix.
+Er is geen pakket voor datums (de standaardfuncties van de browser volstaan voor één tijdzone), geen pakket voor toestandsmachines, geen pakket voor formulieren en geen tweede componentbibliotheek naast Base UI. `lucide-react`, `clsx`, `tailwind-merge` en `cva` zijn hulpmiddelen en geen componentbibliotheek; ze leveren geen enkel bedienbaar element.
 
 **Beleid.** Versies staan vast in het `lockfile`, dat in het versiebeheer staat. Er is geen automatische bijwerking. Eén keer per week draait een controle op bekende kwetsbaarheden; een kritieke melding wordt binnen 48 uur behandeld, een hoge binnen twee weken. Een nieuwe afhankelijkheid komt er alleen met een regel in het besluitenregister.
 
@@ -8515,7 +8536,7 @@ Dit is het antwoord op B11t en de basis onder de belofte uit §1.6.
 
 **Wat er gemeten wordt.** Twaalf documentaties, gemaakt zoals de maker ze nu maakt: foto's van de telefoon halen, in een tekstverwerker schrijven, opmaken, exporteren, versturen. Per documentatie wordt met een stopwatch bijgehouden: totale tijd, aantal keren wisselen tussen programma's, en of hij dezelfde dag af kwam.
 
-**Wanneer.** Vóór sprint 1, in de eerste twee weken van het schooljaar 2026-2027. Niet erna, want dan weet je al hoe het beter kan en meet je jezelf te snel.
+**Wanneer.** In de eerste vier schoolweken van 2026-2027, van 24 augustus tot en met 18 september. De meting loopt parallel aan de bouwstappen 0 tot en met 9 en houdt sprint 1 niet tegen (T-44, §1.6.1); die stappen leveren geen documentatiescherm op, dus de maker werkt in die weken nog volledig op de oude manier. Compleet en vastgelegd vóór stap 11. Niet later, want dan weet je al hoe het beter kan en meet je jezelf te snel.
 
 **Waarmee vergeleken wordt.** Twaalf documentaties in EduFlow, gemaakt in dezelfde periode van het volgende trimester, met dezelfde stopwatch.
 
@@ -8858,7 +8879,35 @@ Aanleiding: het vastleggen van het volledige product in één handboek, op basis
 | T-37 | Domeingebeurtenissen worden synchroon afgehandeld na de transactie en zelf niet opgeslagen |
 | T-38 | Verweesde foto's worden opgeruimd bij het verwijderen van het laatste verwijzende blok, met een opruimronde bij elke start als vangnet |
 
-### 19.5 Openstaand
+### 19.5 Besluiten van 8 augustus 2026 — architectuurreview
+
+Op 8 augustus 2026 is de bestaande codebase volledig getoetst aan deze Bible. Daaruit kwamen zevenentwintig dragende afwijkingen, eenentwintig interne tegenstrijdigheden in dit document, en zeven punten waarop een besluit ontbrak. Die zeven zijn hieronder genomen. Ze zijn genummerd T-39 tot en met T-45; die nummers zijn niet eerder gebruikt.
+
+| # | Besluit in één zin |
+|---|---|
+| T-39 | De componentlaag is Base UI (`@base-ui/react`); Radix wordt niet geïnstalleerd |
+| T-40 | Versie 1.0 begint op de database `eduflow-v1`; er komt geen migratieketen vanaf de ontwikkelversie |
+| T-41 | `status` is een opgeslagen veld dat uitsluitend door `DocumentationService` wordt afgeleid uit `firstExportedAt` |
+| T-42 | Het back-upbestand heeft de extensie `.efb` en de interne structuur uit §8.7 |
+| T-43 | Het terugdraaien van een AI-bewerking loopt via `aiUndoSnapshot` en overleeft een herlaadactie |
+| T-44 | De nulmeting loopt parallel aan de bouwstappen 0 tot en met 9 en houdt sprint 1 niet tegen |
+| T-45 | De toegestane afhankelijkheden voor versie 1.0 liggen vast; `idb` en `jspdf` verdwijnen bij respectievelijk stap 4 en stap 13 |
+
+**T-39 — Base UI als componentlaag.** *Probleem:* §11.6 en §16.8 schreven Radix voor, terwijl de bestaande code op `@base-ui/react` staat en daar negentien primitieven en vijf gedeelde patronen op gebouwd zijn. *Reden:* het productdoel is een toegankelijke primitievenlaag, niet een merk. Base UI komt van hetzelfde team als Radix, biedt dezelfde focusopsluiting, `aria-modal`, Esc-afhandeling en focusherstel, en is de opvolger in dezelfde lijn. Overstappen zou een week kosten aan werk dat aan het doel niets toevoegt. *Gevolg:* §5.7, §11.6 en §16.8 noemen Base UI. Radix wordt niet geïnstalleerd en er komt geen tweede componentbibliotheek naast. Bestaande Base UI-componenten blijven waar ze aan hoofdstuk 5 voldoen. *Herziening:* zodra Base UI geen ondersteuning meer krijgt of een WCAG 2.2 AA-tekort vertoont dat `axe-core` in de bouwstraat aantoont.
+
+**T-40 — Nieuwe database, geen migratieketen.** *Probleem:* de ontwikkelversie draait op de database `eduflow` met een recordmodel dat op zes dragende punten afwijkt van hoofdstuk 8: UUIDv4 in plaats van UUIDv7, geen `deletedAt`, `rev`, `origin` of `schemaVersion`, één tekstveld in plaats van pagina's met blokken, en één groep per leerling. *Reden:* er zijn nul echte records. §15.6 verbiedt gegevens van echte kinderen tot DPIA, FRIA en verwerkersovereenkomst rond zijn, en dat is niet zo. Een migratieketen zou enkele honderden regels code zijn die precies één keer draait, op nul records, en daarna jarenlang onderhouden en getoetst moet worden. Dat is U-05 en DR-02 tegelijk geschonden. *Gevolg:* versie 1.0 opent `eduflow-v1` en telt vanaf schemaversie 1 van dat schema. De oude database wordt niet gelezen, niet gewijzigd en niet verwijderd. Er komt één eenmalige uitleesroute die een bestaande `eduflow`-database als `.efb`-bestand wegschrijft. *Herziening:* niet van toepassing; dit besluit vervalt zodra stap 4 is opgeleverd.
+
+**T-41 — `status` opgeslagen, betekenis afgeleid.** *Probleem:* §8.3.5 maakte `status` een opgeslagen en geïndexeerd veld, terwijl §2.1.2 en INV-15 stelden dat de status geen veld is maar een functie. Beide konden niet waar zijn. *Reden:* het overzicht, de filters en `SearchService` hebben een index op status nodig; een berekende waarde is niet te indexeren in IndexedDB. Tegelijk is het gevaar dat §2.1.2 benoemt reëel: een veld dat iedereen kan zetten, gaat liegen. *Gevolg:* het veld bestaat en is geïndexeerd, maar `DocumentationService` is de enige schrijver en leidt de waarde af uit `firstExportedAt`. Geen scherm en geen andere service raakt het aan. De gebruiker zet de status nooit. De eerste geslaagde export maakt hem `gedeeld`, en `gedeeld` is onomkeerbaar (B-94). Een afwijking tussen `status` en `firstExportedAt` wordt bij het lezen gecorrigeerd en gelogd. *Herziening:* bij het ontwerp van fase 2, wanneer een tweede schrijver denkbaar wordt.
+
+**T-42 — `.efb` met de structuur uit §8.7.** *Probleem:* §8.7 beschreef een zip met `data/<tabel>.json` en `blobs/`, terwijl F-03 en F-23 spraken van een `.efb` met `records.ndjson`. *Reden:* de extensie komt uit de flows, want die staat in drie schermteksten en in foutpad F-03.E6 dat de gebruiker letterlijk vertelt een bestand op `.efb` te kiezen. De interne structuur komt uit §8.7, want één bestand per tabel maakt terugzetten in stappen mogelijk en dat is precies waarom §8.7 elk bestand afzonderlijk versleutelt. *Gevolg:* `eduflow-backup-<datum>-<apparaat>.efb`, met `manifest.json`, `data/<tabel>.json` per tabel en `blobs/<hash>`. Het archief is een zip; de eigen extensie bestaat voor de bestandskiezer en de foutmeldingen. *Herziening:* niet voorzien.
+
+**T-43 — `aiUndoSnapshot` voor het terugdraaien van AI.** *Probleem:* drie plaatsen beschreven drie verschillende mechanismen — §4.8 en F-04 een `ChangeLogEntry`, §6.1.1 een veld `aiUndoSnapshot`, §10.7 een stapel in het geheugen die een herlaadactie niet overleeft. De eerste kan niet, want §8.3.13 verbiedt veldwaarden in `changeLog`. *Reden:* een AI-bewerking is de enige handeling waarbij een machine je woorden vervangt. U-10 eist dat dat terug te draaien is, en "je had het tabblad niet moeten sluiten" is dan geen aanvaardbaar antwoord. *Gevolg:* `aiUndoSnapshot` op de documentatie bevat één stap met de vorige tekst, het tijdstip en de gebruikte opdracht, en overleeft herladen en het sluiten van het tabblad. De in-geheugenstapel van vijftig stappen blijft bestaan voor gewone bewerkingen. `changeLog` speelt geen rol en blijft zonder veldwaarden. *Herziening:* niet voorzien.
+
+**T-44 — Nulmeting parallel aan stap 0 tot en met 9.** *Probleem:* §1.6.1 en §17.10 eisten dat de twaalf metingen compleet waren vóór sprint 1, met een meetperiode van 24 augustus tot 18 september 2026, terwijl §18.2 sprint 1 op 11 augustus 2026 liet beginnen. Die drie data konden niet alle drie kloppen. *Reden:* de stappen 0 tot en met 9 — governance, bouwstraat, `lib/`, domeintypen, `StorageService`, de gebeurtenissenbus, `AuditService`, `SettingsService`, de leerlingen- en groepenservices, `PrivacyService` en `BackupService` — leveren geen enkel bruikbaar documentatiescherm op. De maker documenteert in die weken nog volledig op de oude manier, dus de meting wordt niet beïnvloed. *Gevolg:* sprint 1 wacht niet. De twaalf metingen moeten compleet en vastgelegd zijn vóór stap 11, waar `DocumentationService` en `PageService` een werkend schrijfscherm mogelijk maken. De doelwaarde van veertig procent blijft ongewijzigd, en de nulmeting wordt niet bijgesteld nadat het resultaat bekend is. *Herziening:* niet van toepassing.
+
+**T-45 — De toegestane afhankelijkheden.** *Probleem:* zeven pakketten waren in gebruik zonder besluit (DR-18), en §16.8 noemde Radix terwijl de code op Base UI staat. *Reden:* elke afhankelijkheid is een besluit dat je opschrijft; een lijst die niet klopt met de werkelijkheid dwingt niets af. *Gevolg:* de tabel in §16.8 is de volledige lijst. `lucide-react`, `clsx`, `tailwind-merge` en `cva` zijn toegestane kleine hulpmiddelen en geen componentbibliotheek: ze leveren geen bedienbaar element. `sonner` is toegestaan voor de meldbalk uit §4.7. `tw-animate-css` blijft omdat de UI-laag aantoonbaar niet zonder kan: `animate-in`, `fade-in-0`, `zoom-in-95` en `slide-in-from-*` worden gebruikt door het inschuifpaneel, het keuzemenu en het dialoogvenster, en Tailwind v4 levert die zelf niet. `idb` verdwijnt bij stap 4, wanneer `StorageService` op Dexie draait; `jspdf` verdwijnt bij stap 13, wanneer `RenderService` op `pdf-lib` en `pdf.js` staat. Tot die stappen blijven ze staan, en er wordt geen enkele nieuwe regel functionaliteit op gebouwd. *Herziening:* bij elke aanvraag voor een nieuw pakket; die vraagt een eigen `T-`nummer.
+
+### 19.6 Openstaand
 
 Deze punten zijn bekend, niet vergeten, en hebben een eigenaar en een moment.
 
@@ -8868,7 +8917,7 @@ Deze punten zijn bekend, niet vergeten, en hebben een eigenaar en een moment.
 | O-02 | De verzonnen groep | Vastgelegd in bijlage A; de twintig namen staan, de drie reeksen staan | gereed |
 | O-03 | Gesprek met de functionaris gegevensbescherming | DPIA-opzet, FRIA-opzet, demonstratie met werkende app | 1-14 december 2026 (§18.2) |
 | O-04 | Verwerkersovereenkomst met de AI-aanbieder, via het bestuur | Bestuur aan zet; de maker levert de gegevensstroomtabel uit §15.2 | vóór de eerste echte gegevens |
-| O-05 | Nulmeting | Twaalf documentaties handmatig geklokt volgens B-51 | 24 augustus - 18 september 2026 |
+| O-05 | Nulmeting | Twaalf documentaties handmatig geklokt volgens B-51; loopt parallel aan de bouwstappen 0 tot en met 9 (T-44) | 24 augustus - 18 september 2026, compleet vóór stap 11 |
 | O-06 | Vakantiebestand vullen | Schooljaren 2026-2027 tot en met 2028-2029, drie regio's | vóór sprint 4 |
 | O-07 | Beoordeling door collega's | Drie collega's, drie documentaties van vóór en drie van na, blind | juni 2027 |
 
@@ -9007,7 +9056,7 @@ In de wortel van het project staat een kort bestand dat bij elke sessie meekomt.
 # EduFlow
 
 AI-assistent voor pedagogische professionals. Documentaties, agenda, mail.
-Volledige specificatie: `docs/06 - Product Bible.md`. Dat document is bindend.
+Volledige specificatie: `docs/EduFlow - Product Bible v1.0.md`. Dat document is bindend.
 
 ## Lees dit vóór je code schrijft
 - Hoofdstuk 2: de tien uitgangspunten, met de rangorde uit B-52
@@ -9030,7 +9079,7 @@ Volledige specificatie: `docs/06 - Product Bible.md`. Dat document is bindend.
 pnpm dev · pnpm test · pnpm test:golden · pnpm lint · pnpm typecheck · pnpm e2e
 
 ## Testgegevens
-Groep 4 - De Regenboog, twintig verzonnen namen: zie hoofdstuk 13 van het handboek.
+Groep 4 - De Regenboog, twintig verzonnen namen: zie bijlage A van het handboek.
 Gebruik nooit namen van echte kinderen, ook niet in een voorbeeld.
 ```
 
@@ -9102,7 +9151,7 @@ uit flow F-22.
 
 ### A.4 Wat er nog aangeleverd moet worden
 
-De stijlvoorbeelden (O-01 in §19.5) zijn geen technisch testmateriaal maar de norm
+De stijlvoorbeelden (O-01 in §19.6) zijn geen technisch testmateriaal maar de norm
 waaraan de AI wordt gemeten. Ze bestaan uit drie of vier paren, elk met een ruwe
 notitie zoals de maker die maakt, de documentatie zoals die zou moeten worden, en een
 te ver doorgeschoten versie met de reden waarom die fout is (§12.9, FR-INS-16).

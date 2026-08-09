@@ -14,9 +14,9 @@ function makeStudent(overrides: Partial<Student> = {}): Student {
 }
 
 /**
- * Besluiten T-12, T-13 en B-25: voornaam, roepnaam en achternaam worden alle
- * drie afgeschermd, en achternamen van één of twee letters worden overgeslagen
- * omdat die in gewone tekst meer valse treffers opleveren dan bescherming.
+ * Voornaam, roepnaam en achternaam worden alle drie afgeschermd, en achternamen
+ * van één of twee letters worden overgeslagen omdat die in gewone tekst meer
+ * valse treffers opleveren dan bescherming.
  */
 describe("getMaskableNames", () => {
   it("neemt de voornaam mee", () => {
