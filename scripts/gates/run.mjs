@@ -20,58 +20,13 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import { join, resolve } from "node:path";
 
-const WORTEL = resolve(import.meta.dirname, "../..");
+import { bestaat, bronbestanden, lees, mislukt, ok, WORTEL, zoek } from "./hulp.mjs";
+
 const isCI = Boolean(process.env.CI);
-
-/* ------------------------------------------------------------------ hulp -- */
-
-const lees = (pad) => readFileSync(join(WORTEL, pad), "utf8");
-const bestaat = (pad) => existsSync(join(WORTEL, pad));
-
-/** Alle bronbestanden onder een map, met de opgegeven extensies. */
-function bronbestanden(map, extensies = [".ts", ".tsx", ".mts", ".mjs", ".js", ".jsx"]) {
-  const start = join(WORTEL, map);
-  if (!existsSync(start)) return [];
-
-  const gevonden = [];
-  const loop = (dir) => {
-    for (const naam of readdirSync(dir)) {
-      const pad = join(dir, naam);
-      if (statSync(pad).isDirectory()) {
-        if (naam === "node_modules" || naam === ".next") continue;
-        loop(pad);
-      } else if (extensies.some((ext) => naam.endsWith(ext))) {
-        gevonden.push(pad);
-      }
-    }
-  };
-  loop(start);
-  return gevonden;
-}
-
-/** Zoekt een patroon in een verzameling bestanden en geeft de treffers terug. */
-function zoek(bestanden, patroon) {
-  const treffers = [];
-  for (const pad of bestanden) {
-    const regels = readFileSync(pad, "utf8").split(/\r?\n/);
-    regels.forEach((regel, i) => {
-      if (patroon.test(regel)) {
-        // Altijd met schuine strepen, zodat een melding op Windows en Linux
-        // hetzelfde leest en met paden te vergelijken is.
-        const relatief = pad.slice(WORTEL.length + 1).replaceAll("\\", "/");
-        treffers.push(`${relatief}:${i + 1}  ${regel.trim().slice(0, 120)}`);
-      }
-    });
-  }
-  return treffers;
-}
-
-const ok = (bericht) => ({ geslaagd: true, bericht });
-const mislukt = (bericht, details = []) => ({ geslaagd: false, bericht, details });
 
 /* ---------------------------------------------------------------- poorten -- */
 
@@ -82,16 +37,37 @@ const POORTEN = [
     naam: "Lintregel: geen persoonsgegevens naar een logfunctie",
     bron: "DR-44",
     wanneer: "elke wijziging",
-    status: "wacht",
-    activeertBij: "stap 3 — domeintypen",
-    waarom:
-      "DR-44 verbiedt een Documentation, Student, Page, Block, MailMessage of MailDraft als geheel " +
-      "aan een logfunctie mee te geven. Dat is een typegebaseerde regel; vier van de zes typen " +
-      "bestaan nog niet en typegericht linten heeft domain/ nodig.",
-    voorwaarde: () =>
-      bestaat("src/domain/types")
-        ? "src/domain/types bestaat: de zes verboden typen zijn nu benoembaar, dus deze regel moet nu werken."
-        : null,
+    status: "actief",
+    uitgevoerdDoor: "pnpm lint en pnpm test",
+    run: () => {
+      const regelbestand = "eslint-rules/dr-44-geen-record-in-logregel.mjs";
+      if (!bestaat(regelbestand)) {
+        return mislukt(`De lintregel ontbreekt: ${regelbestand}.`);
+      }
+
+      const config = lees("eslint.config.mjs");
+      if (!config.includes('"eduflow/dr-44-geen-record-in-logregel": "error"')) {
+        return mislukt("De lintregel staat niet op `error` in eslint.config.mjs.");
+      }
+      // Zonder typeinformatie kijkt de regel naar niets en meldt hij niets.
+      if (!config.includes("projectService")) {
+        return mislukt("Typegericht linten staat uit; DR-44 kijkt dan naar geen enkel type.");
+      }
+
+      // Zes typen uit DR-44 plus de vier blokvarianten waaruit `Block` bestaat.
+      const regel = lees(regelbestand);
+      const ontbreekt = ["Documentation", "Student", "Page", "Block", "MailMessage", "MailDraft"] //
+        .filter((typenaam) => !regel.includes(`"${typenaam}"`));
+      if (ontbreekt.length) {
+        return mislukt(`De regel kent deze typen uit DR-44 niet: ${ontbreekt.join(", ")}.`);
+      }
+
+      if (!bestaat("src/domain/dr-44.test.ts")) {
+        return mislukt("De toets die bewijst dat de regel bijt ontbreekt: src/domain/dr-44.test.ts.");
+      }
+
+      return ok("Zes typen verboden in een logregel, typegericht afgedwongen en met een toets erop.");
+    },
   },
 
   {
