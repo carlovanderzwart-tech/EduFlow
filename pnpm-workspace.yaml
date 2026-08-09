@@ -1,0 +1,14 @@
+# pnpm-instellingen. Vanaf pnpm 10 wonen deze hier en niet meer in package.json.
+#
+# Buildscripts draaien niet zomaar: pnpm vraagt per pakket om toestemming. Dat is
+# de gewenste stand, want een postinstall-script is willekeurige code die bij elke
+# installatie draait — risico R-11 uit §16.5 van de Product Bible. Elke regel
+# hieronder is dus een bewust besluit en geen formaliteit.
+allowBuilds:
+  # Levert de platformspecifieke binding die de import-resolver van ESLint
+  # gebruikt. Zonder deze binding valt lint terug op een trage JavaScript-resolver.
+  unrs-resolver: true
+
+  # Het postinstall-script drukt alleen een donatieboodschap af en is voor de
+  # bouw niet nodig.
+  core-js: false

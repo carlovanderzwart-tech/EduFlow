@@ -1,0 +1,108 @@
+name: Bouwstraat
+
+# De poorten uit §16.9 van de Product Bible. Elf controles, elk met een moment:
+# de meeste bij elke wijziging, de kwetsbaarhedencontrole en de gouden testset
+# met netwerk ook wekelijks.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Maandag 06:00 UTC — de wekelijkse ronde uit §16.9.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: bouwstraat-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Zonder deze regel installeert Playwright zijn browsers op een pad dat niet
+  # in de cache past.
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright
+
+jobs:
+  poorten:
+    name: Poorten bij elke wijziging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm komt uit corepack en niet uit een aparte actie: de versie staat al
+      # in het veld `packageManager` van package.json (T-45, §20.5).
+      - name: pnpm inschakelen
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Afhankelijkheden installeren
+        run: pnpm install --frozen-lockfile
+
+      # Poort 2 en 3: de lintregels uit §10.2, DR-11 en DR-13.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecontrole
+        run: pnpm typecheck
+
+      - name: Eenheidstoetsen
+        run: pnpm test
+
+      # Poort 8 meet de bundel, dus die heeft een bouw nodig.
+      - name: Bouw
+        run: pnpm build
+
+      - name: Browsers voor de schermtoetsen
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Poort 7: axe-core op elk scherm, faalt bij WCAG 2.2 AA (NFR-30).
+      - name: Schermtoetsen met axe-core
+        run: pnpm e2e
+
+      # De elf poorten met hun stand. Faalt bij een actieve poort die niet slaagt
+      # en bij een wachtende poort waarvan het onderwerp inmiddels bestaat.
+      - name: Bouwstraatpoorten
+        run: pnpm gates
+
+      - name: Rapport bewaren bij een fout
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-rapport
+          path: playwright-report/
+          retention-days: 7
+
+  wekelijks:
+    name: Wekelijkse poorten
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pnpm inschakelen
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Afhankelijkheden installeren
+        run: pnpm install --frozen-lockfile
+
+      # Poort 6 draait ook bij elke wijziging; wekelijks vangt de kwetsbaarheid
+      # die pas na de laatste wijziging bekend werd.
+      - name: Kwetsbaarheden
+        run: pnpm gates afhankelijkheden
+
+      # Poort 11 wacht op implementatiestap 16. Hij staat hier al zodat de
+      # wekelijkse ronde compleet is zodra hij actief wordt.
+      - name: Gouden testset met netwerk
+        run: pnpm gates golden-online
