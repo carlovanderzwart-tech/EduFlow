@@ -144,3 +144,9 @@ vite.config.ts.timestamp-*
 
 # Local Claude Code settings (machine-specific, not project config)
 .claude/
+
+# Playwright: rapport en sporen van de schermtoetsen
+playwright-report/
+test-results/
+blob-report/
+.playwright/
