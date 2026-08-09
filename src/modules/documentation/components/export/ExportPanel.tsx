@@ -28,7 +28,7 @@ import { ExportPreview } from "./ExportPreview";
 import { PhotoConsentDialog } from "./PhotoConsentDialog";
 import { TemplatePicker } from "./TemplatePicker";
 
-/** Waar de gebruiker naartoe wil (doc 04, *Exporteren*). */
+/** Waar de gebruiker naartoe wil (docs/archief/04, *Exporteren*). */
 export type ExportDestination = "pdf" | "afbeelding";
 
 /** Wat er na een geslaagde export op de documentatie wordt vastgelegd. */
@@ -81,9 +81,9 @@ function readCanCopy(): boolean {
 /**
  * Het exportpaneel (besluit B-06): vier miniaturen, een voorbeeld, het aantal
  * pagina's en de exportknoppen. Het schuift over het schrijfscherm heen en is
- * geen aparte route (doc 03, *Layout*).
+ * geen aparte route (docs/archief/03, *Layout*).
  *
- * **Initialen gaan door de renderlaag heen, niet door de exportlaag.** Doc 02
+ * **Initialen gaan door de renderlaag heen, niet door de exportlaag.** docs/archief/02
  * eist dat het voorbeeld toont wat je krijgt; zou de vervanging pas bij het
  * exporteren gebeuren, dan lopen voorbeeld en bestand uiteen. Daarom wordt de
  * tekst hier één keer omgezet en gebruiken voorbeeld én export dezelfde
@@ -118,7 +118,7 @@ export function ExportPanel({
 
   const isImage = destination === "afbeelding";
 
-  // Alleen de deelbare afbeelding kent de initialenschakelaar (doc 04).
+  // Alleen de deelbare afbeelding kent de initialenschakelaar (docs/archief/04).
   useEffect(() => {
     if (!isImage) return;
 

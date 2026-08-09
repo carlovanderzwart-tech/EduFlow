@@ -16,7 +16,7 @@ interface QuoteListProps {
 
 /**
  * Citaten van kinderen. Apart van de lopende tekst, omdat ze in de opmaak een
- * eigen plek krijgen (doc 04, scherm 3).
+ * eigen plek krijgen (docs/archief/04, scherm 3).
  */
 export function QuoteList({ quotes, onChange }: QuoteListProps) {
   const [draft, setDraft] = useState("");

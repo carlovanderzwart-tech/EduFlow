@@ -63,7 +63,7 @@ export function formatDateShort(value: string): string {
 
 /**
  * Het lopende schooljaar, dat in Nederland op 1 augustus begint en op 31 juli
- * eindigt. Standaardbereik voor het periodefilter (doc 02).
+ * eindigt. Standaardbereik voor het periodefilter (docs/archief/02).
  */
 export function getCurrentSchoolYearRange(today: Date = new Date()): {
   from: string;

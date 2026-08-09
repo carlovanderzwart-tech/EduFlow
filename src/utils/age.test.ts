@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { calculateAge, formatAge } from "./age";
 
 /**
- * Doc 02 vraagt de leeftijd in jaren en maanden ("4 jaar en 1 maand"). Doc 04:
+ * docs/archief/02 vraagt de leeftijd in jaren en maanden ("4 jaar en 1 maand"). docs/archief/04:
  * staat er geen geboortedatum, dan toont EduFlow niets — geen streepje, geen
  * schatting.
  */

@@ -161,7 +161,7 @@ describe("ExportPanel", () => {
       renderPanel("pdf");
       await wachtOpVoorbeeld();
 
-      // Doc 04: de schakelaar zit alleen bij de deelbare afbeelding.
+      // docs/archief/04: de schakelaar zit alleen bij de deelbare afbeelding.
       expect(screen.queryByRole("switch")).not.toBeInTheDocument();
     });
   });

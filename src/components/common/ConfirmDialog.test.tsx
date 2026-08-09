@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 /**
- * Doc 04 (*Gedeelde patronen*): "Verwijderen. Vraagt altijd om bevestiging en
+ * docs/archief/04 (*Gedeelde patronen*): "Verwijderen. Vraagt altijd om bevestiging en
  * zegt wat er verdwijnt." Het tweede deel is hier het belangrijkste: de
  * beschrijving moet zichtbaar zijn.
  */

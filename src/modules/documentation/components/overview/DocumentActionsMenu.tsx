@@ -19,10 +19,10 @@ interface DocumentActionsMenuProps {
 }
 
 /**
- * Acties per documentatie (doc 04, scherm 2): openen, dupliceren, verwijderen.
+ * Acties per documentatie (docs/archief/04, scherm 2): openen, dupliceren, verwijderen.
  *
  * Exporteren staat hier nog niet: dat komt met de exportlaag. Lang indrukken —
- * de tweede manier die doc 04 noemt — is niet gebouwd; een menu-icoon is op
+ * de tweede manier die docs/archief/04 noemt — is niet gebouwd; een menu-icoon is op
  * beide apparaten te gebruiken en lang indrukken botst op de telefoon met
  * tekstselectie en scrollen.
  */

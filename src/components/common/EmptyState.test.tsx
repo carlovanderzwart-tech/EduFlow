@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { EmptyState } from "./EmptyState";
 
 /**
- * Doc 04 (*Gedeelde patronen*): "Nooit alleen leegte. Altijd één zin die
+ * docs/archief/04 (*Gedeelde patronen*): "Nooit alleen leegte. Altijd één zin die
  * uitlegt wat hier komt te staan, plus één knop." De knop is optioneel, maar er
  * mag er nooit meer dan één zijn.
  */

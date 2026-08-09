@@ -9,7 +9,7 @@ import type { Student } from "@/types/student";
 /**
  * Laadt de leerlingen die bij het filter passen. Zoeken, filteren op groep en
  * het al dan niet meenemen van inactieve leerlingen zit in `StudentService` —
- * componenten bevatten geen businesslogica (doc 03).
+ * componenten bevatten geen businesslogica (docs/archief/03).
  *
  * Eén laadpad. Opnieuw laden gebeurt door de teller te verhogen, niet door de
  * query op een tweede plek te herhalen.

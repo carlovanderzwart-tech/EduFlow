@@ -8,7 +8,7 @@ export { createMeasurer, STYLES, type TextMeasurer, type TextStyle };
 
 /**
  * Een documentatie omzetten naar pagina's volgens het gekozen template
- * (doc 03, *Services*).
+ * (docs/archief/03, *Services*).
  *
  * De service valt uiteen in twee stappen die los van elkaar te begrijpen zijn:
  *
@@ -19,12 +19,12 @@ export { createMeasurer, STYLES, type TextMeasurer, type TextStyle };
  *   tekenen, geen beslissingen.
  *
  * Voorbeeld en export gebruiken allebei deze twee stappen. Dat is de reden dat
- * wat je in het paneel ziet niet kan afwijken van wat je exporteert (doc 03:
+ * wat je in het paneel ziet niet kan afwijken van wat je exporteert (docs/archief/03:
  * *"Drie uitkomsten, één renderlaag"*).
  */
 
 /**
- * A4 liggend op 300 dpi met 10 mm veilige marge (doc 04, besluit T-03).
+ * A4 liggend op 300 dpi met 10 mm veilige marge (docs/archief/04, besluit T-03).
  *
  * 297 mm × 300 dpi ÷ 25,4 = 3508 px breed, 210 mm = 2480 px hoog, 10 mm = 118 px.
  * De inhoudsbreedte van 3272 px is precies waarom foto's op 3300 px worden
@@ -45,7 +45,7 @@ export interface RenderedPage {
   pageNumber: number;
   totalPages: number;
   size: PageSize;
-  /** Met de reeks als voorvoegsel wanneer die is ingevuld (doc 04). */
+  /** Met de reeks als voorvoegsel wanneer die is ingevuld (docs/archief/04). */
   title: string;
   /** `Leerling(en): groep geel — Kjeld, Roos`. Leeg als er niets te melden valt. */
   meta: string;
@@ -55,7 +55,7 @@ export interface RenderedPage {
 export interface RenderInput {
   document: Documentation;
   seriesName?: string;
-  /** Leeg wanneer de groep is opgeruimd; die verwijzing mag doodlopen (doc 02). */
+  /** Leeg wanneer de groep is opgeruimd; die verwijzing mag doodlopen (docs/archief/02). */
   groupName?: string;
   /** Voornamen van de gekoppelde leerlingen, in de volgorde van `studentIds`. */
   studentNames?: string[];
@@ -78,7 +78,7 @@ function buildTitle(doc: Documentation, seriesName?: string): string {
 }
 
 /**
- * Doc 04: *"Daaronder in kleiner grijs: `Leerling(en): [groep]`. Zijn er
+ * docs/archief/04: *"Daaronder in kleiner grijs: `Leerling(en): [groep]`. Zijn er
  * leerlingen gekoppeld, dan komen hun voornamen erachter."*
  *
  * Is de groep opgeruimd én zijn er geen leerlingen gekoppeld, dan valt de regel
@@ -98,7 +98,7 @@ function buildMeta(groupName?: string, studentNames: string[] = []): string {
 // ---- Tekst ----------------------------------------------------------------
 
 /**
- * De lopende tekst, en daarna de citaten tussen aanhalingstekens. Doc 04 wil ze
+ * De lopende tekst, en daarna de citaten tussen aanhalingstekens. docs/archief/04 wil ze
  * los van elkaar: *"Citaten krijgen een eigen plek in de opmaak."*
  */
 function buildLines(
@@ -212,7 +212,7 @@ export function layout(input: RenderInput, measure: TextMeasurer): RenderedPage[
     }
 
     // Minder foto's dan het template aankan: de rest schuift op, er blijven
-    // geen lege vakken staan (doc 04).
+    // geen lege vakken staan (docs/archief/04).
     const onThisPage = photoIds.slice(
       index * template.photosPerPage,
       (index + 1) * template.photosPerPage,

@@ -9,7 +9,7 @@ import { formatAge } from "@/utils/age";
 
 interface StudentRowProps {
   student: Student;
-  /** Leeg wanneer de groep is opgeruimd; de leerling blijft dan bestaan (doc 02). */
+  /** Leeg wanneer de groep is opgeruimd; de leerling blijft dan bestaan (docs/archief/02). */
   groupName?: string;
   selected: boolean;
   onSelectedChange: (selected: boolean) => void;
@@ -17,11 +17,11 @@ interface StudentRowProps {
 }
 
 /**
- * Eén regel in de lijst (doc 04, scherm 7): selectievakje, voornaam en
+ * Eén regel in de lijst (docs/archief/04, scherm 7): selectievakje, voornaam en
  * achternaam, de groep, en de leeftijd.
  *
  * De leeftijd komt uit de geboortedatum. Is die er niet, dan staat er niets —
- * geen streepje en geen schatting (doc 02, *Leeftijd*).
+ * geen streepje en geen schatting (docs/archief/02, *Leeftijd*).
  *
  * Inactieve leerlingen zijn zichtbaar grijs. De naam is een knop die over de
  * hele regel uitrekt zodat de hele regel een raakvlak is; het selectievakje

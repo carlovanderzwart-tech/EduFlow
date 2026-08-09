@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { SaveStatus } from "./SaveStatus";
 
 /**
- * Doc 04 (*Gedeelde patronen*): "Kort bericht in beeld: 'Opgeslagen.'" — en in
+ * docs/archief/04 (*Gedeelde patronen*): "Kort bericht in beeld: 'Opgeslagen.'" — en in
  * rust staat er niets.
  */
 describe("SaveStatus", () => {

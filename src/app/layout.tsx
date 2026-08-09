@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
-        {/* Eén keer gemonteerd; hier komen de korte berichten uit doc 04
+        {/* Eén keer gemonteerd; hier komen de korte berichten uit docs/archief/04
             (*Gedeelde patronen*) terecht. */}
         <Toaster position="bottom-center" />
       </body>

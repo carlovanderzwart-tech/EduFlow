@@ -9,7 +9,7 @@ import type { Documentation, DocumentFilter } from "@/types/documentation";
 /**
  * Laadt de documentaties die bij het filter passen. Het filteren zelf zit in
  * `DocumentService`, inclusief de zoekindex — componenten bevatten geen
- * businesslogica (doc 03).
+ * businesslogica (docs/archief/03).
  *
  * Er is één laadpad. Opnieuw laden gebeurt door de teller te verhogen, niet door
  * de query op een tweede plek te herhalen.

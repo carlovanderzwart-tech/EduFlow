@@ -16,7 +16,7 @@ interface ErrorMessageProps {
 /**
  * Foutmelding in gewone taal, met altijd een vervolgstap.
  *
- * Doc 04 (*Gedeelde patronen*): *"Fouten. Altijd in gewone taal, altijd met een
+ * docs/archief/04 (*Gedeelde patronen*): *"Fouten. Altijd in gewone taal, altijd met een
  * vervolgstap. Niet: 'Error 500.'"* Die vervolgstap is hier een **verplichte**
  * prop: een melding zonder vervolgstap is met dit component niet te maken.
  *

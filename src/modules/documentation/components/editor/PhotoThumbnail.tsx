@@ -7,9 +7,9 @@ import { DocumentService } from "@/services/DocumentService";
 
 /**
  * Toont één foto. Haalt zijn eigen blob op, maakt daar een object-URL van en
- * geeft die bij het opruimen weer vrij (doc 03, *Foto's*).
+ * geeft die bij het opruimen weer vrij (docs/archief/03, *Foto's*).
  *
- * Doc 03 schrijft dit expliciet zo voor: foto-blobs gaan niet door Context heen,
+ * docs/archief/03 schrijft dit expliciet zo voor: foto-blobs gaan niet door Context heen,
  * anders hertekent het halve scherm bij elke wijziging.
  */
 export function PhotoThumbnail({ photoId, alt }: { photoId: string; alt: string }) {

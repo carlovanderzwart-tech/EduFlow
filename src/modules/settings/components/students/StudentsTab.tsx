@@ -18,7 +18,7 @@ import { StudentFilters } from "./StudentFilters";
 import { StudentList } from "./StudentList";
 import { StudentDraft, StudentSheet } from "./StudentSheet";
 
-/** Een batchbewerking die nog bevestigd moet worden (doc 02). */
+/** Een batchbewerking die nog bevestigd moet worden (docs/archief/02). */
 type PendingBatch =
   | { kind: "move"; groupId: string }
   | { kind: "deactivate" }
@@ -55,7 +55,7 @@ function titleFor(pending: PendingBatch): string {
   }
 }
 
-/** Doc 02: elke batchbewerking noemt het aantal — "23 leerlingen verplaatsen naar groep blauw". */
+/** docs/archief/02: elke batchbewerking noemt het aantal — "23 leerlingen verplaatsen naar groep blauw". */
 function describeBatch(pending: PendingBatch, count: number, groupName: string): string {
   switch (pending.kind) {
     case "move":
@@ -71,7 +71,7 @@ function describeBatch(pending: PendingBatch, count: number, groupName: string):
 }
 
 /**
- * Het tabblad Leerlingen (doc 04, scherm 7).
+ * Het tabblad Leerlingen (docs/archief/04, scherm 7).
  *
  * Alle bewerkingen lopen via `StudentService`; hier staat alleen wat het scherm
  * moet weten om te tonen en te vragen.
@@ -95,7 +95,7 @@ export function StudentsTab({
   const [pendingBatch, setPendingBatch] = useState<PendingBatch | null>(null);
 
   // Gearchiveerde groepen verdwijnen uit keuzelijsten, maar blijven wel namen
-  // leveren voor leerlingen die er nog in zitten (besluit B-19).
+  // leveren voor leerlingen die er nog in zitten.
   const selectableGroups = groups.filter((group) => !group.archived);
 
   function openSheet(student: Student | null) {

@@ -11,7 +11,7 @@ import { photoRepository } from "./repositories/photoRepository";
 import { serviceError, toServiceError } from "./ServiceError";
 
 /**
- * Documentaties en foto's opslaan, ophalen, verwijderen en zoeken (doc 03).
+ * Documentaties en foto's opslaan, ophalen, verwijderen en zoeken (docs/archief/03).
  *
  * Zoeken loopt via een index in het geheugen die één keer wordt opgebouwd
  * (besluit T-09): IndexedDB kan niet in tekst zoeken, en bij een paar honderd
@@ -23,7 +23,7 @@ let cache: Map<string, Documentation> | null = null;
 const searchIndex = new Map<string, string>();
 
 function buildSearchText(doc: Documentation): string {
-  // Zoeken doorzoekt titel, tekst en citaten (doc 02).
+  // Zoeken doorzoekt titel, tekst en citaten (docs/archief/02).
   return normalizeForSearch([doc.title, doc.text, ...doc.quotes.map((q) => q.text)].join(" "));
 }
 
@@ -105,7 +105,7 @@ export const DocumentService = {
   /**
    * Slaat op en geeft terug wat is opgeslagen.
    *
-   * Een documentatie zonder tekst én zonder foto's wordt niet bewaard (doc 02).
+   * Een documentatie zonder tekst én zonder foto's wordt niet bewaard (docs/archief/02).
    * Bestaat hij al, dan blijft hij staan: leegmaken is geen manier om te
    * verwijderen, want dat zou werk kunnen weggooien zonder dat erom gevraagd is.
    */
@@ -177,7 +177,7 @@ export const DocumentService = {
 
   /**
    * Verkleint de foto en voegt hem toe. Het origineel wordt niet bewaard
-   * (doc 03) — verkleinen gebeurt bij het toevoegen, niet bij het tonen.
+   * (docs/archief/03) — verkleinen gebeurt bij het toevoegen, niet bij het tonen.
    *
    * Neemt de documentatie zelf mee, niet alleen een id. Twee redenen: de nog
    * niet opgeslagen tekst uit de editor gaat dan in dezelfde schrijfactie mee,

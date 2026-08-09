@@ -4,7 +4,7 @@ import { serviceError, toServiceError } from "../ServiceError";
 import { DB_VERSION, MIGRATIONS } from "./migrations";
 
 /**
- * Bezit de verbinding, de schemaversie en de migraties (doc 03, *De
+ * Bezit de verbinding, de schemaversie en de migraties (docs/archief/03, *De
  * repositorylaag*). De repositories gebruiken deze module; niets anders raakt
  * IndexedDB aan.
  */
@@ -27,7 +27,7 @@ export function getDb(): Promise<IDBPDatabase<EduFlowDB>> {
   dbPromise ??= openDB<EduFlowDB>(DB_NAME, DB_VERSION, {
     async upgrade(db, oldVersion, _newVersion, tx) {
       // Alle stappen boven de huidige versie, op volgorde. Eén pad, of je van
-      // niets komt of van een oudere versie (besluit T-20).
+      // niets komt of van een oudere versie.
       for (const migration of MIGRATIONS) {
         if (migration.version > oldVersion) {
           await migration.run(db, tx);
@@ -75,7 +75,7 @@ export function withTransaction<T>(
 
 /**
  * Hoeveel opslag in gebruik is. Nodig omdat Safari sinds versie 17 niets meer
- * meldt als het vol raakt (doc 03, *Opslaglimiet*): er komt een
+ * meldt als het vol raakt (docs/archief/03, *Opslaglimiet*): er komt een
  * `QuotaExceededError` en verder niets.
  */
 export async function getStorageEstimate(): Promise<{

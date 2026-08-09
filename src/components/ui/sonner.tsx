@@ -4,7 +4,7 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 // Afwijking van de registry-versie: die leest het thema uit next-themes.
-// EduFlow is in versie 1 licht (doc 03, Styling: "Donkere modus komt in versie
+// EduFlow is in versie 1 licht (docs/archief/03, Styling: "Donkere modus komt in versie
 // 2"). Zonder provider valt next-themes terug op "system", en dan worden toasts
 // donker bij een donker besturingssysteem terwijl de app licht blijft.
 // Bij het invoeren van donkere modus in versie 2 gaat dit terug naar useTheme.

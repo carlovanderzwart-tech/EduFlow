@@ -1,6 +1,6 @@
 /**
- * Velden die elke entiteit met meerdere exemplaren draagt (doc 03, *Gedeelde
- * velden op elke entiteit*, besluit B-24).
+ * Velden die elke entiteit met meerdere exemplaren draagt (docs/archief/03, *Gedeelde
+ * velden op elke entiteit*, besluit T-11).
  *
  * Tijdstempels staan er ook waar niets ze vandaag leest: ze zijn niet met
  * terugwerkende kracht te maken. Instellingen en het logboek vallen hier buiten

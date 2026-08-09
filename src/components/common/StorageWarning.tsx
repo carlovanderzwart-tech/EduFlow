@@ -12,9 +12,9 @@ const WARN_FROM_RATIO = 0.8;
  * Waarschuwt wanneer de opslag voor 80% vol zit (besluit T-09).
  *
  * Nodig omdat Safari sinds versie 17 helemaal niets meldt als het vol raakt:
- * er komt een `QuotaExceededError` en verder niets (doc 03, *Opslaglimiet*).
+ * er komt een `QuotaExceededError` en verder niets (docs/archief/03, *Opslaglimiet*).
  *
- * Doc 02 wil hier een knop naar exporteren en opruimen. Exporteren bestaat nog
+ * docs/archief/02 wil hier een knop naar exporteren en opruimen. Exporteren bestaat nog
  * niet, dus verwijst de melding nu alleen naar opruimen.
  */
 export function StorageWarning() {

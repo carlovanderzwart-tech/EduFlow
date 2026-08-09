@@ -16,7 +16,7 @@ interface UseAutosaveOptions<T> {
 
 /**
  * Slaat automatisch op na een seconde stilte, en altijd bij het verlaten van
- * het scherm (besluit T-09, doc 02 *Algemene eisen*).
+ * het scherm (besluit T-09, docs/archief/02 *Algemene eisen*).
  *
  * Niet bij elke toetsaanslag: dat zou bij elke letter naar IndexedDB schrijven.
  *
@@ -85,7 +85,7 @@ export function useAutosave<T>({ value, onSave, enabled = true }: UseAutosaveOpt
 
   /**
    * Opslaan op verzoek van de gebruiker. Bevestigt **altijd**, ook wanneer er
-   * niets gewijzigd is (doc 04, *Gedeelde patronen*: *"Kort bericht in beeld:
+   * niets gewijzigd is (docs/archief/04, *Gedeelde patronen*: *"Kort bericht in beeld:
    * 'Opgeslagen.'"*). De knop staat er voor de zekerheid, en een knop die
    * zwijgt geeft die zekerheid niet.
    *

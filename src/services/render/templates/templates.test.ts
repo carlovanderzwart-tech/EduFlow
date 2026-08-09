@@ -5,14 +5,14 @@ import { DEFAULT_TEMPLATE_ID, getTemplate, TEMPLATES } from "./registry";
 
 const page = A4_LANDSCAPE_300DPI;
 
-/** Doc 04, *Opmaak*: vier templates, elk met een eigen aantal foto's. */
+/** docs/archief/04, *Opmaak*: vier templates, elk met een eigen aantal foto's. */
 describe("templates", () => {
   it("kent de vier gedocumenteerde templates, in volgorde", () => {
     expect(TEMPLATES.map((template) => template.id)).toEqual(["a", "b", "c", "d"]);
   });
 
   it("gebruikt template A als standaard", () => {
-    // "De meest gebruikte indeling" (doc 04).
+    // "De meest gebruikte indeling" (docs/archief/04).
     expect(DEFAULT_TEMPLATE_ID).toBe("a");
     expect(getTemplate(undefined).id).toBe("a");
     expect(getTemplate("bestaat-niet").id).toBe("a");
@@ -134,13 +134,13 @@ describe("templates", () => {
   });
 
   it("geeft template C een grotere eerste foto dan tweede", () => {
-    // "één dominante foto rechts, eventueel één kleinere eronder" (doc 04).
+    // "één dominante foto rechts, eventueel één kleinere eronder" (docs/archief/04).
     const [groot, klein] = getTemplate("c").frame(page).photoSlots;
     expect(groot.height).toBeGreaterThan(klein.height);
   });
 
   it("geeft template B de tekst meer ruimte dan template A", () => {
-    // "Voor langere teksten" (doc 04).
+    // "Voor langere teksten" (docs/archief/04).
     const a = getTemplate("a").frame(page).text!;
     const b = getTemplate("b").frame(page).text!;
     expect(b.width).toBeGreaterThan(a.width);

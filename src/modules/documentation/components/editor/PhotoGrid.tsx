@@ -19,7 +19,7 @@ interface PhotoGridProps {
 }
 
 /**
- * Foto's toevoegen, verwijderen en van volgorde wisselen (doc 02).
+ * Foto's toevoegen, verwijderen en van volgorde wisselen (docs/archief/02).
  *
  * Volgorde wisselen gebeurt met knoppen en niet met slepen. Slepen vraagt een
  * extra bibliotheek en werkt op een telefoon slecht samen met scrollen; knoppen

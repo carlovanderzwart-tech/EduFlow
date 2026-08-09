@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ErrorMessage } from "./ErrorMessage";
 
 /**
- * Doc 04 (*Gedeelde patronen*): een fout is altijd in gewone taal en noemt
+ * docs/archief/04 (*Gedeelde patronen*): een fout is altijd in gewone taal en noemt
  * altijd een vervolgstap. Die twee eisen worden hier getest.
  */
 describe("ErrorMessage", () => {

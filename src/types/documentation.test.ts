@@ -18,8 +18,8 @@ function makeDoc(overrides: Partial<Documentation> = {}): Documentation {
 }
 
 /**
- * Doc 02: een documentatie zonder tekst én zonder foto's wordt niet bewaard.
- * Besluit B-05: afgerond volgt uit een export en wordt niet met de hand gezet.
+ * docs/archief/02: een documentatie zonder tekst én zonder foto's wordt niet bewaard.
+ * Besluit B-13: afgerond volgt uit een export en wordt niet met de hand gezet.
  */
 describe("isWorthSaving", () => {
   it("bewaart niets zonder tekst en zonder foto's", () => {

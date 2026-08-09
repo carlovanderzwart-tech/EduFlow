@@ -19,7 +19,7 @@ function makeStudent(overrides: Partial<Student> = {}): Student {
 
 const noop = () => {};
 
-/** Doc 04, scherm 7: per regel een selectievakje, de naam, de groep en de leeftijd. */
+/** docs/archief/04, scherm 7: per regel een selectievakje, de naam, de groep en de leeftijd. */
 describe("StudentRow", () => {
   it("toont de naam en de groep", () => {
     render(
@@ -47,7 +47,7 @@ describe("StudentRow", () => {
       />,
     );
 
-    // Doc 02: geen streepje en geen schatting.
+    // docs/archief/02: geen streepje en geen schatting.
     expect(screen.getByText("groep geel")).toBeInTheDocument();
     expect(screen.queryByText(/jaar/)).not.toBeInTheDocument();
   });

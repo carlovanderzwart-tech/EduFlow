@@ -1,11 +1,16 @@
 import type { IDBPDatabase, IDBPTransaction } from "idb";
 
 /**
- * Migraties als losse, genummerde stappen die op volgorde draaien (besluit
- * T-20). Geen groeiende functie met vertakkingen: een apparaat dat lang niet is
- * geopend springt van versie 1 naar de laatste, en dan is er maar één pad.
+ * Migraties als losse, genummerde stappen die op volgorde draaien. Geen groeiende
+ * functie met vertakkingen: een apparaat dat lang niet is geopend springt van
+ * versie 1 naar de laatste, en dan is er maar één pad. Dezelfde werkwijze staat in
+ * §8.6 van de Bible.
  *
- * **Een migratie roept nooit een service aan** (besluit T-21). Alleen de
+ * Deze migraties horen bij de ontwikkeldatabase `eduflow`. Versie 1.0 begint op
+ * `eduflow-v1` en krijgt geen migratieketen vanaf dit model (T-40); wat hier staat
+ * blijft alleen om een bestaande ontwikkeldatabase te kunnen uitlezen.
+ *
+ * **Een migratie roept nooit een service aan**. Alleen de
  * gegevens en zijn eigen code. Services veranderen mee met de app; een migratie
  * moet doen wat hij deed toen hij geschreven werd, ook over drie jaar. Daarom
  * staan de sleutels en velden hieronder als letterlijke tekst en niet als
@@ -14,7 +19,7 @@ import type { IDBPDatabase, IDBPTransaction } from "idb";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- een migratie werkt op de
    vorm die de gegevens toen hadden, niet op de huidige types. Die vorm typeren
-   zou hem laten meeveranderen met de app, en dat is precies wat T-21 verbiedt. */
+   zou hem laten meeveranderen met de app, en dat is precies wat deze regel verbiedt. */
 
 export interface Migration {
   /** De versie die deze stap oplevert. */

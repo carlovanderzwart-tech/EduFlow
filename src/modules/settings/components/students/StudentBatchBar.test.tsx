@@ -32,7 +32,7 @@ function renderBar(props: Partial<React.ComponentProps<typeof StudentBatchBar>> 
   );
 }
 
-/** Doc 04, scherm 7: het aantal geselecteerde leerlingen en drie acties. */
+/** docs/archief/04, scherm 7: het aantal geselecteerde leerlingen en drie acties. */
 describe("StudentBatchBar", () => {
   it("noemt het aantal geselecteerde leerlingen", () => {
     renderBar();
@@ -57,8 +57,8 @@ describe("StudentBatchBar", () => {
   it("heeft geen verwijderknop", () => {
     renderBar();
 
-    // Leerlingen worden nooit hard verwijderd (T-14). Een massale verwijdering
-    // is precies de handeling waarmee de afscherming stukgaat (doc 02).
+    // Leerlingen worden nooit hard verwijderd (DR-26). Een massale verwijdering
+    // is precies de handeling waarmee de afscherming stukgaat (docs/archief/02).
     expect(screen.queryByRole("button", { name: /verwijder/i })).not.toBeInTheDocument();
   });
 

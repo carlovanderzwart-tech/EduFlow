@@ -17,7 +17,7 @@ import type { GroupWithCount } from "../../hooks/useGroups";
 import { GroupDraft, GroupSheet } from "./GroupSheet";
 import { GroupRow } from "./GroupRow";
 
-/** Een handeling die nog bevestigd moet worden. Beide zeggen wat er gebeurt (doc 04). */
+/** Een handeling die nog bevestigd moet worden. Beide zeggen wat er gebeurt (docs/archief/04). */
 type PendingAction = { kind: "archive" | "remove"; entry: GroupWithCount };
 
 interface GroupsTabProps {
@@ -33,7 +33,7 @@ function plural(count: number): string {
 }
 
 /**
- * Doc 04 eist dat een bevestiging zegt wát er gebeurt. Bij archiveren is de
+ * docs/archief/04 eist dat een bevestiging zegt wát er gebeurt. Bij archiveren is de
  * bijzin over de afscherming geen franje: het is de reden dat archiveren geen
  * verwijderen is.
  */
@@ -57,7 +57,7 @@ function describe({ kind, entry }: PendingAction): string {
 }
 
 /**
- * Het tabblad Groepen (doc 04, scherm 7): toevoegen, hernoemen, opruimen en
+ * Het tabblad Groepen (docs/archief/04, scherm 7): toevoegen, hernoemen, opruimen en
  * archiveren. Alle bewerkingen lopen via `GroupService`.
  */
 export function GroupsTab({ groups, loading, error, onChanged }: GroupsTabProps) {
@@ -115,7 +115,7 @@ export function GroupsTab({ groups, loading, error, onChanged }: GroupsTabProps)
     try {
       await GroupService.unarchive(group.id);
       onChanged();
-      // De leerlingen blijven inactief; dat is een keuze, dus zeg het erbij (B-19).
+      // De leerlingen blijven inactief; dat is een keuze, dus zeg het erbij.
       toast.success("Groep teruggehaald. De leerlingen blijven inactief.");
     } catch (cause) {
       const failure = toServiceError(cause);

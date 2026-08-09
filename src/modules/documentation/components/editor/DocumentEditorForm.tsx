@@ -44,7 +44,7 @@ interface DocumentEditorFormProps {
 }
 
 /**
- * De velden van het bewerkscherm (doc 04, scherm 3).
+ * De velden van het bewerkscherm (docs/archief/04, scherm 3).
  *
  * Staat los van het inlezen, zodat dit component al bij de eerste render de
  * definitieve documentatie heeft. Anders zou het automatisch opslaan het
@@ -69,14 +69,14 @@ export function DocumentEditorForm({
   /** Welk exportpaneel openstaat, of `null` als het dicht is. */
   const [destination, setDestination] = useState<ExportDestination | null>(null);
 
-  // Alleen de leerlingen uit de gekozen groep zijn te koppelen (doc 04).
+  // Alleen de leerlingen uit de gekozen groep zijn te koppelen (docs/archief/04).
   const studentsInGroup = useMemo(
     () => (draft.groupId ? students.filter((student) => student.groupId === draft.groupId) : []),
     [students, draft.groupId],
   );
 
   // Wat de opmaak nodig heeft: de groepsnaam en de voornamen van de gekoppelde
-  // leerlingen (doc 04, *Regels voor alle templates*).
+  // leerlingen (docs/archief/04, *Regels voor alle templates*).
   const groupName = groups.find((group) => group.id === draft.groupId)?.name;
   const studentNames = useMemo(
     () =>
@@ -110,7 +110,7 @@ export function DocumentEditorForm({
 
   const { state, saveNow } = useAutosave({
     value: { document: draft, seriesName },
-    // Een documentatie zonder tekst én zonder foto's wordt niet bewaard (doc 02).
+    // Een documentatie zonder tekst én zonder foto's wordt niet bewaard (docs/archief/02).
     enabled: isWorthSaving(draft),
     onSave: async ({ document }) => {
       try {
@@ -134,7 +134,7 @@ export function DocumentEditorForm({
    * De reden dat het niet bij `SaveStatus` alleen kan blijven: die staat
    * bovenaan het formulier en de knop staat onderaan, ruim een schermhoogte
    * lager. Wie naar de knop scrolt om te klikken, heeft de statusregel niet in
-   * beeld en ziet dus niets. Doc 04 vraagt een kort bericht *in beeld*.
+   * beeld en ziet dus niets. docs/archief/04 vraagt een kort bericht *in beeld*.
    *
    * De melding overleeft het navigeren: de `Toaster` hangt in de root-layout en
    * gaat niet mee met het scherm dat je verlaat. Je ziet de bevestiging dus op
@@ -238,7 +238,7 @@ export function DocumentEditorForm({
         <Field>
           <FieldLabel htmlFor="text">Tekst</FieldLabel>
           {/* Een gewoon tekstveld: geen rich text en geen eigen
-              toetsenbordafhandeling, zodat dicteren blijft werken (doc 03). */}
+              toetsenbordafhandeling, zodat dicteren blijft werken (docs/archief/03). */}
           <Textarea
             id="text"
             value={draft.text}
@@ -261,7 +261,7 @@ export function DocumentEditorForm({
         />
       </FieldGroup>
 
-      {/* Doc 04, *Onderaan*: "Opslaan · Print-PDF · Deelbare afbeelding". */}
+      {/* docs/archief/04, *Onderaan*: "Opslaan · Print-PDF · Deelbare afbeelding". */}
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button onClick={() => void handleSaveClick()} disabled={!isWorthSaving(draft)}>
           Opslaan

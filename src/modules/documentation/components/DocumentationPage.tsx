@@ -29,13 +29,13 @@ import { DocumentFilters, type FilterValues } from "./overview/DocumentFilters";
 import { DocumentList } from "./overview/DocumentList";
 import { SeriesGroupList } from "./overview/SeriesGroupList";
 
-/** Het lopende schooljaar is de standaardperiode (doc 02). */
+/** Het lopende schooljaar is de standaardperiode (docs/archief/02). */
 function initialFilters(): FilterValues {
   const { from, to } = getCurrentSchoolYearRange();
   return { seriesId: "", groupId: "", studentId: "", from, to };
 }
 
-/** Doc 04 eist dat een bevestiging zegt wát er verdwijnt, foto's inbegrepen. */
+/** docs/archief/04 eist dat een bevestiging zegt wát er verdwijnt, foto's inbegrepen. */
 function describeDeletion(doc: Documentation): string {
   const title = doc.title.trim() || "Zonder titel";
   const photoCount = doc.photoIds.length;

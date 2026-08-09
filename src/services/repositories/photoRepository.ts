@@ -3,7 +3,7 @@ import type { Photo } from "@/types/documentation";
 import { withDb } from "../db";
 
 /**
- * Leest en schrijft foto's. Blobs, geen base64 (doc 03, *Foto's*).
+ * Leest en schrijft foto's. Blobs, geen base64 (docs/archief/03, *Foto's*).
  *
  * Het eigenaarschap staat hier via `documentId`; de volgorde staat op de
  * documentatie en is daar de enige bron van waarheid.

@@ -1,7 +1,7 @@
 import { contentRect, gapFor, grid, type PageSize, type Template, type TemplateFrame } from ".";
 
 /**
- * Template B — tekst boven, fotorij onder (doc 04).
+ * Template B — tekst boven, fotorij onder (docs/archief/04).
  *
  * Tekst over de volle breedte bovenaan, daaronder een rij foto's. Voor langere
  * teksten: de tekst krijgt hier de meeste ruimte van alle templates.

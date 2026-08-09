@@ -1,16 +1,16 @@
 import type { Entity } from "./entity";
 
 /**
- * Een leerling in het register (besluit B-15). Het register bestaat om de
+ * Een leerling in het register. Het register bestaat om de
  * afscherming richting AI te laten werken en om een documentatie te kunnen
- * koppelen — niet om iets over een kind bij te houden. Zie doc 01, *Buiten
+ * koppelen — niet om iets over een kind bij te houden. Zie docs/archief/01, *Buiten
  * scope*.
  */
 export interface Student extends Entity {
   firstName: string;
   /**
    * De naam die dagelijks gebruikt wordt, wanneer die afwijkt van de voornaam
-   * (besluit B-25). Een leerkracht schrijft "JP", niet "Jan-Peter", en zonder
+   *. Een leerkracht schrijft "JP", niet "Jan-Peter", en zonder
    * dit veld gaat die naam onafgeschermd de deur uit.
    */
   callName?: string;
@@ -19,20 +19,26 @@ export interface Student extends Entity {
   dateOfBirth?: string;
   /**
    * Verplicht bij invoer. Mag doodlopen wanneer de groep later wordt
-   * opgeruimd — dan blijft de leerling bestaan zonder groep (doc 02).
+   * opgeruimd — dan blijft de leerling bestaan zonder groep (docs/archief/02).
    */
   groupId?: string;
   /**
    * Een leerling die van school gaat gaat op inactief en wordt nooit hard
-   * verwijderd (besluit T-14), omdat de afscherming op het volledige register
-   * werkt (T-12).
+   * verwijderd (besluit DR-26), omdat de afscherming op het volledige register
+   * werkt.
    */
   active: boolean;
   /** Identificatie uit een ander systeem, voor het herkennen bij een import. */
   externalId?: string;
 }
 
-/** Alle namen van één leerling die afgeschermd moeten worden (T-12, T-13, B-25). */
+/**
+ * Alle namen van één leerling die afgeschermd moeten worden.
+ *
+ * De Bible kent hier een ander veldenpakket: `firstName`, `firstNameLower` en
+ * `lastNameInitial`, zonder aparte roepnaam (§8.3.1). Dat volgt bij
+ * implementatiestap 7, samen met de achtstaps vervangingsvolgorde uit §12.5 (T-04).
+ */
 export function getMaskableNames(student: Student): string[] {
   const firstName = student.firstName?.trim();
   const callName = student.callName?.trim();
@@ -40,10 +46,10 @@ export function getMaskableNames(student: Student): string[] {
 
   const names = [firstName, callName].filter((name): name is string => Boolean(name));
 
-  // De lengtegrens uit besluit T-13 geldt **alleen voor achternamen**: die
-  // leveren met één of twee letters meer valse treffers op in gewone tekst dan
-  // bescherming. Voor voornaam en roepnaam geldt hij niet — een kind dat "JP"
-  // wordt genoemd is precies het geval waarvoor de roepnaam bestaat (B-25).
+  // De lengtegrens geldt **alleen voor achternamen**: die leveren met één of twee
+  // letters meer valse treffers op in gewone tekst dan bescherming. Voor voornaam
+  // en roepnaam geldt hij niet — een kind dat "JP" wordt genoemd is precies het
+  // geval waarvoor de roepnaam bestaat.
   if (lastName && lastName.length > 2) {
     names.push(lastName);
   }

@@ -17,13 +17,13 @@ interface StudentFiltersProps {
   onGroupChange: (groupId: string) => void;
   showInactive: boolean;
   onShowInactiveChange: (show: boolean) => void;
-  /** Alleen niet-gearchiveerde groepen; die verdwijnen uit keuzelijsten (B-19). */
+  /** Alleen niet-gearchiveerde groepen; die verdwijnen uit keuzelijsten. */
   groups: Group[];
   onAdd: () => void;
 }
 
 /**
- * Bovenaan het tabblad Leerlingen (doc 04, scherm 7): zoeken op naam, filteren
+ * Bovenaan het tabblad Leerlingen (docs/archief/04, scherm 7): zoeken op naam, filteren
  * op groep, en een knop om een leerling toe te voegen.
  *
  * De schakelaar "Toon inactieve leerlingen" staat hier ook: inactieve

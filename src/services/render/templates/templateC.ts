@@ -1,7 +1,7 @@
 import { contentRect, gapFor, type PageSize, type Template, type TemplateFrame } from ".";
 
 /**
- * Template C — tekst links, één grote foto (doc 04).
+ * Template C — tekst links, één grote foto (docs/archief/04).
  *
  * Tekst links, één dominante foto rechts, eventueel één kleinere eronder. Voor
  * als één beeld de pagina draagt.

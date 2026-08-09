@@ -6,7 +6,7 @@ import { withDb } from "../db";
  * Leest en schrijft leerlingen. Geen businesslogica — zie `StudentService`.
  *
  * Er is geen `delete`. Leerlingen worden op inactief gezet en nooit hard
- * verwijderd (besluit T-14), omdat de afscherming op het volledige register
+ * verwijderd (besluit DR-26), omdat de afscherming op het volledige register
  * werkt. Een methode die dat wel zou kunnen is een uitnodiging om die regel te
  * overtreden.
  */

@@ -1,5 +1,22 @@
 # EduFlow – Implementation Rules
 
+> **GROTENDEELS ACHTERHAALD — zie `docs/EduFlow - Product Bible v1.0.md`**
+>
+> Dit bestand is geschreven onder de architectuur van vóór 8 augustus 2026. De Product
+> Bible v1.0 is sindsdien de enige normatieve bron; hoofdstuk 20 daarvan bevat de
+> geldende ontwikkelregels (DR-01 t/m DR-57).
+>
+> Twee delen hieronder spreken de Bible tegen en gelden **niet** meer:
+> de paragraaf *Architecture Freeze*, die nieuwe services, entiteiten en abstracties
+> verbiedt — versie 1.0 vraagt er vijftien respectievelijk zeventien — en de
+> verwijzing naar `ARCHITECTURE_FREEZE.md`, dat nu in `docs/archief/` staat.
+>
+> Wat hieronder wél blijft gelden, staat ook in hoofdstuk 20 en is daar leidend:
+> één issue per pull request, poorten groen vóór oplevering, geen drive-by refactors.
+>
+> Of dit bestand blijft bestaan of naar `docs/archief/` verhuist, is een openstaand
+> punt uit de architectuurreview van 8 augustus 2026.
+
 ## Status
 
 The architecture has been finalized and approved.
@@ -24,7 +41,7 @@ When code and documentation differ:
 
 ## Architecture Freeze
 
-See also: docs/ARCHITECTURE_FREEZE.md
+See also: docs/archief/ARCHITECTURE_FREEZE.md (historisch, niet meer leidend)
 
 Do not introduce:
 

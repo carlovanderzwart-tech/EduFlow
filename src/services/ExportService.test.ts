@@ -123,7 +123,7 @@ describe("ExportService.toPdf", () => {
     await ExportService.toPdf(pages(2, 6));
 
     expect(paint).toHaveBeenCalledTimes(2);
-    // Op ware grootte: 300 dpi (doc 04).
+    // Op ware grootte: 300 dpi (docs/archief/04).
     expect(paint).toHaveBeenLastCalledWith(expect.anything(), expect.anything(), expect.anything(), 1);
   });
 

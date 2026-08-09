@@ -260,7 +260,7 @@ describe("RenderService.layout", () => {
     });
   });
 
-  /** Doc 04: template D is een raster van vier tot zes foto's, zonder tekst. */
+  /** docs/archief/04: template D is een raster van vier tot zes foto's, zonder tekst. */
   describe("template D", () => {
     it("toont geen tekst, ook niet als de documentatie tekst heeft", () => {
       const [page] = layout(

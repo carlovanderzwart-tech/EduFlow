@@ -1,7 +1,7 @@
 /**
- * Gestandaardiseerde fout uit een service (doc 03, *Error Handling*).
+ * Gestandaardiseerde fout uit een service (docs/archief/03, *Error Handling*).
  *
- * Doc 02 eist dat elke foutmelding in gewone taal is en **altijd een
+ * docs/archief/02 eist dat elke foutmelding in gewone taal is en **altijd een
  * vervolgstap noemt**. Daarom is `nextStep` verplicht: een fout maken zonder
  * vervolgstap kan hier niet. Technische details gaan naar de console.
  */
@@ -46,7 +46,7 @@ const FALLBACK: Record<ServiceErrorCode, { message: string; nextStep: string }> 
 /**
  * Zet een onbekende fout om naar een `ServiceError`. Herkent de
  * `QuotaExceededError` die Safari sinds versie 17 zonder eigen melding gooit
- * (doc 03, *Opslaglimiet*).
+ * (docs/archief/03, *Opslaglimiet*).
  */
 export function toServiceError(error: unknown): ServiceError {
   if (error instanceof ServiceError) return error;

@@ -1,7 +1,7 @@
 import { contentRect, gapFor, grid, type PageSize, type Template, type TemplateFrame } from ".";
 
 /**
- * Template A — tekst links, fotoraster rechts (doc 04).
+ * Template A — tekst links, fotoraster rechts (docs/archief/04).
  *
  * Tekstkolom links op ongeveer een derde, daarnaast vier tot zes foto's in een
  * raster. De meest gebruikte indeling.

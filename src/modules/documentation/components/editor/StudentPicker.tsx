@@ -13,14 +13,14 @@ interface StudentPickerProps {
 }
 
 /**
- * Nul of meer leerlingen uit de gekozen groep aanvinken (besluit B-13).
+ * Nul of meer leerlingen uit de gekozen groep aanvinken (besluit B-17).
  *
  * Leeg laten is de normale situatie en kost geen handeling: het merendeel van de
  * documentaties gaat over de hele groep. Vinkjes en geen zoekveld, want een
  * groep is een korte lijst.
  *
  * Wie je koppelt hoeft niet te kloppen met wie er in de tekst wordt genoemd: de
- * afscherming werkt op de tekst, niet op de koppeling (doc 02).
+ * afscherming werkt op de tekst, niet op de koppeling (docs/archief/02).
  */
 export function StudentPicker({ students, selectedIds, onChange, hasGroup }: StudentPickerProps) {
   function toggle(id: string, checked: boolean) {

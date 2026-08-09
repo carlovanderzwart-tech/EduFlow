@@ -32,7 +32,7 @@ function renderRow(group: Group, studentCount = 23) {
   );
 }
 
-/** Doc 04, scherm 7: naam, schooljaar en hoeveel leerlingen erin zitten. */
+/** docs/archief/04, scherm 7: naam, schooljaar en hoeveel leerlingen erin zitten. */
 describe("GroupRow", () => {
   it("toont naam, schooljaar en aantal leerlingen", () => {
     renderRow(makeGroup());

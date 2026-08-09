@@ -4,10 +4,10 @@ import { templateB } from "./templateB";
 import { templateC } from "./templateC";
 import { templateD } from "./templateD";
 
-/** In de volgorde waarin de miniaturen in het exportpaneel staan (doc 04). */
+/** In de volgorde waarin de miniaturen in het exportpaneel staan (docs/archief/04). */
 export const TEMPLATES: Template[] = [templateA, templateB, templateC, templateD];
 
-/** Template A is de meest gebruikte indeling en daarmee de standaard (doc 04). */
+/** Template A is de meest gebruikte indeling en daarmee de standaard (docs/archief/04). */
 export const DEFAULT_TEMPLATE_ID: TemplateId = "a";
 
 /**
