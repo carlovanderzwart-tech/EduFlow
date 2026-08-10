@@ -25,6 +25,20 @@ describe("zDocumentation — §8.3.5, §6.1.1", () => {
     expect(zDocumentation.safeParse({ ...documentatie(), date: "2026-02-30" }).success).toBe(false);
   });
 
+  it("weigert een datum vóór 2015-08-01 (INV-16)", () => {
+    // De ondergrens is de enige van de drie grenzen uit INV-16 die absoluut is en
+    // dus in het schema hoort. De zevendagengrens (B-70) en de schooljaargrens
+    // vragen om de klok respectievelijk om andere records, en horen bij de service.
+    expect(zDocumentation.safeParse({ ...documentatie(), date: "2015-07-31" }).success).toBe(false);
+    expect(zDocumentation.safeParse({ ...documentatie(), date: "2015-08-01" }).success).toBe(true);
+  });
+
+  it("laat een datum in de toekomst door, want die grens heeft een klok nodig", () => {
+    // Geen vergeetachtigheid: §10.3 legt de klok bij de servicelaag, zodat B-70
+    // te toetsen is zonder de systeemtijd te verzetten.
+    expect(zDocumentation.safeParse({ ...documentatie(), date: "2030-01-01" }).success).toBe(true);
+  });
+
   it("weigert een datum met een tijd erin", () => {
     // §8.1.4: een kalenderdag wordt nooit als tijdstip opgeslagen, want dan
     // verschuift 1 januari op de helft van de apparaten naar 31 december.
