@@ -85,9 +85,8 @@ const OVEREENKOMSTEN: boolean[] = [
 
 describe("types en schemas beschrijven hetzelfde", () => {
   it("dekt elke geïmplementeerde tabel", () => {
-    // Eenentwintig tabellen plus het basisrecord en de blokunie. De drie
-    // ontbrekende tabellen — calendarEvents, holidayPeriods en settings —
-    // hebben geen eenduidige veldbeschrijving in het handboek.
+    // Eenentwintig van de zesentwintig tabellen, plus het basisrecord en de
+    // blokunie. De vijf die ontbreken staan in de kop van schemas/index.ts.
     expect(OVEREENKOMSTEN).toHaveLength(23);
     expect(OVEREENKOMSTEN.every(Boolean)).toBe(true);
   });

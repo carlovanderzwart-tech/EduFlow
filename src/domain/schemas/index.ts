@@ -8,8 +8,10 @@
  * Alle schema's zijn `strict`: een onbekend veld wordt geweigerd, niet
  * genegeerd. Dat is de voorwaarde waaronder INV-23 iets betekent.
  *
- * **Drie tabellen uit §8.3 ontbreken**: `calendarEvents`, `holidayPeriods` en
- * `settings`. Zie de openstaande punten bij implementatiestap 3.
+ * **Vijf van de zesentwintig tabellen uit §8.3 ontbreken**: `calendarEvents`
+ * (O-10), `holidayPeriods` (O-08) en `settings` (O-09) missen een eenduidige
+ * veldbeschrijving; `weekPatterns` en `weekPatternOverrides` (B-98) zijn later
+ * toegevoegd en moeten nog een schema krijgen.
  */
 
 export {

@@ -5,10 +5,11 @@
  * losse paden. De verzameling is precies wat hoofdstuk 8 beschrijft en niets
  * meer (DR-01).
  *
- * **Drie tabellen uit §8.3 ontbreken hier met opzet**: `calendarEvents`,
- * `holidayPeriods` en `settings`. Voor die drie geeft het handboek geen
- * eenduidige veldbeschrijving; ze zijn niet te typeren zonder velden te
- * verzinnen. Zie de openstaande punten bij implementatiestap 3.
+ * **Vijf van de zesentwintig tabellen uit §8.3 ontbreken hier.** Drie omdat het
+ * handboek er geen eenduidige veldbeschrijving voor geeft: `calendarEvents`
+ * (O-10), `holidayPeriods` (O-08) en `settings` (O-09). Twee omdat ze bij een
+ * later besluit zijn toegevoegd en nog getypeerd moeten worden: `weekPatterns`
+ * en `weekPatternOverrides` (B-98, §8.3.15 en §8.3.16).
  */
 
 export type { BaseRecord, Colour, IsoDate, IsoDateTime, Uuid } from "./base";
