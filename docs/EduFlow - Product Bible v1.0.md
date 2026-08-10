@@ -462,6 +462,7 @@ hoofdstuk 19.
   - [19.5 Besluiten van 8 augustus 2026 — architectuurreview](#195-besluiten-van-8-augustus-2026--architectuurreview)
   - [19.6 Openstaand](#196-openstaand)
   - [19.7 Besluiten van 10 augustus 2026 — de basisweek](#197-besluiten-van-10-augustus-2026--de-basisweek)
+  - [19.8 Besluiten van 11 augustus 2026 — de vier blokkades voor `StorageService`](#198-besluiten-van-11-augustus-2026--de-vier-blokkades-voor-storageservice)
 - [20. Ontwikkelregels voor AI-programmeurs](#20-ontwikkelregels-voor-ai-programmeurs)
   - [20.1 Lees dit eerst](#201-lees-dit-eerst)
   - [20.2 De regels](#202-de-regels)
@@ -3818,15 +3819,15 @@ Geen enkele soort heeft een herhaalregel die je zelf instelt (B-101). Wat zich h
 | `herinnering` | nee | nee | documentatie, mailconcept | neutraal-400 | eigen |
 | `documentatiemoment` | nee | nee | groep, leerlingen, documentatie | accent-zacht | eigen |
 
-Gemeenschappelijke velden van een `CalendarEvent`:
+Gemeenschappelijke velden van een `CalendarEvent`. **`allDay` bepaalt het type van `start` en `end`, en dat is één begrip in twee vormen** (T-48). Een hele-dag-item draagt kalenderdagen (`IsoDate`), want §8.1.4 zegt dat een dag zonder tijd nooit als tijdstip wordt opgeslagen — anders verschuift 1 januari op de helft van de apparaten naar 31 december. Een item met tijden draagt tijdstippen (`IsoDateTime`) in UTC. Beide vormen hebben altijd een begin **en** een einde, zoals INV-30 eist; bij een hele-dag-item is het einde de laatste dag, zodat een vakantie van negen dagen één item is. Dat de twee vormen elkaar uitsluiten, is wat INV-31 met "twee varianten in één unie" bedoelt.
 
 | Veld | Type | Verplicht | Standaard | Validatie |
 |---|---|---|---|---|
 | `title` | tekst | ja | — | 1-120 tekens |
 | `kind` | opsomming | ja | `afspraak` | een van de acht |
-| `start` | datumtijd | ja | eerstvolgend half uur | — |
-| `end` | datumtijd | ja bij niet-hele-dag | start + 30 min | niet vóór `start` |
-| `allDay` | ja/nee | ja | volgt uit soort | — |
+| `allDay` | ja/nee | ja | volgt uit soort | bepaalt het type van `start` en `end` (T-48) |
+| `start` | datum bij een hele dag, anders datumtijd | ja | eerstvolgend half uur | — |
+| `end` | datum bij een hele dag, anders datumtijd | ja | start + 30 min | niet vóór `start` |
 | `note` | tekst | nee | leeg | ≤ 2.000 tekens |
 | `location` | tekst | nee | leeg | ≤ 120 tekens |
 | `groupIds` | lijst | nee | leeg | bestaande groepen |
@@ -5596,7 +5597,7 @@ export const zIsoDateTime = z.string().datetime({ offset: false });
 export const zIsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Verwacht JJJJ-MM-DD');
 export const zLocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Verwacht UU:MM');
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 1; // T-47
 
 export const zBaseRecord = z.object({
   id: zUuid,
@@ -6006,7 +6007,20 @@ Bij het toevoegen worden EXIF-locatiegegevens verwijderd en wordt de opnamedatum
 
 `schoolYears`: `name` ("2026-2027"), `firstSchoolDay`, `lastSchoolDay`, `region` (`noord`, `midden`, `zuid`), `isCurrent`.
 
-`holidayPeriods` is een leescache van het meegeleverde bestand, niet de bron. Bij een update van het bestand wordt de tabel leeggemaakt en opnieuw gevuld; `holidayOverrides` blijft staan en wordt eroverheen gelegd (B-50, FR-AGE-11).
+`holidayPeriods` is een leescache van het meegeleverde bestand, niet de bron. Bij een update van het bestand wordt de tabel leeggemaakt en opnieuw gevuld; `holidayOverrides` blijft staan en wordt eroverheen gelegd (B-50, FR-AGE-11). De velden zijn die van één periode uit `schoolvakanties.json` (§6.2.4), met het schooljaar en de regio uit de omhullende structuur erbij, zodat één rij op zichzelf te lezen is (T-49). Indexen: `[schoolYearName+region]`, `holidayKey`.
+
+| Veld | Type | Verplicht | Validatie |
+|---|---|---|---|
+| `schoolYearName` | tekst | ja | zoals in het bestand, bijvoorbeeld "2026-2027" |
+| `region` | opsomming | ja | `noord`, `midden`, `zuid` |
+| `holidayKey` | tekst | ja | `herfst`, `kerst`, `voorjaar`, `mei`, `zomer` — dezelfde sleutel als in `holidayOverrides` |
+| `name` | tekst | ja | 1-60 tekens, zoals het bestand hem noemt |
+| `from` | datum | ja | — |
+| `to` | datum | ja | niet vóór `from` |
+| `fixed` | ja/nee | ja | `true` bij kerst en zomer; die zijn niet aanpasbaar (B-29, INV-32) |
+| `fileVersion` | geheel getal | ja | de `schemaVersion` van het bronbestand |
+
+`fileVersion` staat op elke rij en niet op één centrale plek. Dat is geen dubbeling maar de aard van een leescache: de tabel wordt in één keer leeggemaakt en opnieuw gevuld, dus elke rij draagt dezelfde versie en één rij lezen is genoeg om te weten of het bestand nieuwer is (§13.4). Het alternatief — de versie in `settings` — zou een tweede plek zijn die kan afwijken van de inhoud die erbij hoort.
 
 `holidayOverrides`: `schoolYearName`, `region`, `holidayKey`, `from`, `to`. De sleutel is de combinatie van de eerste drie, zodat een update van het bronbestand jouw aanpassing niet raakt.
 
@@ -6077,7 +6091,22 @@ Dit is het logboek dat de kwaliteitsmeting voedt en dat bij een privacygesprek o
 
 #### 8.3.14 `settings`
 
-Eén record met alle instellingen die persoonsgegevens raken of afleiden: standaardgroep, standaardleerlingen, drempel voor het blok Aandacht, taalkeuze leerling of kind, detectoren aan of uit, en de bevestiging bij een lege leerlingenlijst. Zie §8.2 voor wat er wél in `localStorage` staat.
+Eén record met de instellingen die persoonsgegevens raken of afleiden (T-50). Er is er altijd precies één (INV-49). Zie §8.2.2 voor wat er in `localStorage` staat en dus **niet** hier: de regio, de standaardtoon, de providerkeuze, de laatste weergave, de back-updatum en de eenmalige bevestigingen. Die zes staan daar alleen, en dat is U-02 in de praktijk.
+
+| Veld | Type | Verplicht | Standaard | Validatie | Waaruit het volgt |
+|---|---|---|---|---|---|
+| `defaultGroupId` | verwijzing | nee | — | bestaande groep | de standaardgroep uit §8.3.5 |
+| `defaultStudentIds` | lijst | nee | leeg | bestaande leerlingen, geen dubbelen | de standaardleerlingen uit §8.3.5 |
+| `attentionThresholdDays` | geheel getal | ja | 42 | 1-365 | het blok Aandacht, §9.8 en §6.4.4 |
+| `pupilNoun` | opsomming | ja | `leerling` | `leerling`, `kind` | FR-INS-27 |
+| `disabledDetectors` | lijst | nee | leeg | een deelverzameling van de vijf uitzetbare detectoren | §6.3.10, FR-MAI-24 |
+| `showOutgoingRequest` | ja/nee | ja | `true` | — | FR-INS-21 |
+
+**Twee dingen die hier bewust anders zijn dan de vorige beschrijving van deze tabel.** De bevestiging bij een lege leerlingenlijst staat er niet meer in: die woont in `eduflow.onboardingFlags` (§8.2.2, T-08), en §8.2.2 zegt uitdrukkelijk dat die zes waarden alleen daar staan. En "detectoren aan of uit" is geen enkele schakelaar maar een lijst van uitzonderingen, want FR-MAI-24 zegt dat BSN, IBAN, e-mailadres en telefoonnummer **niet** uit te zetten zijn. Die vier mogen dus nooit in `disabledDetectors` staan; de overige vijf uit §6.3.10 wel.
+
+`showOutgoingRequest` is nieuw ten opzichte van de opsomming die hier eerder stond. FR-INS-21 eist de schakelaar en §16.2 eist dat het uitzetten in het logboek komt; een schakelaar die nergens wordt bewaard, kan geen van beide.
+
+**Er is geen `users`-tabel** (T-50). §9.4 noemt `User` als aggregaat met naam, rol, school en standaardtoon, maar alle vier hebben elders al een plek: de standaardtoon is `eduflow.defaultTone` (§8.2.2), de rol is in versie 1.0 één vaste waarde die niet gebouwd wordt (§14.2), en de schoolnaam is een `PrivacyTerm` met soort `school` (§8.3.10, FR-INS-19). Voor de naam van de gebruiker is er in versie 1.0 geen gebruik: het logboek en de back-upnaam gebruiken de **apparaatnaam** (§16.2, §8.7). Een tabel voor één ongebruikt veld is een tabel te veel, en accounts bestaan in 1.0 niet (B-21).
 
 #### 8.3.15 `weekPatterns`
 
@@ -6249,7 +6278,7 @@ blobs/3f7a1c9e...b2.thumb.jpg
   "formatVersion": 2,
   "createdAt": "2026-08-07T16:20:03.118Z",
   "appVersion": "1.0.0",
-  "dbVersion": 7,
+  "dbVersion": 1,
   "device": { "id": "d7f1...", "name": "pc-carlo" },
   "encryption": { "algorithm": "AES-GCM", "kdf": "PBKDF2-SHA256", "iterations": 600000 },
   "counts": {
@@ -6694,7 +6723,7 @@ Drie regels gelden voor elk aggregaat in EduFlow.
 | `Feedback` | geen | `aiInteractionId` | Los aggregaat omdat terugkoppeling later kan komen |
 | `PrivacyTerm` | geen | geen | De eigen woordenlijst naast de leerlingennamen |
 | `Settings` | geen | geen | Precies één record, altijd aanwezig |
-| `User` | geen | geen | Precies één record; naam, rol, school, standaardtoon |
+| `User` | — | — | Bestaat niet in versie 1.0 (T-50). Naam, rol, school en standaardtoon hebben elk elders een plek |
 | `ExportBundle` | de volledige inhoud van alle andere aggregaten | geen | Bestaat alleen als bestand, niet in de opslag |
 | `AuditEvent` | geen | vrije verwijzing als tekst | Alleen-toevoegen, nooit wijzigen, nooit verwijderen |
 | `ChangeLogEntry` | geen | wortelsleutel van het gewijzigde aggregaat | Alleen-toevoegen; voedt `SyncService` in fase 2 |
@@ -6818,7 +6847,7 @@ Eén regel die je hier zou verwachten staat er niet: dat een aangepaste dag verw
 
 | ID | Regel | Waarom | Afgedwongen in | Bij schending |
 |---|---|---|---|---|
-| INV-49 | Er is precies één `Settings`-record en precies één `User`-record, altijd aanwezig. | Twee instellingenrecords betekenen twee waarheden over de standaardtoon en de regio. | `SettingsService` bij het opstarten | Ontbreekt het record, dan wordt het met standaardwaarden aangemaakt; zijn er meer, dan wint het oudste en wordt de rest gelogd. |
+| INV-49 | Er is precies één `Settings`-record, altijd aanwezig. Een `User`-record bestaat in versie 1.0 niet (T-50). | Twee instellingenrecords betekenen twee waarheden over dezelfde voorkeur. | `SettingsService` bij het opstarten | Ontbreekt het record, dan wordt het met standaardwaarden aangemaakt; zijn er meer, dan wint het oudste en wordt de rest gelogd. |
 | INV-50 | Een `ExportBundle` draagt een `schemaVersion` en is alleen terug te zetten door dezelfde of een hogere versie van de app. | Een nieuwere back-up terugzetten met een oudere app levert stille gegevensverlies op. | `BackupService` bij het inlezen | Terugzetten wordt geweigerd met de melding welke versie nodig is. |
 | INV-51 | Terugzetten uit een back-up overschrijft nooit stilzwijgend: de gebruiker kiest tussen samenvoegen en vervangen, en ziet vooraf de aantallen. | Dit is de enige handeling in de app die in één keer alles kan wissen. | `BackupService`, met een bevestigingsscherm dat de aantallen toont | Terugzetten zonder keuze is niet aan te roepen; de keuze is een verplicht argument. |
 | INV-52 | Een `AuditEvent` wordt alleen toegevoegd. Hij is niet te wijzigen en niet te verwijderen. | Karin moet kunnen aantonen wat er de deur uit ging. Een aanpasbaar logboek bewijst niets. | `AuditService` (alleen een `append`-functie) | Er is geen schrijfpad; de tabel is voor de rest van de app alleen-lezen. |
@@ -9071,12 +9100,12 @@ Deze punten zijn bekend, niet vergeten, en hebben een eigenaar en een moment.
 | O-05 | Nulmeting | Twaalf documentaties handmatig geklokt volgens B-51; loopt parallel aan de bouwstappen 0 tot en met 9 (T-44) | 24 augustus - 18 september 2026, compleet vóór stap 11 |
 | O-06 | Vakantiebestand vullen | Schooljaren 2026-2027 tot en met 2028-2029, drie regio's | vóór sprint 4 |
 | O-07 | Beoordeling door collega's | Drie collega's, drie documentaties van vóór en drie van na, blind | juni 2027 |
-| O-08 | Veldtabel voor `holidayPeriods` | §8.3.8 beschrijft de tabel in proza als leescache van het vakantiebestand en geeft geen velden; ze zijn alleen uit §6.2.4 te reconstrueren en dat is ontwerpen in plaats van afleiden | vóór stap 4 |
-| O-09 | Veldtabel voor `settings`, en het ontbrekende `User` | §8.3.14 somt zes onderwerpen op in gewone taal, zonder veldnamen en zonder typen. INV-49 eist bovendien "precies één `Settings`-record **en precies één `User`-record**", terwijl `User` in §8.3 geen tabel heeft, §9.4 hem wel als aggregaat noemt met "naam, rol, school, standaardtoon", en B-21 zegt dat versie 1.0 geen accounts kent. Drie bepalingen die niet alle drie waar kunnen zijn. Nodig: de veldtabel van `settings`, plus het besluit of `User` in 1.0 bestaat en zo ja waar zijn vier velden wonen | vóór stap 4 |
-| O-10 | De vorm van een agenda-item — de laatste blokkade op `calendarEvents` | INV-30 eist onvoorwaardelijk een begin en een einde, INV-31 eist handhaving in het **type** met "twee varianten in één unie" waarvan de hele-dag-variant géén tijden heeft, en §6.2.2 geeft één vorm met `start` en `end` als datumtijd plus een losse boolean `allDay`. Die drie zijn niet te verenigen. Sinds B-101 het veld `recurrence` heeft geschrapt, is dit het **enige** punt waarop `calendarEvents` nog vastzit. Nodig: één besluit over hoe een hele-dag-item zijn dag of dagen draagt — een `IsoDate`-paar, of een datumtijdpaar met de afspraak dat de tijd genegeerd wordt | vóór stap 4 |
+| O-08 | Veldtabel voor `holidayPeriods` | **Beslecht met T-49** (§19.8). | *(gereed)* |
+| O-09 | Veldtabel voor `settings`, en het ontbrekende `User` | **Beslecht met T-50** (§19.8). | *(gereed)* |
+| O-10 | De vorm van een agenda-item | **Beslecht met T-48** (§19.8). | *(gereed)* |
 | O-11 | Botsingsregel bij samenvoegen, voor alle tabellen | §8.1.4 zegt "bij het samenvoegen van twee versies is `rev` leidend en `updatedAt` de tiebreaker" en §8.10 zegt "per record de hoogste `rev` wint, met `origin` als beslisser bij gelijkstand". De tabel in §8.7 zegt het omgekeerde voor `documentations`, `pages`, `calendarEvents` en `mailDrafts`: "hoogste `updatedAt` wint". Dat raakt dus vier bestaande tabellen en niet alleen `weekPatterns` en `weekPatternOverrides`. Daarbij verwijst §8.1.4 naar §8.7.5 en §8.10.3, en die paragrafen bestaan niet: §8.7 en §8.10 hebben geen subparagrafen. Nodig: één regel voor alle tabellen, en de twee verwijzingen repareren | vóór stap 4 voor het terugzetten van een back-up; vóór fase 2 voor synchronisatie |
 | O-12 | De typen `ConversationAnswer` en `AiUndoSnapshot` | §6.1.1 geeft ze als veldtype op `Documentation`, maar geen van beide wordt ergens uitgeschreven; T-43 noemt voor de tweede drie bestanddelen in proza | vóór de gespreksmodus en vóór "Laat AI meeschrijven" |
-| O-13 | Waar de schemaversie begint | §8.1.5 zet `CURRENT_SCHEMA_VERSION = 7` en begrenst `schemaVersion` daarmee op 7. T-40 en §8.6 zeggen dat versie 1.0 op `eduflow-v1` begint en "telt vanaf schemaversie 1 van dat schema". Beide kunnen niet waar zijn, en er staat nergens wat de versies 1 tot en met 7 zouden betekenen. `StorageService` moet met één getal beginnen, en de bovengrens in het Zod-schema hangt eraan. Nodig: één besluit — begint versie 1.0 op schemaversie 1 of op 7 | vóór stap 4 |
+| O-13 | Waar de schemaversie begint | **Beslecht met T-47** (§19.8). | *(gereed)* |
 
 ### 19.7 Besluiten van 10 augustus 2026 — de basisweek
 
@@ -9112,6 +9141,25 @@ Bij dit werk zijn drie fouten in dit document gevonden die niets met de basiswee
 **Het bereik van B-70 stond niet in het besluit.** B-70 gaat over een documentatiedatum: §8.3.5 citeert hem bij het veld `date` van `documentations`, §10.3 zegt "een documentatie mag hoogstens zeven dagen in de toekomst liggen (B-70)", en het voorbeeldcommentaar bij DR-57 gaat over precies die grens. Maar de rij stond onder het kopje "Agenda, leerlingen en groepen", waardoor hij las als een grens op agenda-items — en dan zou hij de jaarweergave (B-10, B-31) en elke vooruitkijkende agenda blokkeren. De rij is verplaatst naar "Fundament en scope" en de tekst noemt nu het veld. Daarmee is ook de driedubbele grens op `Documentation.date` opgelost: §6.1.1 zei "vandaag plus 365 dagen", INV-16 zei "niet in de toekomst", §8.3.5 zei "vandaag plus zeven dagen". Zeven dagen wint, want dat is wat het besluit zegt. De ondergrens blijft op twee lagen: Zod bewaakt 2015-08-01, `DocumentationService` bewaakt de grens van het oudste schooljaar.
 
 **§6.5 had geen Agenda-scherm.** FR-AGE-23 verwees naar "Instellingen → Agenda" en FR-AGE-25 naar hetzelfde scherm, maar §6.5 kende dertien subsecties waarvan geen enkele Agenda heette. §6.5.7 heette "Regio en schooljaar" en is nu "Agenda", met de regio en het schooljaar erin en de basisweek erbij. Dat kostte geen renummering van de subsecties erna.
+
+### 19.8 Besluiten van 11 augustus 2026 — de vier blokkades voor `StorageService`
+
+Vier openstaande punten uit §19.6 hielden `StorageService` tegen: O-08, O-09, O-10 en O-13. Geen van de vier vroeg een nieuwe productkeuze; alle vier zijn beslecht met wat er al in dit handboek stond. Ze zijn genummerd T-47 tot en met T-50; die nummers zijn niet eerder gebruikt.
+
+| # | Besluit in één zin |
+|---|---|
+| T-47 | Versie 1.0 begint op schemaversie 1, niet op 7 |
+| T-48 | `allDay` bepaalt het type van `start` en `end`: kalenderdagen bij een hele dag, tijdstippen anders |
+| T-49 | `holidayPeriods` draagt de velden van één periode uit het vakantiebestand, plus schooljaar, regio en bestandsversie |
+| T-50 | Er is één `settings`-record met zes velden, en geen `users`-tabel |
+
+**T-47 — schemaversie 1.** *Probleem:* §8.1.5 zette `CURRENT_SCHEMA_VERSION` op 7 en begrensde `schemaVersion` daarmee op 7, terwijl T-40 en §8.6 zeggen dat versie 1.0 op `eduflow-v1` begint en "telt vanaf schemaversie 1 van dat schema". Het back-upmanifest in §8.7 noemde `dbVersion: 7`. `StorageService` moet met één getal beginnen. *Reden:* T-40 is een besluit in het register en is genomen ná de datamodelhoofdstukken, precies om de migratievraag te beslechten; §19.1 maakt het register de plek waar besluiten wonen. Inhoudelijk klopt 1 ook: er zijn nooit versies 1 tot en met 6 van `eduflow-v1` geweest, er staat nergens wat die zes zouden betekenen, en §8.6 eist dat elke migratie omkeerbaar wordt beschreven. Beginnen op 7 zou zes migraties veronderstellen die niet bestaan. *Gevolg:* `CURRENT_SCHEMA_VERSION = 1`, `dbVersion: 1` in het manifest, en het Zod-schema begrenst `schemaVersion` op 1. Bij de eerste echte migratie wordt het 2, met de omkering in woorden erbij. *Herziening:* niet voorzien; het getal loopt mee met de migraties.
+
+**T-48 — één agenda-item in twee vormen.** *Probleem:* INV-30 eist onvoorwaardelijk een begin en een einde, INV-31 eist handhaving in het type met "twee varianten in één unie" waarvan de hele-dag-variant géén tijden heeft, en de veldtabel van §6.2.2 gaf één vorm met `start` en `end` als datumtijd plus een losse boolean, met `end` alleen verplicht bij een niet-hele-dag-item. Die drie waren niet te verenigen, en daarom kon `calendarEvents` niet getypeerd worden. *Reden:* §8.1.4 geeft het antwoord al voor het hele datamodel: "Kalenderdagen zonder tijd zijn een apart type `IsoDate` van tien tekens en worden nooit als tijdstip opgeslagen, want dan verschuift 1 januari op de helft van de apparaten naar 31 december." Een studiedag, een margedag en een vakantie zijn kalenderdagen. Daarmee is de hele-dag-variant vanzelf tijdloos, zoals INV-31 wil, en houden beide varianten een begin en een einde, zoals INV-30 wil. De veldnamen blijven `start` en `end`, zodat de index `[start+end]` uit §8.3.8 en de zoekvraag uit §8.5 ongewijzigd blijven; een kalenderdag sorteert daarin vóór een tijdstip op diezelfde dag, wat precies de gewenste volgorde is. *Gevolg:* `end` is in beide vormen verplicht — de tekst "ja bij niet-hele-dag" in §6.2.2 vervalt. Bij een hele-dag-item is het einde de laatste dag, zodat een vakantie van negen dagen één item is in plaats van negen. *Herziening:* niet voorzien.
+
+**T-49 — `holidayPeriods` als leescache.** *Probleem:* §8.3.8 beschreef de tabel in proza zonder veldtabel, en §13.4 eist dat `HolidayService` de versie in het bestand vergelijkt met die in de opslag zonder te zeggen waar die opgeslagen versie staat. *Reden:* de tabel is een cache van `schoolvakanties.json`, dus de velden van één periode uit dat bestand (§6.2.4) zijn de velden van één rij. Wat in het bestand in de omhullende structuur staat — schooljaar en regio — moet mee, want anders is een rij niet op zichzelf te lezen en niet te koppelen aan een `HolidayOverride`, die juist op die drie sleutelt. De bestandsversie staat op elke rij en niet in `settings`: de tabel wordt in één keer geleegd en opnieuw gevuld, dus elke rij draagt dezelfde versie, en een tweede plek zou kunnen afwijken van de inhoud waar hij bij hoort. *Gevolg:* acht velden, en de sleutel heet `holidayKey` en niet `key`, zodat hij hetzelfde heet als in `holidayOverrides`. *Herziening:* niet voorzien.
+
+**T-50 — één `settings`-record, geen `users`-tabel.** *Probleem:* §8.3.14 somde zes onderwerpen op in gewone taal zonder veldnamen of typen, en INV-49 eiste "precies één `Settings`-record **en precies één `User`-record**" terwijl §8.3 geen `users`-tabel had en B-21 zegt dat versie 1.0 geen accounts kent. *Reden:* §8.2.2 blijkt drie van de gezochte waarden al te bezitten — de regio, de standaardtoon en de providerkeuze — met de uitdrukkelijke regel dat die zes waarden **alleen** in `localStorage` staan en niet ook in `settings`. Datzelfde geldt voor de bevestiging bij een lege leerlingenlijst, die in `eduflow.onboardingFlags` woont. Wat er dan overblijft voor `settings` zijn vier van de zes onderwerpen, plus de schakelaar uit FR-INS-21 die nergens een plek had terwijl §16.2 eist dat het uitzetten ervan in het logboek komt. Voor `User` geldt hetzelfde: de standaardtoon staat in `localStorage`, de rol is in 1.0 één vaste waarde die volgens §14.2 beschreven maar niet gebouwd wordt, de schoolnaam is een `PrivacyTerm` met soort `school`, en voor de naam van de gebruiker is er geen enkel gebruik — het logboek en de back-upnaam gebruiken de apparaatnaam. *Gevolg:* `settings` heeft zes velden, INV-49 noemt alleen `Settings`, de rij `User` in §9.4 zegt dat hij in 1.0 niet bestaat, en het aantal tabellen blijft 26. Ook opgelost: "detectoren aan of uit" is een lijst van uitzonderingen en geen schakelaar, want FR-MAI-24 zegt dat vier van de negen detectoren niet uit te zetten zijn. *Herziening:* bij fase 2, wanneer accounts ontstaan en `User` een echte entiteit wordt.
 
 ---
 

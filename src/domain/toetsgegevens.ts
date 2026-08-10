@@ -63,7 +63,7 @@ export function basisRecord(): BaseRecord {
     deletedAt: null,
     rev: 1,
     origin: newId(),
-    schemaVersion: 7,
+    schemaVersion: 1,
   };
 }
 
