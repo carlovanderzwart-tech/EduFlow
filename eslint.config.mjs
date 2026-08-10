@@ -2,14 +2,15 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
+import eduflowRegels from "./eslint-rules/dr-44-geen-record-in-logregel.mjs";
+
 /**
  * Lintregels van de bouwstraat.
  *
- * Drie van de elf controles uit §16.9 van de Product Bible zijn lintregels. Twee
- * daarvan staan hieronder en werken vandaag; de derde (DR-44, geen
- * persoonsgegevens naar een logfunctie) is typegebaseerd en wacht op de
- * domeintypen uit implementatiestap 3. Zie `scripts/gates/run.mjs` voor de stand
- * van alle elf.
+ * Drie van de elf controles uit §16.9 van de Product Bible zijn lintregels. Alle
+ * drie werken vandaag; DR-44 is er bij implementatiestap 3 bij gekomen, want die
+ * regel kijkt naar typen en had `domain/` nodig. Zie `scripts/gates/run.mjs` voor
+ * de stand van alle elf.
  *
  * De regels gelden ook voor mappen die nog niet bestaan (`domain/`, `lib/`,
  * `services/storage/`). Dat is opzet: dan bijten ze zodra die mappen ontstaan.
@@ -47,6 +48,10 @@ const eslintConfig = defineConfig([
     // Voortbrengselen van de bouwstraat:
     "playwright-report/**",
     "test-results/**",
+    // Toetsmateriaal dat met opzet een regel overtreedt. `dr-44.test.ts` lint dit
+    // bestand zelf, mét `ignore: false`, en telt de fouten. Zou `pnpm lint` het
+    // meenemen, dan was de bouwstraat altijd rood.
+    "src/domain/__fixtures__/**",
   ]),
 
   {
@@ -163,6 +168,30 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+
+  {
+    // DR-44 — geen persoonsgegevens naar een logfunctie.
+    //
+    // Deze regel heeft typeinformatie nodig en zet daarom `projectService` aan.
+    // Dat is de enige plek waar dat gebeurt: typegericht linten is trager, en het
+    // is alleen hier nodig.
+    //
+    // Dit blok stelt met opzet géén `no-restricted-imports` in. Zou het dat wel
+    // doen, dan verving het de opties van de blokken hierboven voor elk bestand
+    // dat het raakt — zie de waarschuwing bovenaan dit bestand.
+    name: "eduflow/dr-44-logregel",
+    files: ["src/**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: { eduflow: eduflowRegels },
+    rules: {
+      "eduflow/dr-44-geen-record-in-logregel": "error",
     },
   },
 
