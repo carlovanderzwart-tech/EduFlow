@@ -5,11 +5,8 @@
  * losse paden. De verzameling is precies wat hoofdstuk 8 beschrijft en niets
  * meer (DR-01).
  *
- * **Vijf van de zesentwintig tabellen uit §8.3 ontbreken hier.** Drie omdat het
- * handboek er geen eenduidige veldbeschrijving voor geeft: `calendarEvents`
- * (O-10), `holidayPeriods` (O-08) en `settings` (O-09). Twee omdat ze bij een
- * later besluit zijn toegevoegd en nog getypeerd moeten worden: `weekPatterns`
- * en `weekPatternOverrides` (B-98, §8.3.15 en §8.3.16).
+ * **Alle zesentwintig tabellen uit §8.3 staan hier.** De laatste vijf kwamen erbij
+ * toen T-47 tot en met T-50 de openstaande punten O-08 tot en met O-13 beslechtten.
  */
 
 export type { BaseRecord, Colour, IsoDate, IsoDateTime, Uuid } from "./base";
@@ -30,7 +27,7 @@ export type {
   TextBlock,
 } from "./page";
 export type { Photo, PhotoVariant, PhotoVariantName } from "./photo";
-export type { HolidayOverride, Region, SchoolYear } from "./schoolYear";
+export type { HolidayOverride, HolidayPeriod, Region, SchoolYear } from "./schoolYear";
 export type {
   MailAccount,
   MailDraft,
@@ -59,3 +56,20 @@ export type {
   FeedbackVerdict,
 } from "./ai";
 export type { AuditEvent, ChangeLogEntry, ChangeOperation } from "./audit";
+export type {
+  AllDayCalendarEvent,
+  CalendarEvent,
+  CalendarEventKind,
+  CalendarEventSource,
+  TimedCalendarEvent,
+} from "./calendar";
+export type { DisableableDetector, PupilNoun, Settings } from "./settings";
+export type {
+  DayCancelled,
+  LineCancelled,
+  LineChanged,
+  WeekPattern,
+  WeekPatternLine,
+  WeekPatternOverride,
+  WeekPatternOverrideKind,
+} from "./weekPattern";

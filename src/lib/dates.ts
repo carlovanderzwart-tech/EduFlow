@@ -24,8 +24,21 @@ export type IsoDateTime = string;
 /** ISO 8601 kalenderdag zonder tijd en zonder zone: 2026-08-07 (§8.1.5). */
 export type IsoDate = string;
 
+/**
+ * Wandkloktijd zonder dag, Europe/Amsterdam: 08:30 (T-46).
+ *
+ * De enige uitzondering op "alles in UTC", en hij heeft een reden. Een
+ * weekonderdeel van de basisweek begint om half negen, en bij het invullen is nog
+ * niet bekend op welke dag dat valt. Half negen blijft half negen aan beide
+ * kanten van de zomertijdgrens; als `IsoDateTime` zou hij twee keer per jaar
+ * verschuiven. Omrekenen naar UTC gebeurt op precies één plek: bij het berekenen
+ * van wat er op een dag staat (§9.8).
+ */
+export type LocalTime = string;
+
 const ISO_DATE_TIME_VORM = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z$/;
 const ISO_DATE_VORM = /^(\d{4})-(\d{2})-(\d{2})$/;
+const LOCAL_TIME_VORM = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 /**
  * Bestaat deze kalenderdag echt?
@@ -56,6 +69,11 @@ export function isIsoDateTime(waarde: string): waarde is IsoDateTime {
   const [, jaar, maand, dag, uur, minuut, seconde] = deel.map(Number);
   if (!isEchteDag(jaar!, maand!, dag!)) return false;
   return uur! < 24 && minuut! < 60 && seconde! < 60;
+}
+
+/** Is dit een wandkloktijd in de vorm `UU:MM`? */
+export function isLocalTime(waarde: string): waarde is LocalTime {
+  return LOCAL_TIME_VORM.test(waarde);
 }
 
 /**

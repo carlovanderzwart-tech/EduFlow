@@ -25,7 +25,7 @@
 
 import { z } from "zod";
 
-import { isIsoDate, isIsoDateTime } from "@/lib/dates";
+import { isIsoDate, isIsoDateTime, isLocalTime } from "@/lib/dates";
 import { UUID_V7 } from "@/lib/uuid";
 
 export const zUuid = z.string().regex(UUID_V7, "Geen geldige UUIDv7");
@@ -33,6 +33,8 @@ export const zIsoDateTime = z
   .string()
   .refine(isIsoDateTime, "Verwacht een tijdstip in UTC met milliseconden");
 export const zIsoDate = z.string().refine(isIsoDate, "Verwacht JJJJ-MM-DD");
+/** Wandkloktijd zonder dag (T-46). */
+export const zLocalTime = z.string().refine(isLocalTime, "Verwacht UU:MM");
 
 /**
  * De schemaversie waarin versie 1.0 begint (T-47).
@@ -45,7 +47,15 @@ export const zIsoDate = z.string().refine(isIsoDate, "Verwacht JJJJ-MM-DD");
  */
 export const CURRENT_SCHEMA_VERSION = 1;
 
-const BASISVELDEN = {
+/**
+ * De zes velden die elk opgeslagen record draagt.
+ *
+ * Uitgevoerd naar buiten zodat een tabel die géén enkel object is — `calendarEvents`
+ * is een unie van twee varianten (T-48) — dezelfde basis kan gebruiken zonder
+ * `recordSchema`, dat een verfijnd schema oplevert en daarom niet in een
+ * gediscrimineerde unie past.
+ */
+export const BASISVELDEN = {
   id: zUuid,
   createdAt: zIsoDateTime,
   updatedAt: zIsoDateTime,
@@ -82,6 +92,18 @@ export const zBaseRecord = z.strictObject(BASISVELDEN).refine(isChronologisch, C
  */
 export function recordSchema<Vorm extends z.ZodRawShape>(vorm: Vorm) {
   return z.strictObject({ ...BASISVELDEN, ...vorm }).refine(isChronologisch, CHRONOLOGIE);
+}
+
+/**
+ * Legt INV-04 op een schema dat niet met `recordSchema` gebouwd is.
+ *
+ * Nodig voor `calendarEvents`, dat een unie van twee varianten is (T-48) en dus
+ * niet uit één `strictObject` bestaat. Zonder deze functie zou de invariant daar
+ * met de hand herhaald moeten worden, en dat is precies de tweede plek die U-03
+ * verbiedt.
+ */
+export function metChronologie<Schema extends z.ZodTypeAny>(schema: Schema) {
+  return schema.refine(isChronologisch, CHRONOLOGIE);
 }
 
 /**

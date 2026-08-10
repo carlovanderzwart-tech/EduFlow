@@ -6095,6 +6095,7 @@ Eén record met de instellingen die persoonsgegevens raken of afleiden (T-50). E
 
 | Veld | Type | Verplicht | Standaard | Validatie | Waaruit het volgt |
 |---|---|---|---|---|---|
+| `deviceId` | sleutel | ja | bij de eerste start gezet | UUIDv7 | §8.1.4: het apparaat-id dat elk record als `origin` draagt, staat in de `settings`-tabel |
 | `defaultGroupId` | verwijzing | nee | — | bestaande groep | de standaardgroep uit §8.3.5 |
 | `defaultStudentIds` | lijst | nee | leeg | bestaande leerlingen, geen dubbelen | de standaardleerlingen uit §8.3.5 |
 | `attentionThresholdDays` | geheel getal | ja | 42 | 1-365 | het blok Aandacht, §9.8 en §6.4.4 |

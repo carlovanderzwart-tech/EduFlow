@@ -8,8 +8,9 @@
  * INV-32 en INV-33 — welke vakanties aanpasbaar zijn en of een aanpassing bij
  * een bestaande periode hoort — horen bij `HolidayService`.
  *
- * `holidayPeriods` ontbreekt: §8.3.8 beschrijft die tabel in proza zonder
- * veldtabel. Zie de openstaande punten bij implementatiestap 3.
+ * `holidayPeriods` is een leescache van `schoolvakanties.json` (T-49). De
+ * bestandsversie staat op elke rij, want de tabel wordt in één keer geleegd en
+ * opnieuw gevuld; één rij lezen is genoeg om te weten of het bestand nieuwer is.
  */
 
 import { z } from "zod";
@@ -24,6 +25,20 @@ export const zSchoolYear = recordSchema({
   lastSchoolDay: zIsoDate,
   region: zRegion,
   isCurrent: z.boolean(),
+});
+
+export const zHolidayPeriod = recordSchema({
+  schoolYearName: z.string().min(1),
+  region: zRegion,
+  holidayKey: z.string().min(1),
+  name: z.string().min(1).max(60),
+  from: zIsoDate,
+  to: zIsoDate,
+  fixed: z.boolean(),
+  fileVersion: z.number().int().min(1),
+}).refine((periode) => periode.to >= periode.from, {
+  message: "De einddatum ligt vóór de begindatum",
+  path: ["to"],
 });
 
 export const zHolidayOverride = recordSchema({
