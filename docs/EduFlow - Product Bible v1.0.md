@@ -218,6 +218,7 @@ hoofdstuk 19.
     - [6.2.8 Verjaardagen en de afweging daarbij](#628-verjaardagen-en-de-afweging-daarbij)
     - [6.2.9 Herinneringen en meldingen](#629-herinneringen-en-meldingen)
     - [6.2.10 Foutgevallen en randgevallen](#6210-foutgevallen-en-randgevallen)
+    - [6.2.11 De basisweek](#6211-de-basisweek)
   - [6.3 Mail](#63-mail)
     - [6.3.1 Wat de module is, en de belofte die eronder ligt](#631-wat-de-module-is-en-de-belofte-die-eronder-ligt)
     - [6.3.2 Een postbus koppelen](#632-een-postbus-koppelen)
@@ -243,7 +244,7 @@ hoofdstuk 19.
     - [6.5.4 Schrijfstijl](#654-schrijfstijl)
     - [6.5.5 Privacy](#655-privacy)
     - [6.5.6 AI-provider](#656-ai-provider)
-    - [6.5.7 Regio en schooljaar](#657-regio-en-schooljaar)
+    - [6.5.7 Agenda](#657-agenda)
     - [6.5.8 Taal](#658-taal)
     - [6.5.9 Back-up maken en terugzetten](#659-back-up-maken-en-terugzetten)
     - [6.5.10 Opslag](#6510-opslag)
@@ -310,6 +311,8 @@ hoofdstuk 19.
     - [8.3.12 `aiInteractions` en `feedback`](#8312-aiinteractions-en-feedback)
     - [8.3.13 `auditEvents` en `changeLog`](#8313-auditevents-en-changelog)
     - [8.3.14 `settings`](#8314-settings)
+    - [8.3.15 `weekPatterns`](#8315-weekpatterns)
+    - [8.3.16 `weekPatternOverrides`](#8316-weekpatternoverrides)
   - [8.4 Relaties](#84-relaties)
   - [8.5 Indexen en zoekstrategie](#85-indexen-en-zoekstrategie)
   - [8.6 Migraties](#86-migraties)
@@ -458,6 +461,7 @@ hoofdstuk 19.
     - [Technische besluiten](#technische-besluiten)
   - [19.5 Besluiten van 8 augustus 2026 — architectuurreview](#195-besluiten-van-8-augustus-2026--architectuurreview)
   - [19.6 Openstaand](#196-openstaand)
+  - [19.7 Besluiten van 10 augustus 2026 — de basisweek](#197-besluiten-van-10-augustus-2026--de-basisweek)
 - [20. Ontwikkelregels voor AI-programmeurs](#20-ontwikkelregels-voor-ai-programmeurs)
   - [20.1 Lees dit eerst](#201-lees-dit-eerst)
   - [20.2 De regels](#202-de-regels)
@@ -2739,7 +2743,7 @@ De toestand **Ontwerp** bestaat alleen in het geheugen. Er is geen record, er st
 |---|---|---|---|---|---|
 | `id` | `string` (UUIDv7) | ja | door de app gezet | UUIDv7-vorm, onveranderlijk | 36 tekens |
 | `title` | `string` | nee | lege tekst | getrimd, geen regeleinden, geen reeksnaam als voorvoegsel (B-35) | 120 tekens |
-| `date` | `string` (`YYYY-MM-DD`) | ja | vandaag volgens de apparaatklok | geldige kalenderdatum, niet vóór 2015-08-01, niet later dan vandaag plus 365 dagen | 10 tekens |
+| `date` | `string` (`YYYY-MM-DD`) | ja | vandaag volgens de apparaatklok | geldige kalenderdatum, niet vóór 2015-08-01, niet later dan vandaag plus zeven dagen (B-70) | 10 tekens |
 | `seriesId` | `string \| null` | nee | `null` | verwijst naar een bestaande `Series` zonder `deletedAt` | 36 tekens |
 | `studentIds` | `string[]` | nee | `[]` of de standaardgroep uit Instellingen | bestaande `Student`-records, geen dubbelen, volgorde is invoervolgorde | 60 verwijzingen |
 | `groupIds` | `string[]` | nee | `[]` | bestaande `Group`-records, geen dubbelen (B-17) | 10 verwijzingen |
@@ -3787,7 +3791,9 @@ De agenda van EduFlow is het schooljaar van één professional. Hij vervangt de 
 
 De reden dat de agenda in versie 1.0 zit en niet later, is dat de andere twee modules erop leunen. Een documentatie heeft een datum en die datum betekent iets: het was de dinsdag vóór de herfstvakantie, het was de dag van het schoolreisje. Een oudergesprek is een agenda-item dat een mail veroorzaakt. Zonder agenda zijn documentatie en mail twee losse gereedschappen; met agenda zijn ze één werkweek.
 
-De agenda is bewust arm aan functies. Er zijn geen genodigden, geen beschikbaarheid, geen locatieboekingen, geen terugkerende reeksen met uitzonderingen, geen tijdzones anders dan Europe/Amsterdam. Elk van die dingen is een bekende bron van complexiteit die niets oplevert voor iemand die op één school werkt (U-05).
+De agenda is bewust arm aan functies. Er zijn geen genodigden, geen beschikbaarheid, geen locatieboekingen, geen herhaalregels op losse items, geen tijdzones anders dan Europe/Amsterdam. Elk van die dingen is een bekende bron van complexiteit die niets oplevert voor iemand die op één school werkt (U-05).
+
+Eén ding heeft de agenda wél, en het is het enige patroon in het product dat zich herhaalt: **de basisweek**. Je vult één keer je normale week in, en de app zet die door naar je schooldagen (§6.2.11, B-98). Dat maakt de agenda geen roostersysteem: er zijn geen lokalen, geen collega's, geen beschikbaarheid en geen schoolbrede planning. Het is jouw week, op jouw schooldagen.
 
 **FR-AGE-01 — De agenda toont het schooljaar op vier niveaus.**
 *Gegeven* een gebruiker met een ingesteld schooljaar, *wanneer* zij de agenda opent, *dan* kan zij zonder herladen wisselen tussen dag, week, maand en jaar, en blijft de geselecteerde datum bij elke wisseling het middelpunt.
@@ -3799,15 +3805,17 @@ De agenda is bewust arm aan functies. Er zijn geen genodigden, geen beschikbaarh
 
 Er zijn acht soorten. Meer soorten maken de agenda niet rijker maar rommeliger; minder soorten dwingen de gebruiker om betekenis in de titel te stoppen, waar hij niet doorzoekbaar is.
 
+Geen enkele soort heeft een herhaalregel die je zelf instelt (B-101). Wat zich herhaalt is je normale week, en die staat in de basisweek (§6.2.11). De kolom "Herhaalt" hieronder zegt daarom overal `nee`, met één uitzondering die geen instelling is: een `verjaardag` komt jaarlijks terug omdat een geboortedatum dat doet, en hij wordt afgeleid uit de leerlingenlijst en nooit opgeslagen (FR-AGE-05).
+
 | Soort | Hele dag | Herhaalt | Koppelingen | Kleur | Bron |
 |---|---|---|---|---|---|
-| `afspraak` | nee | ja | groep, leerlingen | accent | eigen |
+| `afspraak` | nee | nee | groep, leerlingen | accent | eigen |
 | `oudergesprek` | nee | nee | leerling (1, verplicht), mailconcept | accent-donker | eigen |
 | `studiedag` | ja | nee | — | neutraal-700 | eigen of import |
 | `margedag` | ja | nee | — | neutraal-500 | eigen of import |
 | `vakantie` | ja | nee | — | neutraal-200 | vakantiebestand |
 | `verjaardag` | ja | jaarlijks | leerling (1) | zacht | afgeleid uit leerlingen |
-| `herinnering` | nee | ja | documentatie, mailconcept | neutraal-400 | eigen |
+| `herinnering` | nee | nee | documentatie, mailconcept | neutraal-400 | eigen |
 | `documentatiemoment` | nee | nee | groep, leerlingen, documentatie | accent-zacht | eigen |
 
 Gemeenschappelijke velden van een `CalendarEvent`:
@@ -3825,7 +3833,6 @@ Gemeenschappelijke velden van een `CalendarEvent`:
 | `studentIds` | lijst | nee | leeg | bestaande leerlingen |
 | `documentationId` | verwijzing | nee | leeg | bestaande documentatie |
 | `mailDraftId` | verwijzing | nee | leeg | bestaand concept |
-| `recurrence` | regel | nee | geen | zie 6.2.5 |
 | `source` | opsomming | ja | `own` | `own`, `holidayFile`, `imported`, `derived` |
 
 **FR-AGE-03 — Een item eindigt niet vóór het begint.**
@@ -3911,10 +3918,9 @@ Een item maak je op vier manieren: de knop "Nieuw", klikken op een lege plek in 
 
 **Verplaatsen.** Op de laptop sleep je een item naar een andere dag of tijd. De toegankelijke tegenhanger is verplicht (B-38, 4.9): met het item geselecteerd verschuiven de pijltoetsen hem met een kwartier, `Shift` plus pijl met een dag, en `Ctrl` plus pijl met een week. Dat wordt bij het selecteren als hint getoond.
 
-**Herhalen.** Alleen drie regels: elke week, elke twee weken, elke maand op dezelfde weekdag. Met een einddatum of een aantal keren. Een uitzondering op één datum wordt een losgemaakt item; de reeks krijgt op die datum een gat. Er is bewust geen `RRULE`-ondersteuning met volledige uitdrukkingskracht.
+**Herhalen bestaat niet op een los item.** Een agenda-item staat op één moment en herhaalt niet (B-101). Wat zich wél herhaalt is je normale week, en die staat in de basisweek (§6.2.11). Er is bewust geen `RRULE`-ondersteuning en er komt geen herhaalregel per item: twee mechanismen voor "dit keer anders" is één te veel, en dat is precies de dubbele logica die U-03 verbiedt.
 
-**FR-AGE-15 — Een herhaling wijzigen vraagt om reikwijdte.**
-*Gegeven* een item uit een herhaling, *wanneer* je het wijzigt, *dan* vraagt de app "Alleen deze, of alle volgende?" met "Alleen deze" als voorselectie.
+*FR-AGE-15 is vervallen met B-101. Een los item herhaalt niet, dus er is geen reikwijdtevraag. Voor de basisweek is die vraag vervangen door één datum: elke wijziging werkt vanaf een datum en het verleden verandert niet (FR-AGE-28). Het nummer wordt niet hergebruikt (§19.1 regel 1).*
 
 **FR-AGE-16 — Verwijderen is markeren.**
 *Gegeven* een verwijderd item, *wanneer* je binnen dertig dagen naar de prullenbak gaat, *dan* staat het er en is het te herstellen met zijn koppelingen. Volgt uit T-11.
@@ -3935,7 +3941,7 @@ Een agenda-item kan aan een groep hangen, aan leerlingen, aan een documentatie e
 #### 6.2.7 ICS-import en ICS-export
 
 **FR-AGE-20 — De agenda exporteert naar ICS.**
-*Gegeven* een schooljaar, *wanneer* je "Exporteer agenda" kiest, *dan* levert de app één `.ics`-bestand met alle eigen items en de vakanties, zonder de afgeleide verjaardagen en zonder de koppelingen. Elk item krijgt een stabiele `UID` op basis van zijn `id`, zodat een tweede export in dezelfde agenda geen dubbelen maakt.
+*Gegeven* een schooljaar, *wanneer* je "Exporteer agenda" kiest, *dan* levert de app één `.ics`-bestand met alle eigen items en de vakanties, zonder de afgeleide verjaardagen, zonder de weekonderdelen van je basisweek (FR-AGE-34) en zonder de koppelingen. Elk item krijgt een stabiele `UID` op basis van zijn `id`, zodat een tweede export in dezelfde agenda geen dubbelen maakt.
 
 **FR-AGE-21 — De agenda importeert ICS eenmalig.**
 *Gegeven* een `.ics`-bestand, *wanneer* je het importeert, *dan* toont de app eerst een overzicht: aantal items, periode, en hoeveel er al bestaan volgens `UID` of volgens de combinatie titel plus begintijd. Je kiest per groep overslaan of toevoegen. Geïmporteerde items krijgen `source: "imported"` en zijn daarna gewone eigen items.
@@ -3973,10 +3979,48 @@ De reden: pushmeldingen vragen om een servicewerker met een pushabonnement, een 
 | 6 | Klok van het apparaat staat verkeerd | Bij een verschil van meer dan 24 uur met de servertijd bij een AI- of mailaanroep verschijnt eenmalig "De klok van dit apparaat lijkt niet te kloppen" |
 | 7 | Regio gewijzigd halverwege het jaar | Vakanties worden herberekend; bestaande overrides op dezelfde sleutel blijven en krijgen de melding uit FR-AGE-11 |
 | 8 | Item van vóór het schooljaar | Zichtbaar bij bladeren, niet in het jaaroverzicht van het huidige schooljaar |
-| 9 | Herhaling zonder einde | Maximaal 200 herhalingen worden berekend; daarna stopt de reeks met een aantekening |
+| 9 | Weekonderdeel op een dag die vrij blijkt te zijn | De basisweek levert niets; de dag toont de vakantie, studiedag of margedag (FR-AGE-30) |
 | 10 | Import van 5.000 items | De app importeert in stappen van 200 met voortgang en een afbreekknop |
 
 ---
+
+#### 6.2.11 De basisweek
+
+Een schoolweek lijkt op de vorige. Rekenen begint maandag om half negen, en volgende week weer. Die week één keer invullen en hem daarna terugzien op elke schooldag, is het enige wat de agenda automatiseert (B-98).
+
+De basisweek is **jouw** week: per weekonderdeel een weekdag, een begintijd, een eindtijd, een naam en optioneel een groep. Geen lokaal, geen collega, geen beschikbaarheid, geen A- en B-week. Werk je niet op woensdag, dan zet je er geen onderdelen; dat lege veld ís de afspraak, en de app vraagt er niet naar.
+
+Wat de basisweek op een dag oplevert, wordt **berekend en nooit opgeslagen** (B-100). Dat is dezelfde keuze als bij verjaardagen (FR-AGE-05) en om dezelfde reden: staat een waarde op twee plekken, dan lopen die twee vroeg of laat uiteen en weet niemand welke klopt (U-02).
+
+**FR-AGE-27 — De basisweek vult je schooldagen.**
+*Gegeven* een basisweek met vier weekonderdelen op maandag, *wanneer* je maandag 14 september 2026 opent, *dan* staan die vier onderdelen er met hun tijden, zonder dat je iets hebt ingevoerd en zonder dat er een agenda-item is aangemaakt.
+
+**FR-AGE-28 — Een wijziging aan de basisweek geldt vanaf een datum en raakt het verleden niet.**
+*Gegeven* een basisweek waarin maandag 08:30 "rekenen" is, *wanneer* je die op 20 oktober wijzigt in "spelling" met ingang van 1 november, *dan* toont maandag 14 september nog steeds "rekenen" en maandag 9 november "spelling". De app vraagt niet "alleen deze of alle volgende": elke wijziging werkt vanaf een datum, standaard vandaag.
+
+**FR-AGE-29 — Per dag afwijken laat de basisweek ongemoeid.**
+*Gegeven* maandag 14 september met vier onderdelen uit de basisweek, *wanneer* je "rekenen" vervangt door "gym", "taal" laat vervallen en een gastles toevoegt, *dan* geldt dat alleen voor 14 september, staat de basisweek onveranderd in Instellingen, en ziet maandag 21 september er weer normaal uit. De vervanging en het vervallen worden vastgelegd als een aangepaste dag; de gastles is een gewoon agenda-item.
+
+**FR-AGE-30 — Op een vrije dag levert de basisweek niets.**
+*Gegeven* de herfstvakantie, een studiedag of een margedag, *wanneer* je die dag opent, *dan* staan er geen weekonderdelen. De app gebruikt daarvoor hetzelfde begrip als de rest van de agenda: `HolidayService.isFreeDay()` (§9.8), inclusief de aanpassing van je eigen school (B-29).
+
+**FR-AGE-31 — Een nieuw schooljaar neemt de basisweek niet automatisch over.**
+*Gegeven* een jaarovergang, *wanneer* het nieuwe schooljaar begint, *dan* is er geen basisweek en biedt de app aan die van vorig jaar over te nemen, met de tekst "Wil je je basisweek van 2026-2027 overnemen?". Neem je hem niet over, dan blijven je schooldagen leeg tot je hem invult (B-102).
+
+**FR-AGE-32 — Wat de basisweek oplevert staat niet in de opslag.**
+*Gegeven* een basisweek met vijf onderdelen per dag en een schooljaar van 191 schooldagen, *wanneer* je `calendarEvents` bekijkt, *dan* staan er nul records uit de basisweek. Er is geen enkel opgeslagen agenda-item dat door de basisweek is gemaakt (B-100, INV-56).
+
+**FR-AGE-33 — De basisweek verdringt het dashboard en de maandweergave niet.**
+*Gegeven* een basisweek van vijfentwintig onderdelen per week, *wanneer* je het dashboard opent, *dan* toont het blok "Deze week" je agenda-items en niet je weekonderdelen; in de maandweergave verschijnt per dag één samengevatte regel "5 onderdelen" in plaats van vijf regels; en in de jaarweergave verschijnen ze niet. In de dag- en weekweergave staan ze wel.
+
+De reden voor die laatste eis staat elders in dit hoofdstuk: het dashboardblok "Deze week" toont hoogstens acht items (§6.4.2), de dagweergave gaat scrollen boven acht items en een maandcel toont hoogstens drie items plus "+n meer" (§6.2.3). Vijfentwintig weekonderdelen zouden die drie plekken onbruikbaar maken. De weergaven zijn ontworpen op een dunne agenda, en de basisweek verdikt precies de laag die dun moest blijven; FR-AGE-33 is de prijs daarvoor.
+
+**FR-AGE-34 — De basisweek gaat niet mee in de ICS-export.**
+*Gegeven* een basisweek en de knop "Exporteer agenda", *wanneer* het `.ics`-bestand klaar is, *dan* staan je eigen agenda-items en de vakanties erin en je weekonderdelen niet. Het scherm zegt dat erbij: "Je basisweek staat niet in het bestand. Wat je per dag hebt aangepast of toegevoegd, staat er wel in."
+
+Die keuze volgt de regel die er al staat. FR-AGE-20 laat de afgeleide verjaardagen ook buiten de export en eist een stabiele `UID` op basis van het `id` van een record; een weekonderdeel is afgeleid en heeft geen record (B-100). Het alternatief zou het bestand tienmaal zo groot maken — duizend voorkomens per schooljaar — en dat is dezelfde verdikking die FR-AGE-33 juist tegenhoudt.
+
+Er zit een prijs aan, en die hoort hier te staan: FR-AGE-25 maakt de ICS-export de enige route naar meldingen op je eigen telefoon, dus je basisweek is buiten EduFlow niet zichtbaar. Wie zijn lesblokken op zijn telefoon wil, zet ze daar als eigen agenda-items neer. Een berekende dag heeft een deterministische sleutel (`weekPatternId`, `lineId`, datum), dus als dit ooit toch geëxporteerd moet worden, is er een stabiele `UID` beschikbaar zonder dat er iets opgeslagen hoeft te worden. Dat is een herziening voor versie 1.1, niet voor nu.
 
 ### 6.3 Mail
 
@@ -4325,7 +4369,15 @@ Dit scherm maakt B-23 waar: wat de app over jouw schrijven geleerd heeft, kun je
 **FR-INS-24 — Het verbruik is zichtbaar.**
 *Gegeven* het providerscherm, *wanneer* je het opent, *dan* zie je het aantal aanroepen deze maand, het aantal tekens, en de schatting van de kosten. Zonder inhoud, alleen tellingen.
 
-#### 6.5.7 Regio en schooljaar
+#### 6.5.7 Agenda
+
+Hier staat wat de agenda van jou moet weten: je basisweek, of verjaardagen meedoen (FR-AGE-23), in welke regio je zit en welk schooljaar loopt.
+
+**FR-INS-46 — De basisweek vul je hier in.**
+*Gegeven* Instellingen → Agenda, *wanneer* je de basisweek opent, *dan* zie je een week met vijf kolommen waarin je per dag weekonderdelen toevoegt met een begintijd, een eindtijd en een naam, en staat erboven vanaf welke datum deze versie geldt.
+
+**FR-INS-47 — Een wijziging vraagt vanaf wanneer.**
+*Gegeven* een bestaande basisweek, *wanneer* je iets wijzigt, *dan* vult de app "vanaf vandaag" in als datum, met de mogelijkheid een latere datum te kiezen, en staat er onder het veld "Wat er tot die datum in je agenda stond, verandert niet." Volgt uit B-99.
 
 **FR-INS-25 — De regio bepaalt de vakanties.**
 *Gegeven* de keuze Noord, Midden of Zuid, *wanneer* je hem wijzigt, *dan* worden de vakanties herberekend en blijven overrides staan (FR-AGE-11). De regio staat in `localStorage` (T-01), want hij zegt niets over een persoon.
@@ -4341,7 +4393,7 @@ Dit scherm maakt B-23 waar: wat de app over jouw schrijven geleerd heeft, kun je
 #### 6.5.9 Back-up maken en terugzetten
 
 **FR-INS-28 — Een back-up bevat alles.**
-*Gegeven* de knop "Back-up maken", *wanneer* je hem gebruikt, *dan* levert de app één bestand met alle documentaties, pagina's, foto's in alle drie de varianten, leerlingen, groepen, lidmaatschappen, reeksen, agenda-items, overrides, mailconcepten, sjablonen, stijlprofiel, stijlvoorbeelden en instellingen. Niet meegenomen: de mailcache, het logboek van AI-aanroepen ouder dan een jaar, en de tokens. Het formaat staat in §8.7.
+*Gegeven* de knop "Back-up maken", *wanneer* je hem gebruikt, *dan* levert de app één bestand met alle documentaties, pagina's, foto's in alle drie de varianten, leerlingen, groepen, lidmaatschappen, reeksen, agenda-items, vakantieaanpassingen, je basisweken met hun aangepaste dagen, mailconcepten, sjablonen, stijlprofiel, stijlvoorbeelden en instellingen. Niet meegenomen: de mailcache, het logboek van AI-aanroepen ouder dan een jaar, en de tokens. Het formaat staat in §8.7.
 
 **FR-INS-29 — Een back-up is te versleutelen.**
 *Gegeven* het back-upscherm, *wanneer* je een wachtwoord opgeeft, *dan* wordt het bestand versleuteld en is het zonder dat wachtwoord niet te openen. De app waarschuwt dat een vergeten wachtwoord het bestand onbruikbaar maakt en biedt geen herstel. Zonder wachtwoord kan ook; dan staat er in de bestandsnaam `onversleuteld`.
@@ -5490,6 +5542,14 @@ vakantiedatum, een geboortedatum, de dag waarop iets gebeurde) zijn een apart ty
 `IsoDate` van tien tekens en worden nooit als tijdstip opgeslagen, want dan verschuift 1
 januari op de helft van de apparaten naar 31 december.
 
+Er is één uitzondering op "alles in UTC", en die heeft een eigen type: een **wandkloktijd**
+zonder dag. Een weekonderdeel van de basisweek begint om half negen, en bij het invullen is
+nog niet bekend op welke dag dat valt (§6.2.11). Zo'n tijd is `LocalTime`, vijf tekens in de
+vorm `HH:MM`, wandkloktijd Europe/Amsterdam (T-46). Half negen blijft half negen aan beide
+kanten van de zomertijdgrens; als `IsoDateTime` zou hij twee keer per jaar verschuiven.
+Omrekenen naar UTC gebeurt op precies één plek, bij het berekenen van wat er op een dag
+staat (§9.8), en dat is dus ook de enige plek die op zomertijd getoetst hoeft te worden.
+
 **`rev` en `updatedAt` doen niet hetzelfde.** `updatedAt` is een klok en klokken lopen op
 apparaten uit de pas; een telefoon met een verkeerd ingestelde tijd is geen zeldzaamheid.
 `rev` is een teller en telt betrouwbaar door. Bij het samenvoegen van twee versies is `rev`
@@ -5514,6 +5574,8 @@ export type Uuid = string;
 export type IsoDateTime = string;
 /** ISO 8601 kalenderdag zonder tijd en zonder zone: 2026-08-07 */
 export type IsoDate = string;
+/** Wandkloktijd zonder dag, Europe/Amsterdam: 08:30 (T-46) */
+export type LocalTime = string;
 
 export interface BaseRecord {
   id: Uuid;
@@ -5532,6 +5594,7 @@ import { z } from 'zod';
 export const zUuid = z.string().regex(UUID_V7, 'Geen geldige UUIDv7');
 export const zIsoDateTime = z.string().datetime({ offset: false });
 export const zIsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Verwacht JJJJ-MM-DD');
+export const zLocalTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Verwacht UU:MM');
 
 export const CURRENT_SCHEMA_VERSION = 7;
 
@@ -5586,7 +5649,7 @@ onderhandelbaar is.
 
 | Laag | Wat erin staat | Persoonsgegevens | Omvang |
 |---|---|---|---|
-| IndexedDB (via Dexie) | Alle 24 tabellen uit §8.3, inclusief foto's als blob | Ja | Gigabytes |
+| IndexedDB (via Dexie) | Alle 26 tabellen uit §8.3, inclusief foto's als blob | Ja | Gigabytes |
 | `localStorage` | Precies zes sleutels, allemaal apparaatvoorkeuren | Nee, nooit | Onder 4 KB |
 | Cookie | Eén sessiecookie met de toegangscode | Nee | Onder 1 KB |
 
@@ -6016,6 +6079,51 @@ Dit is het logboek dat de kwaliteitsmeting voedt en dat bij een privacygesprek o
 
 Eén record met alle instellingen die persoonsgegevens raken of afleiden: standaardgroep, standaardleerlingen, drempel voor het blok Aandacht, taalkeuze leerling of kind, detectoren aan of uit, en de bevestiging bij een lege leerlingenlijst. Zie §8.2 voor wat er wél in `localStorage` staat.
 
+#### 8.3.15 `weekPatterns`
+
+De basisweek (§6.2.11, B-98). Eén record per geldigheidsperiode; meerdere records per schooljaar vormen samen de geschiedenis. Indexen: `[schoolYearId+validFrom]`, `deletedAt`.
+
+| Veld | Type | Verplicht | Standaard | Validatie |
+|---|---|---|---|---|
+| `schoolYearId` | verwijzing | ja | het huidige schooljaar | bestaand schooljaar |
+| `validFrom` | datum | ja | vandaag | — |
+| `validTo` | datum | nee | — | niet vóór `validFrom` |
+| `lines` | lijst | ja | leeg | ≤ 40 weekonderdelen |
+
+Een weekonderdeel staat **ingebed** in de basisweek, om dezelfde reden als een blok in een pagina (§8.3.6): het heeft geen eigen levensduur, geen verwijzingen van buiten en geen zin buiten zijn week.
+
+| Veld | Type | Verplicht | Validatie |
+|---|---|---|---|
+| `id` | sleutel | ja | UUIDv7; stabiel binnen deze versie van de basisweek |
+| `weekday` | geheel getal | ja | 1-7, ISO-8601 weekdag |
+| `startTime` | tijd | ja | `LocalTime`, wandkloktijd Europe/Amsterdam (T-46) |
+| `endTime` | tijd | ja | `LocalTime`, ná `startTime`, op dezelfde dag (INV-55) |
+| `title` | tekst | ja | 1-120 tekens, dezelfde grens als `CalendarEvent.title` |
+| `groupId` | verwijzing | nee | bestaande groep; draagt de knop "Maak documentatie" (FR-AGE-17) |
+
+Een wijziging sluit de lopende periode af en opent een nieuwe (FR-AGE-28). Dat is dezelfde vorm als een `GroupMembership` met `from` en `to` (INV-24), en om dezelfde reden: de vraag "wat gold er op deze datum" moet één antwoord hebben.
+
+#### 8.3.16 `weekPatternOverrides`
+
+Wat er op één concrete dag anders is dan de basisweek zegt (FR-AGE-29). Indexen: `date`, `[date+lineId]`, `deletedAt`.
+
+| Veld | Type | Verplicht | Validatie |
+|---|---|---|---|
+| `date` | datum | ja | het schooljaar volgt uit de datum, net als bij `CalendarEvent` |
+| `kind` | opsomming | ja | `dag-vervalt`, `onderdeel-vervalt`, `onderdeel-anders` |
+| `lineId` | sleutel | bij de laatste twee | een weekonderdeel uit de basisweek die op `date` gold |
+| `title` | tekst | nee | alleen bij `onderdeel-anders`, 1-120 tekens |
+| `startTime`, `endTime` | tijd | nee | alleen bij `onderdeel-anders`, `LocalTime` |
+| `groupId` | verwijzing | nee | alleen bij `onderdeel-anders` |
+
+Een eigen tabel en geen veld op `weekPatterns`, om de reden die §8.7 en §8.10 geven: samenvoegen gaat per record, dus een aanpassing op dinsdag en een op donderdag mogen niet op hetzelfde record schrijven, anders verdwijnt er werk. Dat is dezelfde reden waarom `holidayOverrides` een eigen tabel heeft.
+
+**`lineId` verwijst naar een ingebed onderdeel, en dat is een bewuste uitzondering.** Elke andere kruisverwijzing in dit hoofdstuk wijst naar een aggregaatwortel: `photoId` naar een `Photo`, `studentId` naar een `Student`, `seriesId` naar een `Series`. `lineId` wijst naar het `id` van een weekonderdeel binnen `WeekPattern`, en dat onderdeel is geen record. Het blijft ingebed en krijgt geen eigen tabel: het heeft geen eigen levensduur, geen verwijzingen van buiten behalve deze, en geen zin buiten zijn week — precies de drie redenen waarom een blok in §8.3.6 ook ingebed staat. Een derde tabel voor iets zonder eigen levensloop zou alleen samenvoegwerk opleveren.
+
+De prijs is dat de verwijzing kan gaan bungelen: wijzigt de leerkracht de basisweek vanaf een datum die vóór een bestaande aanpassing ligt, dan kan die aanpassing naar een verdwenen onderdeel wijzen. Dat is afgevangen zoals INV-13 een ontbrekende foto afvangt — de aanpassing heeft geen effect en de opruimronde verwijdert hem met één regel in het logboek (§9.5.4). Regel B van §9.4 blijft daarmee overeind: er gaat een sleutel over de grens, nooit een object.
+
+Een hele week die anders verloopt, is vijf keer `dag-vervalt`. Een **extra** activiteit op één dag is géén aangepaste dag maar een gewoon agenda-item (FR-AGE-29): daar bestaat `CalendarEvent` al voor.
+
 ### 8.4 Relaties
 
 ```mermaid
@@ -6040,6 +6148,9 @@ erDiagram
   AIInteraction ||--o| Feedback : "krijgt"
   SchoolYear ||--o{ HolidayPeriod : "kent"
   HolidayPeriod ||--o| HolidayOverride : "aangepast door"
+  SchoolYear ||--o{ WeekPattern : "kent"
+  WeekPattern ||--o{ WeekPatternLine : "bevat (ingebed)"
+  WeekPatternLine ||--o{ WeekPatternOverride : "aangepast op een dag door"
 ```
 
 | Van | Naar | Kardinaliteit | Verwijzing bij | Bij verwijderen |
@@ -6055,6 +6166,9 @@ erDiagram
 | CalendarEvent | Documentation | n : 0..1 | CalendarEvent | losmaken met melding (FR-AGE-19) |
 | MailDraft | MailMessage | n : 0..1 | MailDraft (`sourceMessageId`) | losmaken |
 | MailAccount | MailMessage | 1 : n | MailMessage | meeverwijderen bij ontkoppelen (FR-MAI-05) |
+| SchoolYear | WeekPattern | 1 : n | WeekPattern (`schoolYearId`) | meeverwijderen |
+| WeekPattern | WeekPatternLine | 1 : n | ingebed | meeverwijderen |
+| WeekPatternLine | WeekPatternOverride | 1 : n | WeekPatternOverride (`lineId`) | de aanpassing heeft geen effect meer en wordt bij de opruimronde verwijderd met één logregel |
 
 De regel dat `Documentation.pageIds` én `Page.documentationId` allebei bestaan, lijkt dubbel maar is het niet: `pageIds` draagt de **volgorde**, `documentationId` draagt de **eigendom**. `PageService` houdt ze consistent binnen één transactie; buiten die service schrijft niemand rechtstreeks aan een van beide (DR-14).
 
@@ -6072,6 +6186,8 @@ De regel dat `Documentation.pageIds` én `Page.documentationId` allebei bestaan,
 | Bezetting van een groep op een datum | `groupMemberships.[groupId+from]` |
 | Verlopen mailcache | `mailMessages.expiresAt` |
 | Verweesde foto's | `photos.refCount` |
+| Mijn basisweek op een datum | `weekPatterns.[schoolYearId+validFrom]` |
+| Aangepaste dagen in een periode | `weekPatternOverrides.date` |
 
 **Zoeken in tekst.** IndexedDB kan geen tekst doorzoeken. `SearchService` bouwt daarom bij het opstarten een index in het geheugen (T-16, C8 uit de review):
 
@@ -6139,7 +6255,8 @@ blobs/3f7a1c9e...b2.thumb.jpg
   "counts": {
     "students": 20, "groups": 3, "groupMemberships": 26, "series": 3,
     "documentations": 212, "pages": 287, "photos": 1240, "photoVariants": 3720,
-    "calendarEvents": 418, "mailDrafts": 34, "styleExamples": 4
+    "calendarEvents": 418, "mailDrafts": 34, "styleExamples": 4,
+    "weekPatterns": 3, "weekPatternOverrides": 11
   },
   "bytes": { "data": 4180221, "blobs": 3980112004 },
   "checksum": { "algorithm": "SHA-256", "value": "9c1f..." }
@@ -6173,7 +6290,8 @@ Terugzetten:
 | `aiInteractions` | 365 dagen | opruimronde bij elke start |
 | `feedback` | volgt de bijbehorende `aiInteraction` | idem |
 | `auditEvents` | 5 jaar | nooit automatisch; wel te exporteren |
-| `documentations`, `pages`, `photos`, `students`, `groups`, `series`, `calendarEvents`, `mailDrafts`, `styleExamples` | **nooit automatisch** | alleen de gebruiker |
+| `documentations`, `pages`, `photos`, `students`, `groups`, `series`, `calendarEvents`, `mailDrafts`, `styleExamples`, `weekPatterns` | **nooit automatisch** | alleen de gebruiker |
+| `weekPatternOverrides` | tot het weekonderdeel waar hij bij hoort verdwijnt | de opruimronde, met één logregel |
 
 Dat laatste is een principe: de app gooit geen werk weg. Wat de gebruiker heeft gemaakt, verdwijnt alleen doordat de gebruiker het weggooit.
 
@@ -6194,6 +6312,8 @@ Uitgangspunt: een gemiddelde documentatie met zes foto's van een moderne telefoo
 | Eén schooljaar, 2 per week | 76 | 1,03 GB |
 | Eén schooljaar, intensief (4 per week) | 152 | 2,07 GB |
 | Drie schooljaren, intensief | 456 | 6,20 GB |
+
+De basisweek staat hier niet in de tabel omdat hij niet meetelt. Vijfentwintig weekonderdeeltjes met een geldigheidsperiode zijn enkele kilobytes, en die groeien niet met het aantal schooldagen: wat de basisweek oplevert wordt berekend en niet opgeslagen (B-100). Een gematerialiseerde basisweek zou per schooljaar ongeveer duizend records hebben toegevoegd en daarmee de referentiegegevens van §17.1 in zijn eentje hebben gevuld. Dat is de reden dat hij berekend is.
 
 Browsers geven doorgaans tot 60 procent van de vrije schijfruimte aan één oorsprong, met een harde bovengrens per browser. Op een laptop met 80 GB vrij is dat ruim voldoende voor drie jaar; op een telefoon met 12 GB vrij komt de grens na ongeveer anderhalf jaar intensief gebruik in zicht.
 
@@ -6374,7 +6494,15 @@ Een agenda-item is één ding dat op een dag of in een periode gebeurt en dat ji
 
 *Herkomst.* Uit de jaarplanning, de weekbrief en de zes mails waarin een datum staat.
 
-*Verwarring.* Een agenda-item is geen vakantie en geen les. EduFlow kent geen rooster en geen lesuren.
+*Verwarring.* Een agenda-item is geen vakantie en geen weekonderdeel. Wat er standaard op een schooldag staat, komt uit je basisweek en is geen agenda-item (B-98, B-100). EduFlow is geen roostersysteem: geen lokalen, geen collega's, geen beschikbaarheid, geen schoolbrede planning.
+
+**Basisweek** — `WeekPattern`
+
+Je normale week: op welke weekdagen je wat doet, van hoe laat tot hoe laat. De app zet die door naar je schooldagen en slaat het resultaat nooit op. Een wijziging geldt vanaf een datum, zodat wat er vorige maand in je agenda stond blijft kloppen (B-99). Een weekonderdeel dat op één dag anders is, leg je vast als een aangepaste dag naast de basisweek, niet eroverheen — dezelfde vorm als een aangepaste vakantie naast een vakantie (B-29).
+
+*Herkomst.* Uit je eigen weekindeling, één keer in augustus ingevuld.
+
+*Verwarring.* De basisweek is geen rooster van de school en geen lesurentabel. Hij is van jou, hij kent geen lokalen en geen collega's, en wat hij oplevert is geen agenda-item.
 
 **Mailbericht** — `MailMessage`
 
@@ -6505,9 +6633,9 @@ Over de grens gaat: sleutels van leerlingen en groepen naar binnen, een geëxpor
 
 #### 9.3.2 Plannen
 
-Entiteiten: `CalendarEvent`, `HolidayPeriod`, `HolidayOverride`, plus `SchoolYear` uit de kern.
+Entiteiten: `CalendarEvent`, `WeekPattern` met zijn `WeekPatternLine`s, `WeekPatternOverride`, `HolidayPeriod`, `HolidayOverride`, plus `SchoolYear` uit de kern.
 
-De taal is die van de kalender: een dag, een week, een jaar, een periode, een hele dag, een vakantie die vastligt of een advies is. Hier bestaat geen concept van "af" en geen concept van "gedeeld". Een agenda-item is er of is er niet.
+De taal is die van de kalender: een dag, een week, een jaar, een periode, een hele dag, een vakantie die vastligt of een advies is. Hier bestaat geen concept van "af" en geen concept van "gedeeld". Een agenda-item is er of is er niet. En wat de basisweek oplevert bestaat alleen zolang je ernaar kijkt: het wordt berekend en nergens bewaard (B-100).
 
 Over de grens gaat: ICS-bestanden in beide richtingen, en datums die je in een mailconcept overneemt. Er gaat vanuit Plannen nooit iets naar de AI-route; de agenda is de enige module die volledig zonder netwerk werkt.
 
@@ -6556,6 +6684,8 @@ Drie regels gelden voor elk aggregaat in EduFlow.
 | `Series` | geen | geen | Documentaties verwijzen naar de reeks, niet omgekeerd |
 | `SchoolYear` | `HolidayPeriod`, `HolidayOverride` | geen | Regio en versie van het vakantiebestand horen erbij |
 | `CalendarEvent` | geen | `groupId` (optioneel) | Het schooljaar volgt uit de datum, zie §9.8 |
+| `WeekPattern` | `WeekPatternLine` | `schoolYearId`, `groupId` per onderdeel | Eén record per geldigheidsperiode; oude periodes blijven staan, want zij dragen de geschiedenis (B-99) |
+| `WeekPatternOverride` | geen | `lineId`, `groupId` | Staat los, zodat twee apparaten op verschillende dagen kunnen afwijken zonder elkaar te overschrijven (§8.10) |
 | `MailAccount` | gecachete `MailMessage`s | geen | Loskoppelen wist de cache in dezelfde transactie |
 | `MailDraft` | `PseudonymMap`, overdrachtsregistraties | `mailMessageId`, `mailTemplateId`, `studentId` | Staat op zichzelf; overleeft het loskoppelen van het account |
 | `MailTemplate` | geen | geen | Alleen door de gebruiker gemaakt en gewijzigd |
@@ -6625,7 +6755,7 @@ De vier soorten handhaving in de kolom *Afgedwongen in* betekenen het volgende. 
 | INV-13 | Een `PhotoBlock` verwijst naar een `Photo` die bestaat en niet verwijderd is. | Een fotoblok zonder foto levert een lege plek in een geëxporteerde PDF, en dat merk je pas bij de ouder. | `DocumentationService` bij schrijven, `PhotoService` bij de opruimronde | Het blok toont een melding in het scherm; exporteren is geblokkeerd tot je het blok verwijdert of vervangt. |
 | INV-14 | Een `QuoteBlock` verwijst naar hoogstens één leerling. | Een citaat is één uitspraak van één kind, of van niemand in het bijzonder (B-37). | Type | Meer dan één verwijzing is niet uit te drukken; het type laat het niet toe. |
 | INV-15 | Een documentatie met status `gedeeld` heeft `firstExportedAt` gevuld met het moment van de eerste geslaagde export. | De status is afgeleid en wordt niet door de gebruiker gezet (B-13, T-41). Zonder deze regel kan hij liegen. | `DocumentationService` is de enige schrijver van het veld; hij leidt de waarde af uit `firstExportedAt` | Het veld is opgeslagen en geïndexeerd, maar geen enkel scherm en geen enkele andere service schrijft eraan; een afwijking tussen `status` en `firstExportedAt` wordt bij het lezen gecorrigeerd en gelogd. |
-| INV-16 | De datum van een documentatie ligt niet in de toekomst en niet vóór het begin van het oudste schooljaar in de opslag. | Je documenteert wat gebeurd is. Een datum in de toekomst breekt sortering, filters en de reeksvolgorde. | Zod, `DocumentationService` | Opslaan faalt met de melding dat de datum niet klopt; het veld krijgt de nadruk. |
+| INV-16 | De datum van een documentatie ligt niet vóór 2015-08-01, niet meer dan zeven dagen in de toekomst (B-70), en niet vóór het begin van het oudste schooljaar in de opslag. | Je documenteert wat gebeurd is. Een datum ver in de toekomst breekt sortering, filters en de reeksvolgorde, en is bijna altijd een typefout. | Zod voor de ondergrens 2015-08-01, want die is absoluut. `DocumentationService` met de geïnjecteerde klok voor de zevendagengrens, en `DocumentationService` voor de schooljaargrens: die twee vragen om de huidige tijd respectievelijk om andere records, en geen van beide hoort daarom in een schema (§10.3). | Opslaan faalt met de melding dat de datum niet klopt; het veld krijgt de nadruk. |
 | INV-17 | Een foto waarnaar geen enkel `PhotoBlock` verwijst, bestaat hoogstens tot en met de eerstvolgende start van de app. | Losse blobs vullen de opslag met materiaal dat niemand meer kan zien en dat er wel toe doet (T-09). | `PhotoService`, opruimronde bij starten | De opruimronde verwijdert de foto en zijn varianten en schrijft één `AuditEvent`. |
 | INV-18 | Van elke beschikbare foto bestaan precies drie varianten: 480, 1280 en 3300 pixels op de lange zijde. | Zonder de drukversie is 300 dpi op een A4 liggend niet haalbaar (T-02). | `PhotoService` | De foto komt niet in de toestand `beschikbaar` en is niet te kiezen. |
 | INV-19 | Een documentatie hoort bij hoogstens één reeks. | Meerdere reeksen maken de reekscontext bij een AI-aanroep dubbelzinnig en de volgorde onbepaald. | Type, Zod | Niet uit te drukken; het veld is één optionele sleutel. |
@@ -6653,6 +6783,11 @@ De vier soorten handhaving in de kolom *Afgedwongen in* betekenen het volgende. 
 | INV-31 | Een agenda-item dat een hele dag beslaat, heeft geen tijden. | Een studiedag van 00:00 tot 00:00 vult de weekweergave met een blok dat niets betekent. | Type (twee varianten in één unie), Zod | Niet uit te drukken: de variant met tijden en de variant zonder sluiten elkaar uit. |
 | INV-32 | Kerstvakantie en zomervakantie zijn niet te wijzigen; alleen herfst-, voorjaars- en meivakantie kennen een aanpassing. | Landelijk vastgestelde periodes zijn geen schoolkeuze (B-29). | `HolidayService` | De knop ontbreekt en de service weigert een aanpassing op een vaste periode. |
 | INV-33 | Een `HolidayOverride` verwijst naar een bestaande `HolidayPeriod` in hetzelfde schooljaar en dezelfde regio. | Anders overleeft je eigen aanpassing een update van het vakantiebestand niet (B-50). | `HolidayService` | De aanpassing wordt niet toegepast en de app meldt dat het vakantiebestand is vernieuwd. |
+| INV-54 | De geldigheidsperiodes van de basisweken binnen één schooljaar overlappen elkaar niet. | Anders is "welke week gold op deze datum" dubbelzinnig, en dat is precies de vraag die het model moet beantwoorden. | `AgendaService` | Opslaan faalt met de botsende periode in de melding. |
+| INV-55 | Een weekonderdeel heeft een begintijd en een eindtijd op dezelfde dag, en de eindtijd ligt ná de begintijd. | Een onderdeel met een nul- of negatieve duur is niet te tekenen in de dag- en weekweergave. | Zod | Opslaan faalt; de tijdkiezer schuift de eindtijd mee. |
+| INV-56 | Wat de basisweek oplevert staat in geen enkele tabel. | Dit is de grendel onder B-100. Zonder toets verwatert hij bij de eerste keer dat iemand "even" een berekende dag wil bewaren. | Toets, naar het model van INV-05 | De toets faalt bij elke poging een weekonderdeel als record weg te schrijven. |
+
+Eén regel die je hier zou verwachten staat er niet: dat een aangepaste dag verwijst naar een weekonderdeel dat op die datum bestaat. Die kan niet altijd waar zijn. Wijzigt de leerkracht de basisweek vanaf een datum die vóór een bestaande aanpassing ligt, dan kan die aanpassing naar een verdwenen onderdeel wijzen. Dat wordt behandeld zoals INV-13 een ontbrekende foto behandelt: de aanpassing heeft geen effect, en de opruimronde verwijdert hem met één regel in het logboek. Een invariant belooft dat iets altijd waar is, en dit is het niet; het hoort dus in `AgendaService` en in FR-AGE-28, niet hier.
 
 #### 9.5.5 Mail
 
@@ -6745,6 +6880,10 @@ Gebeurtenissen worden synchroon binnen het proces afgehandeld, direct na de tran
 | DE-37 | `StorageThresholdReached` | Als het gebruik boven 80 procent van de beschikbare opslag komt. | Gebruikt, beschikbaar, grootste verbruikers. | Waarschuwing, dashboard, `AuditService` |
 | DE-38 | `AccessCodeAccepted` | Als een apparaat een geldige toegangscode invoert. | Vingerafdruk van het apparaat, moment, dagbudget. | Server, `AuditService` |
 | DE-39 | `AccessCodeRejected` | Bij een ongeldige of geblokkeerde code, of bij overschrijding van de snelheidslimiet. | Reden, aantal pogingen, wachttijd. | Scherm, server, `AuditService` |
+
+**Twee dingen die hier bewust ontbreken.** Er is geen gebeurtenis voor het aanmaken, wijzigen of verwijderen van een agenda-item, en er is er ook geen voor de basisweek. Dat is geen omissie: geen van de vier bestemmingen hierboven heeft er iets te halen. Er is geen tekst voor de zoekindex, geen stijl om van te leren, en er verlaat niets het apparaat, dus is er niets te verantwoorden. `StorageService` schrijft zijn `ChangeLogEntry` toch al per gewijzigd aggregaat. Een gebeurtenis toevoegen zou het patroon van dit hoofdstuk doorbreken in plaats van volgen.
+
+Wat `AgendaService` bij **DE-27** doet, staat er wel bij, want dat stond nergens: bij een jaarovergang biedt hij aan de basisweek van het vorige schooljaar over te nemen. Hij neemt hem niet automatisch mee (B-102, FR-AGE-31).
 
 ### 9.7 Toestandsmachines
 
@@ -6908,6 +7047,8 @@ Alles in deze paragraaf wordt berekend en nergens opgeslagen. Dat is de praktisc
 | Huidig schooljaar | Het schooljaar waarvan de periode de datum van vandaag bevat. Valt vandaag in geen enkel schooljaar, dan het eerstvolgende. | `AgendaService.currentSchoolYear()` |
 | Standaardweergave van de agenda | Jaarweergave op de laptop tussen 1 juli en 15 september, daarbuiten de week (B-31). Op de telefoon altijd de lijst. | `AgendaService`, gelezen door het agendascherm |
 | Werkdag of vrije dag | Een dag is vrij als hij in een vakantieperiode valt, met de aanpassing van de school erop toegepast, of als er een agenda-item van het type studiedag of margedag op staat. | `HolidayService.isFreeDay()` |
+| Wat er op een dag staat | De weekonderdelen van de basisweek die op die datum gold, met dezelfde weekdag, minus wat een aangepaste dag onderdrukt of vervangt. Is de dag vrij volgens `isFreeDay()`, dan levert de basisweek niets (FR-AGE-30). De begin- en eindtijd worden bij het tekenen omgerekend uit de kalenderdag plus de wandkloktijd; alleen daar vindt zomertijdconversie plaats. | `AgendaService.dayOf()` |
+| Verjaardagen in een periode | De leerlingen met een geboortedag en -maand die in de getoonde periode vallen. Er staat geen verjaardagsitem in de opslag (FR-AGE-05). | `AgendaService` |
 | Opslaggebruik | De som van de omvang van alle blobs plus een schatting voor de records, gedeeld door de beschikbare ruimte die de browser opgeeft. Boven 0,8 volgt DE-37. | `StorageService.usage()` |
 | Zoekindex | Opgebouwd uit titel, tekstblokken, citaten, reeksnaam en de namen van gekoppelde leerlingen (B-32), met trigrammen als terugval bij typefouten (T-16). Volledig in het geheugen, herbouwd bij elke start. | `SearchService` |
 | Leeftijd van de berichtencache | Het aantal dagen sinds `fetchedAt` van een gecachet bericht. Boven 7 wordt het bericht verwijderd (INV-36). | `MailService` |
@@ -6943,6 +7084,9 @@ Dit is het woordenboek waar de schermen, de code, de tests en de rest van dit do
 | Vakantie | `HolidayPeriod` | vrije week, `Vacation`, `Recess` |
 | Aangepaste vakantie | `HolidayOverride` | eigen vakantie, uitzondering, `CustomHoliday` |
 | Agenda-item | `CalendarEvent` | afspraak, activiteit, `Event` los, `Appointment` |
+| Basisweek | `WeekPattern` | rooster, basisrooster, lesrooster, weekschema, dagritme, `Schedule`, `Timetable` |
+| Weekonderdeel | `WeekPatternLine` | les, lesuur, lesblok, dagdeel, `Lesson` |
+| Aangepaste dag | `WeekPatternOverride` | uitzondering, afwijking, losgemaakt item, `Exception` |
 | Studiedag | `CalendarEvent` met type `studiedag` | vrije dag, `PD-day` |
 | Postvak | `MailAccount` | inbox, account, `Mailbox` |
 | Mailbericht | `MailMessage` | mailtje, bericht, `Email` |
@@ -7161,7 +7305,7 @@ Dat `message` in het Nederlands staat en niet in het Engels, is bewust: er is pr
 | `SeriesService` | reeksen, volgorde, context voor de vervolgzin | AI |
 | `StudentService` | leerlingen, dubbele voornamen, samenvoegen, uit dienst | groepen |
 | `GroupService` | groepen, lidmaatschappen, overlapcontrole, jaarovergang | documentaties |
-| `AgendaService` | items, weergaven, herhalingen, ICS | vakantiegegevens |
+| `AgendaService` | items, weergaven, de basisweek, ICS | vakantiegegevens, behalve de vraag `isFreeDay()` aan `HolidayService` |
 | `HolidayService` | vakantiebestand, regio's, overrides, verlooptermijn | agenda-items |
 | `MailService` | postbus, cache, concepten, overdracht | hoe een mail geschreven wordt |
 | `AIService` | aanroepen, streaming, nieuwe pogingen, budget, logboek | wat er in de opdracht staat |
@@ -7619,7 +7763,7 @@ De bevestiging "Toch doorgaan" zet `emptyListConfirmedAt` en schrijft een `Audit
 | Twee gelijke namen | "Noa deed het" met beide Noa's gekoppeld | `[LEERLING-AMBIGU-1]` plus melding |
 | Rondgang | pseudonimiseren en terugvertalen | exact de oorspronkelijke tekst |
 
-De laatste is de belangrijkste: `restore(pseudonymise(t)) === t` moet gelden voor elke tekst in de set. Dat is INV-30.
+De laatste is de belangrijkste: `restore(pseudonymise(t)) === t` moet gelden voor elke tekst in de set. Dat is NFR-25.
 
 ### 12.6 De serverroute
 
@@ -8400,7 +8544,7 @@ Er is geen pakket voor datums (de standaardfuncties van de browser volstaan voor
 | Controle op afhankelijkheden | wekelijks en bij elke wijziging | een kwetsbaarheid met status kritiek |
 | `axe-core` op elk scherm | elke wijziging | een overtreding van WCAG 2.2 AA |
 | Controle op bundelomvang | elke wijziging | overschrijding van meer dan 10 procent (T-31) |
-| Rondgangtoets pseudonimisatie | elke wijziging | `restore(pseudonymise(t)) !== t` voor enige tekst in de set (INV-30) |
+| Rondgangtoets pseudonimisatie | elke wijziging | `restore(pseudonymise(t)) !== t` voor enige tekst in de set (NFR-25) |
 | Gouden testset zonder netwerk | elke wijziging | een afwijking in de samengestelde opdracht |
 | Gouden testset met netwerk | wekelijks en vóór elke release | onder de drempels uit §12.9 |
 
@@ -8467,7 +8611,7 @@ De gegevensomvang is bewust groot: eisen die alleen halen op een lege database, 
 | NFR-22 | Terugzetten van een back-up op een leeg apparaat levert een werkende installatie op met alle foto's zichtbaar. Wordt bij elke release getoetst. |
 | NFR-23 | De app opent niet op een database met een hogere schemaversie, en wijzigt daarbij niets (T-24). |
 | NFR-24 | Er gaat nooit een AI-aanroep uit zonder dat `PrivacyService` heeft gedraaid. Afgedwongen in `AIService` en getoetst. |
-| NFR-25 | `restore(pseudonymise(t)) === t` voor elke tekst in de toetsset (INV-30). |
+| NFR-25 | `restore(pseudonymise(t)) === t` voor elke tekst in de toetsset. |
 
 ### 17.4 Beschikbaarheid
 
@@ -8609,7 +8753,9 @@ Gespreksmodus op telefoon en laptop met de fotovragen. Reeksen met de reeksweerg
 **De poort in december.** Aan het eind van sprint 3 is er een werkende app met alles wat de gegevensstromen bepaalt. Dat is het moment voor het gesprek met de functionaris: met het controlescherm erbij, met het logboek, met de verzonnen groep. Niet eerder, want dan is er alleen een plan; niet later, want dan staat er een agenda en een mailmodule omheen die opnieuw beoordeeld moeten worden.
 
 **Sprint 4 — agenda.**
-`AgendaService` en `HolidayService`, het vakantiebestand met versienummer en overrides, de vier weergaven inclusief de jaarweergave, itemsoorten, het snelveld met lokale ontleding, koppelingen naar documentaties, ICS-import en -export.
+`AgendaService` en `HolidayService`, het vakantiebestand met versienummer en overrides, de vier weergaven inclusief de jaarweergave, itemsoorten, het snelveld met lokale ontleding, koppelingen naar documentaties, ICS-import en -export. En de basisweek (B-98): het invulscherm in Instellingen → Agenda, het berekenen van wat er op een dag staat, het afwijken per dag, en het overnemen bij een jaarovergang.
+
+**Waarom de basisweek in sprint 4 hoort en niet eerder.** Hij leunt op drie dingen die pas dan bestaan: `HolidayService.isFreeDay()` om vrije dagen over te slaan (FR-AGE-30), de dag- en weekweergave om hem in te tekenen, en het schooljaar om hem aan te hangen. De twee tabellen zelf — `weekPatterns` en `weekPatternOverrides` — moeten wel eerder bestaan, want `StorageService` in sprint 1 declareert alle 26 stores in één keer (§8.2). Een tabel zonder scherm is geen halve functie maar een lege lade.
 
 **Sprint 5 — mail.**
 `MailService` met de twee adapters, OAuth met PKCE en de tokenafhandeling, het postvak met cache en vervaltermijn, de extra detectoren, het verplichte controlescherm, samenvatten, sjablonen, concepten, en de overdracht naar de eigen postbus.
@@ -8740,6 +8886,7 @@ Aanleiding: het vastleggen van het volledige product in één handboek, op basis
 | B-53 | Een idee buiten scope gaat met datum naar het ideeënregister en wordt niet gebouwd; drie keer terugkomen uit de praktijk geeft voorrang | "wat niet beschreven staat wordt niet gebouwd" heeft een uitgang nodig, anders wordt de regel omzeild | bij elke versie-afbakening |
 | B-54 | Een functie komt pas in scope als vijf kostenassen zijn ingevuld: bouw, onderhoud (25 procent van de bouwtijd per jaar), uitleg, testwerk, privacyverantwoording | zonder model is elke afwijzing een mening | geen |
 | B-57 | Elk besluit krijgt een herzieningsmoment als datum of gebeurtenis, nooit "later" | zonder herzieningsmoment wordt een besluit onder onzekerheid stilzwijgend permanent | geen |
+| B-70 | Een **documentatiedatum** meer dan zeven dagen in de toekomst wordt geweigerd. Voor een agenda-item geldt geen bovengrens | het is bijna altijd een typefout; de agenda plant per definitie een heel schooljaar vooruit | geen |
 
 #### Mail
 
@@ -8814,8 +8961,12 @@ Aanleiding: het vastleggen van het volledige product in één handboek, op basis
 | B-50 | Het vakantiebestand heeft een versienummer en een einddatum, en meldt zichzelf | een statisch bestand zonder actualisatiepad loopt stilzwijgend af |
 | B-58 | Het snelveld ontleedt lokaal, zonder AI | de invoer bevat vrijwel altijd een naam, en een agendaregel heeft geen stijl nodig |
 | B-63 | Er bestaat **geen hoofdgroep**; alle lidmaatschappen zijn gelijkwaardig | een hoofdgroep is een aanname die na één projectgroep niet meer klopt |
-| B-70 | Een datum meer dan zeven dagen in de toekomst wordt geweigerd | het is bijna altijd een typefout |
 | B-74 | Een handmatige pagina blijft bestaan als hij leeg is; een automatische vervolgpagina niet | de gebruiker heeft hem met een reden gemaakt |
+| B-98 | EduFlow kent een **basisweek**: de leerkracht vult zijn normale week in en de app zet die door naar zijn schooldagen | het invullen van dezelfde week is de enige agendahandeling die wekelijks terugkomt |
+| B-99 | Een wijziging aan de basisweek werkt **vanaf een datum**; het verleden verandert niet | wat er in september in je agenda stond, is een feit over september |
+| B-100 | Wat de basisweek oplevert wordt **berekend en nooit opgeslagen** | staat een waarde op twee plekken, dan lopen die uiteen; verjaardagen doen het al zo (FR-AGE-05, U-02) |
+| B-101 | `recurrence` op een agenda-item **vervalt**; de basisweek neemt de enige echte toepassing over | twee mechanismen voor "dit keer anders" is dubbele logica (U-03) |
+| B-102 | Een nieuw schooljaar neemt de basisweek **niet automatisch** over; de app biedt het aan | een nieuw jaar is een nieuwe groep en meestal een nieuwe week |
 
 #### Proces, rollen en verantwoording
 
@@ -8920,6 +9071,47 @@ Deze punten zijn bekend, niet vergeten, en hebben een eigenaar en een moment.
 | O-05 | Nulmeting | Twaalf documentaties handmatig geklokt volgens B-51; loopt parallel aan de bouwstappen 0 tot en met 9 (T-44) | 24 augustus - 18 september 2026, compleet vóór stap 11 |
 | O-06 | Vakantiebestand vullen | Schooljaren 2026-2027 tot en met 2028-2029, drie regio's | vóór sprint 4 |
 | O-07 | Beoordeling door collega's | Drie collega's, drie documentaties van vóór en drie van na, blind | juni 2027 |
+| O-08 | Veldtabel voor `holidayPeriods` | §8.3.8 beschrijft de tabel in proza als leescache van het vakantiebestand en geeft geen velden; ze zijn alleen uit §6.2.4 te reconstrueren en dat is ontwerpen in plaats van afleiden | vóór stap 4 |
+| O-09 | Veldtabel voor `settings`, en het ontbrekende `User` | §8.3.14 somt zes onderwerpen op in gewone taal, zonder veldnamen en zonder typen. INV-49 eist bovendien "precies één `Settings`-record **en precies één `User`-record**", terwijl `User` in §8.3 geen tabel heeft, §9.4 hem wel als aggregaat noemt met "naam, rol, school, standaardtoon", en B-21 zegt dat versie 1.0 geen accounts kent. Drie bepalingen die niet alle drie waar kunnen zijn. Nodig: de veldtabel van `settings`, plus het besluit of `User` in 1.0 bestaat en zo ja waar zijn vier velden wonen | vóór stap 4 |
+| O-10 | De vorm van een agenda-item — de laatste blokkade op `calendarEvents` | INV-30 eist onvoorwaardelijk een begin en een einde, INV-31 eist handhaving in het **type** met "twee varianten in één unie" waarvan de hele-dag-variant géén tijden heeft, en §6.2.2 geeft één vorm met `start` en `end` als datumtijd plus een losse boolean `allDay`. Die drie zijn niet te verenigen. Sinds B-101 het veld `recurrence` heeft geschrapt, is dit het **enige** punt waarop `calendarEvents` nog vastzit. Nodig: één besluit over hoe een hele-dag-item zijn dag of dagen draagt — een `IsoDate`-paar, of een datumtijdpaar met de afspraak dat de tijd genegeerd wordt | vóór stap 4 |
+| O-11 | Botsingsregel bij samenvoegen, voor alle tabellen | §8.1.4 zegt "bij het samenvoegen van twee versies is `rev` leidend en `updatedAt` de tiebreaker" en §8.10 zegt "per record de hoogste `rev` wint, met `origin` als beslisser bij gelijkstand". De tabel in §8.7 zegt het omgekeerde voor `documentations`, `pages`, `calendarEvents` en `mailDrafts`: "hoogste `updatedAt` wint". Dat raakt dus vier bestaande tabellen en niet alleen `weekPatterns` en `weekPatternOverrides`. Daarbij verwijst §8.1.4 naar §8.7.5 en §8.10.3, en die paragrafen bestaan niet: §8.7 en §8.10 hebben geen subparagrafen. Nodig: één regel voor alle tabellen, en de twee verwijzingen repareren | vóór stap 4 voor het terugzetten van een back-up; vóór fase 2 voor synchronisatie |
+| O-12 | De typen `ConversationAnswer` en `AiUndoSnapshot` | §6.1.1 geeft ze als veldtype op `Documentation`, maar geen van beide wordt ergens uitgeschreven; T-43 noemt voor de tweede drie bestanddelen in proza | vóór de gespreksmodus en vóór "Laat AI meeschrijven" |
+| O-13 | Waar de schemaversie begint | §8.1.5 zet `CURRENT_SCHEMA_VERSION = 7` en begrenst `schemaVersion` daarmee op 7. T-40 en §8.6 zeggen dat versie 1.0 op `eduflow-v1` begint en "telt vanaf schemaversie 1 van dat schema". Beide kunnen niet waar zijn, en er staat nergens wat de versies 1 tot en met 7 zouden betekenen. `StorageService` moet met één getal beginnen, en de bovengrens in het Zod-schema hangt eraan. Nodig: één besluit — begint versie 1.0 op schemaversie 1 of op 7 | vóór stap 4 |
+
+### 19.7 Besluiten van 10 augustus 2026 — de basisweek
+
+Bij het typeren van de tabellen uit hoofdstuk 8 bleek `calendarEvents` niet te bouwen: het veld `recurrence` had nergens een typebeschrijving, en §6.2.1 sloot terugkerende reeksen met uitzonderingen uit terwijl §6.2.5 ze uitgebreid beschreef. Tegelijk lag er een productwens: de leerkracht wil zijn normale week één keer invullen en die terugzien op zijn schooldagen. Die twee zijn hier in één keer opgelost. De besluiten zijn genummerd B-98 tot en met B-102 en T-46; die nummers zijn niet eerder gebruikt.
+
+| # | Besluit in één zin |
+|---|---|
+| B-98 | EduFlow kent een basisweek: de leerkracht vult zijn normale week in en de app zet die door naar zijn schooldagen |
+| B-99 | Een wijziging aan de basisweek werkt vanaf een datum; het verleden verandert niet |
+| B-100 | Wat de basisweek oplevert wordt berekend en nooit opgeslagen |
+| B-101 | `recurrence` op een agenda-item vervalt; de basisweek neemt de enige echte toepassing over |
+| B-102 | Een nieuw schooljaar neemt de basisweek niet automatisch over; de app biedt het aan |
+| T-46 | `LocalTime` is een derde scalair tijdtype naast `IsoDate` en `IsoDateTime` |
+
+**B-98 — de basisweek.** *Probleem:* een schoolweek lijkt op de vorige, maar de agenda kende geen enkele manier om dat één keer vast te leggen. Elke week opnieuw dezelfde vijfentwintig blokken invoeren doet niemand, dus deed niemand het en bleef de agenda leeg. Tegelijk zeiden §6.2.1 ("hij is geen roostersysteem") en §9.2 ("EduFlow kent geen rooster en geen lesuren") dat dit er niet hoorde. *Reden:* die twee zinnen waren bedoeld tegen een schoolroostersysteem — lokalen, collega's, beschikbaarheid, schoolbrede planning — en dat blijft uitgesloten. Wat er nu bijkomt is één persoonlijke weekindeling zonder een van die vier. De vijf kostenassen van B-54: bouw laag, onderhoud laag, uitleg middel (één nieuw begrip en één datumvraag), testwerk middel, privacyverantwoording **nul**, want vanuit Plannen gaat nooit iets naar de AI-route (§9.3.2). *Gevolg:* §6.2.11 met FR-AGE-27 tot en met FR-AGE-34, twee tabellen in §8.3, twee aggregaten in §9.4, drie invarianten in §9.5.4, drie lemma's in §9.9, een instellingenscherm in §6.5.7 met FR-INS-46 en FR-INS-47, en een regel in sprint 4 van §18.3. De zin "hij is geen roostersysteem" blijft ongewijzigd staan; de zin in §9.2 over lesuren is vervangen. De twee tabellen komen wel eerder dan sprint 4, want `StorageService` declareert in sprint 1 alle 26 stores in één keer. *Herziening:* na één schooljaar gebruik, met de vraag of de basisweek daadwerkelijk is ingevuld en of A- en B-weken gemist worden.
+
+**B-99 — vanaf een datum, niet met terugwerkende kracht.** *Probleem:* wijzigt de leerkracht in november zijn week, dan mag wat er in september stond niet mee veranderen. Anders liegt de agenda over het verleden, en dat is precies waar een documentatie-app niet mee weg komt. *Reden:* de structuur moet dit dragen, niet de discipline van de programmeur. Een basisweek met een geldigheidsperiode geeft per datum precies één antwoord, en oude periodes blijven staan. Dat is dezelfde vorm als `GroupMembership` met `from` en `to` (B-16, INV-24) en om exact dezelfde reden: oude documentaties moeten blijven kloppen. *Gevolg:* `weekPatterns` heeft `validFrom` en `validTo`; elke wijziging sluit de lopende periode af en opent een nieuwe, standaard vanaf vandaag. Er is daarmee geen reikwijdtevraag meer nodig, en FR-AGE-15 vervalt. INV-54 verbiedt overlappende periodes. *Herziening:* niet voorzien.
+
+**B-100 — berekend, niet opgeslagen.** *Probleem:* je kunt de dagen die uit de basisweek volgen vooraf wegschrijven als agenda-items, of ze berekenen op het moment dat iemand kijkt. Het handboek koos nergens. *Reden:* vier plaatsen wijzen dezelfde kant op. FR-AGE-05 laat verjaardagen al berekenen en niet opslaan, met een beroep op U-02. §6.2.10 zei bij herhalingen "worden berekend". §9.8 zegt "alles in deze paragraaf wordt berekend en nergens opgeslagen". En U-02 staat op rang twee in de rangorde van B-52. Materialiseren zou bovendien vijf uitzonderingen vragen: op `changeLog` (één pas vult een vijfde van de ringbuffer), op §8.7 (een teruggezette back-up laat de verliezende versie als kopie staan en levert dus duizenden dubbelen), op §8.8 (`calendarEvents` wordt nooit automatisch opgeruimd), op `purge()` en op de bewaartermijnen. Berekenen vraagt er nul. *Gevolg:* er bestaat geen opgeslagen agenda-item dat door de basisweek is gemaakt. INV-56 en FR-AGE-32 leggen dat vast, en §8.9 legt uit dat dit de reden is dat de basisweek niet in de opslagbegroting voorkomt. De prijs is dat een weekonderdeel geen eigen sleutel heeft en dus niet in de prullenbak komt (FR-AGE-16) en niet in de ICS-export (FR-AGE-20, FR-AGE-34); dat volgt dezelfde regel als de afgeleide verjaardagen. *Herziening:* bij de eerste meting die boven de 1.500 agenda-items van §17.1 uitkomt, en voor de ICS-export bij versie 1.1.
+
+**B-101 — `recurrence` vervalt.** *Probleem:* §6.2.1 sloot "terugkerende reeksen met uitzonderingen" uit; §6.2.5 beschreef ze vier alinea's later met drie regels, een losgemaakt item en een gat in de reeks; FR-AGE-15 bouwde daar een dialoog op. Vier plaatsen tegen één. Bovendien had het veld `recurrence` type "regel" en verder niets: geen veldvorm, geen Zod, geen index, geen entiteit in §8.4, en geen anker waaraan een losgemaakt item of een gat kon hangen. De functie was niet te bouwen zoals hij stond. *Reden:* met de basisweek erbij zouden er twee mechanismen bestaan voor "dit keer anders", en dat is de dubbele logica die U-03 verbiedt en fout twee uit §20.6. Van de twee is de basisweek de enige die volledig is gespecificeerd, en hij dekt de enige echte toepassing: mijn normale week. Dit besluit verkleint de scope. *Gevolg:* de rij `recurrence` verdwijnt uit de veldtabel van §6.2.2, de kolom "Herhaalt" staat bij alle acht soorten op `nee`, de alinea "Herhalen" in §6.2.5 is vervangen, FR-AGE-15 vervalt met de aantekening dat het nummer niet wordt hergebruikt (§19.1 regel 1), en randgeval 9 in §6.2.10 gaat niet meer over eindeloze herhalingen. *Herziening:* bij versie 1.1, als blijkt dat een losse afspraak toch wekelijks moet kunnen terugkomen.
+
+**B-102 — een nieuw schooljaar begint leeg.** *Probleem:* DE-27 noemt `AgendaService` als luisteraar bij de jaarovergang, maar nergens stond wat die dan doet. Voor de basisweek is dat de eerste vraag die een gebruiker stelt. *Reden:* een nieuw schooljaar is meestal een andere groep en een andere week; automatisch overnemen zou een week neerzetten die niet klopt, en die stilzwijgend fout is erger dan een lege. Maar opnieuw intypen wat vorig jaar al klopte is precies wat B-98 wil voorkomen. *Gevolg:* de app biedt het aan met "Wil je je basisweek van 2026-2027 overnemen?" en neemt hem niet automatisch mee (FR-AGE-31). Neem je hem niet over, dan blijven de schooldagen leeg tot je hem invult. *Herziening:* niet voorzien.
+
+**T-46 — `LocalTime`.** *Probleem:* een weekonderdeel begint om half negen, maar op welke dag is bij het invullen niet bekend. §8.1.4 kent alleen `IsoDateTime` (een tijdstip in UTC) en `IsoDate` (een kalenderdag). Een tijd zonder dag paste in geen van beide. *Reden:* de tijd van het weekonderdeel is een wandkloktijd: half negen blijft half negen aan beide kanten van de zomertijdgrens. Zou je hem als `IsoDateTime` bewaren, dan verschuift hij twee keer per jaar. Zou je hem als minuten sinds middernacht bewaren, dan is hij niet leesbaar in de opslag en in een back-up. *Gevolg:* `LocalTime` is een tekenreeks `"08:30"` in de vorm `HH:MM`, wandkloktijd Europe/Amsterdam, en hij komt naast `IsoDate` en `IsoDateTime` in §8.1.4 te staan. Omrekenen naar UTC gebeurt op precies één plek: bij het berekenen van wat er op een dag staat (§9.8). Dat is de enige plek waar zomertijd een rol speelt, en dus de enige plek die daarop getoetst hoeft te worden. *Herziening:* niet voorzien.
+
+#### Drie correcties in dezelfde ronde
+
+Bij dit werk zijn drie fouten in dit document gevonden die niets met de basisweek te maken hebben en die stap 4 zouden hebben geblokkeerd. Ze zijn hier meteen rechtgezet.
+
+**INV-30 had twee betekenissen.** In §9.5.4 is INV-30 de agenda-invariant over begin en einde. Op drie andere plaatsen — in hoofdstuk 12, in de toetsentabel van §16.9 en in NFR-25 zelf — verwees "INV-30" naar de rondgangeis van de pseudonimisering. Dat is geen nummerbotsing die om een hertoekenning vraagt, want de rondgangeis had al een nummer: NFR-25. De drie verwijzingen waren simpelweg fout en zijn gecorrigeerd. INV-30 betekent vanaf nu uitsluitend de agenda-invariant.
+
+**Het bereik van B-70 stond niet in het besluit.** B-70 gaat over een documentatiedatum: §8.3.5 citeert hem bij het veld `date` van `documentations`, §10.3 zegt "een documentatie mag hoogstens zeven dagen in de toekomst liggen (B-70)", en het voorbeeldcommentaar bij DR-57 gaat over precies die grens. Maar de rij stond onder het kopje "Agenda, leerlingen en groepen", waardoor hij las als een grens op agenda-items — en dan zou hij de jaarweergave (B-10, B-31) en elke vooruitkijkende agenda blokkeren. De rij is verplaatst naar "Fundament en scope" en de tekst noemt nu het veld. Daarmee is ook de driedubbele grens op `Documentation.date` opgelost: §6.1.1 zei "vandaag plus 365 dagen", INV-16 zei "niet in de toekomst", §8.3.5 zei "vandaag plus zeven dagen". Zeven dagen wint, want dat is wat het besluit zegt. De ondergrens blijft op twee lagen: Zod bewaakt 2015-08-01, `DocumentationService` bewaakt de grens van het oudste schooljaar.
+
+**§6.5 had geen Agenda-scherm.** FR-AGE-23 verwees naar "Instellingen → Agenda" en FR-AGE-25 naar hetzelfde scherm, maar §6.5 kende dertien subsecties waarvan geen enkele Agenda heette. §6.5.7 heette "Regio en schooljaar" en is nu "Agenda", met de regio en het schooljaar erin en de basisweek erbij. Dat kostte geen renummering van de subsecties erna.
 
 ---
 
