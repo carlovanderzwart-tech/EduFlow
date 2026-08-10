@@ -34,7 +34,16 @@ export const zIsoDateTime = z
   .refine(isIsoDateTime, "Verwacht een tijdstip in UTC met milliseconden");
 export const zIsoDate = z.string().refine(isIsoDate, "Verwacht JJJJ-MM-DD");
 
-export const CURRENT_SCHEMA_VERSION = 7;
+/**
+ * De schemaversie waarin versie 1.0 begint (T-47).
+ *
+ * Eén en niet zeven. §8.1.5 gaf 7, maar T-40 en §8.6 zeggen dat versie 1.0 op de
+ * database `eduflow-v1` begint en "telt vanaf schemaversie 1 van dat schema".
+ * Beginnen op 7 zou zes migraties veronderstellen die nooit hebben bestaan, en
+ * §8.6 eist dat elke migratie omkeerbaar beschreven wordt. Bij de eerste echte
+ * migratie wordt dit 2.
+ */
+export const CURRENT_SCHEMA_VERSION = 1;
 
 const BASISVELDEN = {
   id: zUuid,

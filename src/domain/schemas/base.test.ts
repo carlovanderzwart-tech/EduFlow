@@ -51,7 +51,7 @@ describe("zBaseRecord — §8.1.5, B1", () => {
 
 describe("schemaVersion — §8.1.5, INV-06", () => {
   it("staat op 7 en niet op iets anders", () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(7);
+    expect(CURRENT_SCHEMA_VERSION).toBe(1);
   });
 
   it("weigert een record zonder versienummer", () => {
