@@ -20,12 +20,14 @@ import type {
   AuditEvent,
   BaseRecord,
   Block,
+  CalendarEvent,
   ChangeLogEntry,
   Documentation,
   Feedback,
   Group,
   GroupMembership,
   HolidayOverride,
+  HolidayPeriod,
   MailAccount,
   MailDraft,
   MailMessage,
@@ -36,23 +38,29 @@ import type {
   PrivacyTerm,
   SchoolYear,
   Series,
+  Settings,
   Student,
   StyleExample,
   StyleProfile,
+  WeekPattern,
+  WeekPatternOverride,
 } from "../types";
 import { zAiInteraction, zFeedback } from "./ai";
 import { zAuditEvent, zChangeLogEntry } from "./audit";
 import { zBaseRecord } from "./base";
+import { zCalendarEvent } from "./calendar";
 import { zDocumentation } from "./documentation";
 import { zGroup, zGroupMembership } from "./group";
 import { zMailAccount, zMailDraft, zMailMessage, zMailTemplate } from "./mail";
 import { zBlock, zPage } from "./page";
 import { zPhoto, zPhotoVariant } from "./photo";
 import { zPrivacyTerm } from "./privacy";
-import { zHolidayOverride, zSchoolYear } from "./schoolYear";
+import { zHolidayOverride, zHolidayPeriod, zSchoolYear } from "./schoolYear";
 import { zSeries } from "./series";
 import { zStudent } from "./student";
+import { zSettings } from "./settings";
 import { zStyleExample, zStyleProfile } from "./style";
+import { zWeekPattern, zWeekPatternOverride } from "./weekPattern";
 
 type Dekt<A, B> = [A] extends [B] ? true : false;
 type Gelijk<A, B> = Dekt<A, B> extends true ? (Dekt<B, A> extends true ? true : false) : false;
@@ -81,13 +89,17 @@ const OVEREENKOMSTEN: boolean[] = [
   true satisfies Gelijk<z.infer<typeof zFeedback>, Feedback>,
   true satisfies Gelijk<z.infer<typeof zAuditEvent>, AuditEvent>,
   true satisfies Gelijk<z.infer<typeof zChangeLogEntry>, ChangeLogEntry>,
+  true satisfies Gelijk<z.infer<typeof zCalendarEvent>, CalendarEvent>,
+  true satisfies Gelijk<z.infer<typeof zHolidayPeriod>, HolidayPeriod>,
+  true satisfies Gelijk<z.infer<typeof zSettings>, Settings>,
+  true satisfies Gelijk<z.infer<typeof zWeekPattern>, WeekPattern>,
+  true satisfies Gelijk<z.infer<typeof zWeekPatternOverride>, WeekPatternOverride>,
 ];
 
 describe("types en schemas beschrijven hetzelfde", () => {
   it("dekt elke geïmplementeerde tabel", () => {
-    // Eenentwintig van de zesentwintig tabellen, plus het basisrecord en de
-    // blokunie. De vijf die ontbreken staan in de kop van schemas/index.ts.
-    expect(OVEREENKOMSTEN).toHaveLength(23);
+    // Alle zesentwintig tabellen uit §8.3, plus het basisrecord en de blokunie.
+    expect(OVEREENKOMSTEN).toHaveLength(28);
     expect(OVEREENKOMSTEN.every(Boolean)).toBe(true);
   });
 });

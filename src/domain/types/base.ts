@@ -11,10 +11,10 @@
  * (U-02).
  */
 
-import type { IsoDate, IsoDateTime } from "@/lib/dates";
+import type { IsoDate, IsoDateTime, LocalTime } from "@/lib/dates";
 import type { Uuid } from "@/lib/uuid";
 
-export type { IsoDate, IsoDateTime, Uuid };
+export type { IsoDate, IsoDateTime, LocalTime, Uuid };
 
 export interface BaseRecord {
   id: Uuid;

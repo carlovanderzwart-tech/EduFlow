@@ -8,10 +8,8 @@
  * Alle schema's zijn `strict`: een onbekend veld wordt geweigerd, niet
  * genegeerd. Dat is de voorwaarde waaronder INV-23 iets betekent.
  *
- * **Vijf van de zesentwintig tabellen uit §8.3 ontbreken**: `calendarEvents`
- * (O-10), `holidayPeriods` (O-08) en `settings` (O-09) missen een eenduidige
- * veldbeschrijving; `weekPatterns` en `weekPatternOverrides` (B-98) zijn later
- * toegevoegd en moeten nog een schema krijgen.
+ * **Alle zesentwintig tabellen uit §8.3 hebben een schema.** De laatste vijf
+ * kwamen erbij met T-47 tot en met T-50.
  */
 
 export {
@@ -29,7 +27,7 @@ export { zSeries } from "./series";
 export { zDocumentation, zDocumentationStatus } from "./documentation";
 export { zAttributionStyle, zBlock, zCrop, zLayoutId, zPage } from "./page";
 export { zPhoto, zPhotoVariant, zPhotoVariantName } from "./photo";
-export { zHolidayOverride, zRegion, zSchoolYear } from "./schoolYear";
+export { zHolidayOverride, zHolidayPeriod, zRegion, zSchoolYear } from "./schoolYear";
 export {
   zMailAccount,
   zMailDraft,
@@ -44,3 +42,11 @@ export { zPrivacyTerm, zPrivacyTermKind } from "./privacy";
 export { zAddress, zCorrectionRule, zStyleExample, zStyleProfile, zTense } from "./style";
 export { zAiInteraction, zAiOutcome, zAiRejectReason, zAiTask, zFeedback, zFeedbackVerdict } from "./ai";
 export { zAuditEvent, zChangeLogEntry, zChangeOperation } from "./audit";
+export { zCalendarEvent, zCalendarEventKind, zCalendarEventSource } from "./calendar";
+export { zDisableableDetector, zPupilNoun, zSettings } from "./settings";
+export {
+  zWeekPattern,
+  zWeekPatternLine,
+  zWeekPatternOverride,
+  zWeekPatternOverrideKind,
+} from "./weekPattern";

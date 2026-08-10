@@ -18,10 +18,16 @@ import { newId } from "@/lib/uuid";
 
 import type {
   AiInteraction,
+  AllDayCalendarEvent,
   AuditEvent,
   BaseRecord,
   ChangeLogEntry,
   Documentation,
+  HolidayPeriod,
+  Settings,
+  TimedCalendarEvent,
+  WeekPattern,
+  WeekPatternOverride,
   Feedback,
   Group,
   GroupMembership,
@@ -312,6 +318,91 @@ export function logboekregel(): AuditEvent {
     deviceName: "pc-ilse",
     detail: "Export: deelbare afbeelding, 3 pagina's, initialen aan",
     actorNote: "",
+  };
+}
+
+export function agendaItem(): TimedCalendarEvent {
+  return {
+    ...basisRecord(),
+    title: "Oudergesprek Kjeld",
+    kind: "oudergesprek",
+    allDay: false,
+    start: "2026-10-13T12:00:00.000Z",
+    end: "2026-10-13T12:30:00.000Z",
+    note: "",
+    location: "",
+    groupIds: [],
+    studentIds: [newId()],
+    documentationId: null,
+    mailDraftId: null,
+    source: "own",
+  };
+}
+
+export function heleDagItem(): AllDayCalendarEvent {
+  return {
+    ...basisRecord(),
+    title: "Studiedag",
+    kind: "studiedag",
+    allDay: true,
+    start: "2026-10-12",
+    end: "2026-10-12",
+    note: "",
+    location: "",
+    groupIds: [],
+    studentIds: [],
+    documentationId: null,
+    mailDraftId: null,
+    source: "own",
+  };
+}
+
+export function vakantieperiode(): HolidayPeriod {
+  return {
+    ...basisRecord(),
+    schoolYearName: "2026-2027",
+    region: "midden",
+    holidayKey: "herfst",
+    name: "Herfstvakantie",
+    from: "2026-10-17",
+    to: "2026-10-25",
+    fixed: false,
+    fileVersion: 2,
+  };
+}
+
+export function instellingen(): Settings {
+  return {
+    ...basisRecord(),
+    deviceId: newId(),
+    defaultGroupId: null,
+    defaultStudentIds: [],
+    attentionThresholdDays: 42,
+    pupilNoun: "leerling",
+    disabledDetectors: [],
+    showOutgoingRequest: true,
+  };
+}
+
+export function basisweek(): WeekPattern {
+  return {
+    ...basisRecord(),
+    schoolYearId: newId(),
+    validFrom: "2026-08-24",
+    validTo: null,
+    lines: [
+      { id: newId(), weekday: 1, startTime: "08:30", endTime: "09:15", title: "rekenen", groupId: null },
+      { id: newId(), weekday: 1, startTime: "09:15", endTime: "10:00", title: "taal", groupId: null },
+    ],
+  };
+}
+
+export function aangepasteDag(): WeekPatternOverride {
+  return {
+    ...basisRecord(),
+    date: "2026-09-14",
+    kind: "onderdeel-vervalt",
+    lineId: newId(),
   };
 }
 
