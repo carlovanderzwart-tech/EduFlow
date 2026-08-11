@@ -33,6 +33,14 @@ const OPSLAG_PADEN = [
     message:
       "DR-13: useLiveQuery hoort in een hook die een service aanroept, niet in een component.",
   },
+  {
+    name: "@/services/db",
+    message: "DR-13: de oude opslaglaag is weg. Ga via StorageService.",
+  },
+  {
+    name: "idb",
+    message: "T-45: `idb` is verdwenen met de oude opslaglaag. De opslag staat op Dexie.",
+  },
 ];
 
 const eslintConfig = defineConfig([
@@ -57,9 +65,9 @@ const eslintConfig = defineConfig([
   {
     // Grondregel: nergens Dexie, behalve in de opslaglaag zelf.
     //
-    // De tweede helft van DR-13, het verbod op `@/services/db`, kan pas bij
-    // implementatiestap 4: die map bestaat nu nog en `StorageWarning.tsx`
-    // importeert eruit. Die overtreding verdwijnt met de map.
+    // DR-13 staat hier nu volledig: `dexie` blijft binnen `services/storage/`, en
+    // `@/services/db` en `idb` bestaan niet meer. Die twee laatste namen staan er
+    // met opzet nog in — ze houden de oude laag tegen als iemand hem terughaalt.
     name: "eduflow/dr-13-opslaglaag",
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/services/storage/**"],

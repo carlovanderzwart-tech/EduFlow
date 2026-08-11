@@ -31,10 +31,11 @@ const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const SCHERMEN = [
   { naam: "dashboard", pad: "/" },
   { naam: "overzicht documentaties", pad: "/documentation" },
+  { naam: "schrijfscherm", pad: "/documentation/nieuw" },
   { naam: "agenda", pad: "/agenda" },
   { naam: "mail", pad: "/mail" },
   { naam: "instellingen", pad: "/settings" },
-  { naam: "leerlingen en groepen", pad: "/settings/students" },
+  { naam: "leerlingen", pad: "/settings/students" },
 ];
 
 interface AxeOvertreding {

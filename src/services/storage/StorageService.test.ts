@@ -209,6 +209,113 @@ describe("het journaal — §9.6, §8.3.13", () => {
   });
 });
 
+describe("één aggregaat, één transactie, één journaalregel — §10.7, §9.4 regel A", () => {
+  /** Een documentatie met haar eerste pagina: het kleinste aggregaat met twee tabellen. */
+  async function documentatieMetPagina() {
+    return opslag.schrijfAggregaat("documentations", ["pages"], async (schrijver) => {
+      const pagina = await schrijver.maak("pages", {
+        documentationId: newId(),
+        order: 1,
+        layoutId: "B-verhaal",
+        autoCreated: false,
+        blocks: [],
+      });
+      const documentatie = await schrijver.maak("documentations", {
+        title: "Kunstwerk",
+        date: "2026-08-09",
+        seriesId: null,
+        studentIds: [],
+        groupIds: [],
+        pageIds: [pagina.id],
+        privateNote: "",
+        status: "concept",
+        firstExportedAt: null,
+        archivedAt: null,
+        imageConsentAt: null,
+      });
+      return { documentatie, pagina };
+    });
+  }
+
+  it("schrijft beide records en journaalt alleen de wortel", async () => {
+    const { documentatie, pagina } = waarde(await documentatieMetPagina());
+
+    expect(await db.documentations.count()).toBe(1);
+    expect(await db.pages.count()).toBe(1);
+    expect(documentatie.pageIds).toEqual([pagina.id]);
+
+    // §9.6: één regel per gewijzigd aggregaat, met de wortelsleutel.
+    const regels = await db.changeLog.toArray();
+    expect(regels).toHaveLength(1);
+    expect(regels[0]!.table).toBe("documentations");
+    expect(regels[0]!.recordId).toBe(documentatie.id);
+  });
+
+  it("laat niets achter als één van de records faalt", async () => {
+    const uitkomst = opslag.schrijfAggregaat("documentations", ["pages"], async (schrijver) => {
+      await schrijver.maak("pages", {
+        documentationId: newId(),
+        order: 1,
+        layoutId: "B-verhaal",
+        autoCreated: false,
+        blocks: [],
+      });
+      // Een documentatie zonder pagina's komt niet door INV-08.
+      return schrijver.maak("documentations", {
+        title: "Kunstwerk",
+        date: "2026-08-09",
+        seriesId: null,
+        studentIds: [],
+        groupIds: [],
+        pageIds: [],
+        privateNote: "",
+        status: "concept",
+        firstExportedAt: null,
+        archivedAt: null,
+        imageConsentAt: null,
+      });
+    });
+
+    await expect(uitkomst).rejects.toThrow(/documentations/);
+    expect(await db.pages.count()).toBe(0);
+    expect(await db.changeLog.count()).toBe(0);
+  });
+
+  it("weigert een aggregaat waarin de wortel niet is geschreven", async () => {
+    // Zonder ophoging van `rev` op de wortel is er geen versie van het geheel, en
+    // daar leunt §10.8 op bij twee tabbladen.
+    await expect(
+      opslag.schrijfAggregaat("documentations", ["pages"], (schrijver) =>
+        schrijver.maak("pages", {
+          documentationId: newId(),
+          order: 1,
+          layoutId: "B-verhaal",
+          autoCreated: false,
+          blocks: [],
+        }),
+      ),
+    ).rejects.toThrow(/wortel/);
+  });
+
+  it("telt de rev van de wortel op bij een wijziging binnen de grens", async () => {
+    const { documentatie, pagina } = waarde(await documentatieMetPagina());
+    klok.verzet("2026-08-10T09:00:00.000Z");
+
+    const na = waarde(
+      await opslag.schrijfAggregaat("documentations", ["pages"], async (schrijver) => {
+        await schrijver.wijzig("pages", pagina.id, {
+          blocks: [{ id: newId(), slot: 0, order: 1, kind: "text", text: "Vandaag geverfd." }],
+        });
+        return schrijver.wijzig("documentations", documentatie.id, { title: "Kunstwerk Dok" });
+      }),
+    );
+
+    expect(na.rev).toBe(2);
+    expect(na.title).toBe("Kunstwerk Dok");
+    expect((await db.changeLog.toArray()).map((r) => r.rev)).toEqual([1, 2]);
+  });
+});
+
 describe("lezen van een record dat niet meer klopt — §6.1.1", () => {
   it("slaat hem over en meldt hem, in plaats van de hele lijst te breken", async () => {
     const goed = waarde(await opslag.create("students", nieuweLeerling("Aya")));

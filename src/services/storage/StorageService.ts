@@ -26,28 +26,51 @@ import type { BaseRecord, ChangeLogEntry, ChangeOperation } from "@/domain/types
 import { CURRENT_SCHEMA_VERSION } from "@/domain/schemas";
 
 import { CHANGELOG_MAX, type EduFlowDatabase } from "./db";
+import { BROWSERSCHATTING, meetOpslag, type Opslaggebruik, type Schatter } from "./gebruik";
 import { TABELLEN, type RecordVan, type TabelNaam } from "./tabellen";
+
+export { OPSLAGDREMPEL, type Opslaggebruik } from "./gebruik";
 
 /** Een injecteerbare klok, zodat tijdsregels te toetsen zijn (§10.3). */
 export interface Clock {
   now(): Date;
 }
 
-/** Boven deze verhouding verschijnt de waarschuwing (INV-53, T-09). */
-export const OPSLAGDREMPEL = 0.8;
-
 type ZonderBasis<T> = T extends unknown ? Omit<T, keyof BaseRecord> : never;
 
 /** Wat een aanroeper aanlevert: de eigen velden, zonder de zes van `BaseRecord`. */
 export type Nieuw<Naam extends TabelNaam> = ZonderBasis<RecordVan<Naam>>;
 
-export interface Opslaggebruik {
-  gebruikt: number;
-  beschikbaar: number;
-  /** Boven `OPSLAGDREMPEL` hoort de waarschuwing te verschijnen. */
-  verhouding: number;
-  /** `false` als de browser geen schatting geeft; dan is er niets te waarschuwen. */
-  bekend: boolean;
+/**
+ * Schrijven binnen één aggregaat (§9.4 regel A).
+ *
+ * Dezelfde twee handelingen als buiten een aggregaat, met één verschil: ze laten
+ * geen journaalregel na. Die schrijft `schrijfAggregaat` één keer, op de wortel.
+ */
+export interface Aggregaatschrijver {
+  /**
+   * Een sleutel vooruit, vóór het record bestaat.
+   *
+   * Nodig omdat de wortel en zijn kinderen naar elkaar verwijzen: §8.4 legt uit dat
+   * `Documentation.pageIds` de **volgorde** draagt en `Page.documentationId` de
+   * **eigendom**, en dat allebei nodig is. Eén van de twee kent de sleutel van de
+   * ander dus voordat die geschreven is.
+   *
+   * Hij komt hiervandaan en niet uit de service erboven, want §8.1.3 laat sleutels
+   * op precies één plek ontstaan.
+   */
+  sleutel(): Uuid;
+  maak<Naam extends TabelNaam>(
+    tabel: Naam,
+    invoer: Nieuw<Naam>,
+    /** Een sleutel uit `sleutel()`. Zonder deze maakt de opslag er zelf een. */
+    id?: Uuid,
+  ): Promise<RecordVan<Naam>>;
+  wijzig<Naam extends TabelNaam>(
+    tabel: Naam,
+    id: Uuid,
+    wijziging: Partial<Nieuw<Naam>>,
+  ): Promise<RecordVan<Naam>>;
 }
 
 export interface StorageDeps {
@@ -57,8 +80,7 @@ export interface StorageDeps {
   origin: Uuid;
   /** Een record dat niet meer door zijn schema komt (§6.1.1). */
   onLeesfout?: (tabel: TabelNaam, id: string, reden: string) => void;
-  /** Uitgesplitst zodat een toets een volle schijf kan naspelen. */
-  schatting?: () => Promise<{ usage?: number; quota?: number } | undefined>;
+  schatting?: Schatter;
 }
 
 const VOL: AppError = {
@@ -137,14 +159,16 @@ export function createStorageService(deps: StorageDeps) {
     return null;
   }
 
-  async function create<Naam extends TabelNaam>(
+  /** Vult de zes basisvelden in en controleert het geheel. Raakt de opslag niet aan. */
+  function nieuwRecord<Naam extends TabelNaam>(
     tabel: Naam,
     invoer: Nieuw<Naam>,
-  ): Promise<Result<RecordVan<Naam>>> {
+    id: Uuid = newId(),
+  ): RecordVan<Naam> {
     const moment = nu();
-    const record = gecontroleerd(tabel, {
+    return gecontroleerd(tabel, {
       ...invoer,
-      id: newId(),
+      id,
       createdAt: moment,
       updatedAt: moment,
       deletedAt: null,
@@ -152,6 +176,45 @@ export function createStorageService(deps: StorageDeps) {
       origin,
       schemaVersion: CURRENT_SCHEMA_VERSION,
     });
+  }
+
+  /**
+   * Werkt een record bij zonder journaalregel. Alleen binnen een transactie.
+   *
+   * De grafsteen van `softDelete` staat als tweede tak in het type en niet als
+   * doorsnede: `Nieuw<Naam>` laat `deletedAt` juist weg, en over een nog niet
+   * opgeloste `Naam` valt een doorsnede van die twee niet te bewijzen.
+   */
+  async function werkBijRecord<Naam extends TabelNaam>(
+    tabel: Naam,
+    id: Uuid,
+    wijziging: Partial<Nieuw<Naam>> | Pick<BaseRecord, "deletedAt">,
+  ): Promise<RecordVan<Naam>> {
+    const bestaand = (await db[tabel].get(id)) as BaseRecord | undefined;
+    if (!bestaand) throw new Error(`Geen record ${id} in ${tabel}`);
+
+    const bijgewerkt = gecontroleerd(tabel, {
+      ...bestaand,
+      ...wijziging,
+      // `createdAt` verandert nooit meer, en `rev` telt met precies één op
+      // (§8.1.4, INV-03). Beide staan hier ná de spread, zodat een aanroeper
+      // ze niet per ongeluk kan meesturen.
+      createdAt: bestaand.createdAt,
+      updatedAt: nu(),
+      rev: bestaand.rev + 1,
+      origin,
+    });
+
+    await db[tabel].put(bijgewerkt as never);
+    return bijgewerkt;
+  }
+
+  async function create<Naam extends TabelNaam>(
+    tabel: Naam,
+    invoer: Nieuw<Naam>,
+  ): Promise<Result<RecordVan<Naam>>> {
+    // Buiten de transactie, zodat een schemafout onverpakt bij de aanroeper komt.
+    const record = nieuwRecord(tabel, invoer);
 
     try {
       await db.transaction("rw", db[tabel], db.changeLog, async () => {
@@ -213,29 +276,12 @@ export function createStorageService(deps: StorageDeps) {
     wijziging: Partial<Nieuw<Naam>>,
   ): Promise<Result<RecordVan<Naam>>> {
     try {
-      let bijgewerkt: RecordVan<Naam> | undefined;
-
-      await db.transaction("rw", db[tabel], db.changeLog, async () => {
-        const bestaand = (await db[tabel].get(id)) as BaseRecord | undefined;
-        if (!bestaand) throw new Error(`Geen record ${id} in ${tabel}`);
-
-        bijgewerkt = gecontroleerd(tabel, {
-          ...bestaand,
-          ...wijziging,
-          // `createdAt` verandert nooit meer, en `rev` telt met precies één op
-          // (§8.1.4, INV-03). Beide staan hier ná de spread, zodat een aanroeper
-          // ze niet per ongeluk kan meesturen.
-          createdAt: bestaand.createdAt,
-          updatedAt: nu(),
-          rev: bestaand.rev + 1,
-          origin,
-        });
-
-        await db[tabel].put(bijgewerkt as never);
-        await journaal(tabel, bijgewerkt as BaseRecord, "update");
+      const bijgewerkt = await db.transaction("rw", db[tabel], db.changeLog, async () => {
+        const record = await werkBijRecord(tabel, id, wijziging);
+        await journaal(tabel, record as BaseRecord, "update");
+        return record;
       });
-
-      return { ok: true, value: bijgewerkt! };
+      return { ok: true, value: bijgewerkt };
     } catch (fout) {
       return mislukt(fout);
     }
@@ -253,26 +299,72 @@ export function createStorageService(deps: StorageDeps) {
     id: Uuid,
   ): Promise<Result<RecordVan<Naam>>> {
     try {
-      let gemarkeerd: RecordVan<Naam> | undefined;
-
-      await db.transaction("rw", db[tabel], db.changeLog, async () => {
-        const bestaand = (await db[tabel].get(id)) as BaseRecord | undefined;
-        if (!bestaand) throw new Error(`Geen record ${id} in ${tabel}`);
-
-        const moment = nu();
-        gemarkeerd = gecontroleerd(tabel, {
-          ...bestaand,
-          deletedAt: moment,
-          updatedAt: moment,
-          rev: bestaand.rev + 1,
-          origin,
-        });
-
-        await db[tabel].put(gemarkeerd as never);
-        await journaal(tabel, gemarkeerd as BaseRecord, "delete");
+      const gemarkeerd = await db.transaction("rw", db[tabel], db.changeLog, async () => {
+        const record = await werkBijRecord(tabel, id, { deletedAt: nu() });
+        await journaal(tabel, record as BaseRecord, "delete");
+        return record;
       });
+      return { ok: true, value: gemarkeerd };
+    } catch (fout) {
+      return mislukt(fout);
+    }
+  }
 
-      return { ok: true, value: gemarkeerd! };
+  /**
+   * Eén aggregaat, één transactie, één journaalregel (§10.7, §9.4 regel A, §9.6).
+   *
+   * Een documentatie met haar pagina's opslaan is geen reeks schrijfacties die
+   * toevallig na elkaar komen; het is er één. Mislukt hij halverwege, dan is er
+   * niets veranderd — anders bestaat er een documentatie zonder pagina en breekt
+   * INV-08 bij de eerstvolgende leesactie.
+   *
+   * De wortel draagt het journaal, want §9.6 schrijft één regel per **aggregaat**
+   * voor, met de wortelsleutel. Daarom moet er aan de wortel geschreven zijn: zijn
+   * `rev` is de versie van het geheel, en daar leunt §10.8 op bij twee tabbladen.
+   */
+  async function schrijfAggregaat<Uitkomst>(
+    wortel: TabelNaam,
+    overige: readonly TabelNaam[],
+    werk: (schrijver: Aggregaatschrijver) => Promise<Uitkomst>,
+  ): Promise<Result<Uitkomst>> {
+    // Een lijst en geen losse variabele: TypeScript versmalt een `let` die alleen
+    // binnen een callback wordt gezet niet betrouwbaar.
+    const wortelregels: { record: BaseRecord; op: ChangeOperation }[] = [];
+
+    function onthoud(tabel: TabelNaam, record: BaseRecord, op: ChangeOperation) {
+      if (tabel !== wortel) return;
+      if (wortelregels.length > 0) {
+        throw new Error(`De wortel ${wortel} is twee keer geschreven binnen één aggregaat`);
+      }
+      wortelregels.push({ record, op });
+    }
+
+    const schrijver: Aggregaatschrijver = {
+      sleutel: newId,
+      async maak(tabel, invoer, id) {
+        const record = nieuwRecord(tabel, invoer, id);
+        await db[tabel].add(record as never);
+        onthoud(tabel, record as BaseRecord, "create");
+        return record;
+      },
+      async wijzig(tabel, id, wijziging) {
+        const record = await werkBijRecord(tabel, id, wijziging);
+        onthoud(tabel, record as BaseRecord, "update");
+        return record;
+      },
+    };
+
+    const stores = [db[wortel], ...overige.map((naam) => db[naam]), db.changeLog];
+
+    try {
+      const uitkomst = await db.transaction("rw", stores, async () => {
+        const waarde = await werk(schrijver);
+        const regel = wortelregels[0];
+        if (!regel) throw new Error(`Er is niets aan de wortel ${wortel} geschreven`);
+        await journaal(wortel, regel.record, regel.op);
+        return waarde;
+      });
+      return { ok: true, value: uitkomst };
     } catch (fout) {
       return mislukt(fout);
     }
@@ -293,39 +385,25 @@ export function createStorageService(deps: StorageDeps) {
     }
   }
 
-  /**
-   * Hoeveel opslag er gebruikt is (§9.8, INV-53).
-   *
-   * Geeft de browser geen schatting, dan is `bekend` onwaar en waarschuwt het
-   * scherm niet. Een waarschuwing op een gok is erger dan geen waarschuwing.
-   */
   async function usage(): Promise<Result<Opslaggebruik>> {
-    const schatten =
-      deps.schatting ??
-      (() =>
-        typeof navigator !== "undefined" && navigator.storage?.estimate
-          ? navigator.storage.estimate()
-          : Promise.resolve(undefined));
-
     try {
-      const schatting = await schatten();
-      const gebruikt = schatting?.usage ?? 0;
-      const beschikbaar = schatting?.quota ?? 0;
-      return {
-        ok: true,
-        value: {
-          gebruikt,
-          beschikbaar,
-          verhouding: beschikbaar > 0 ? gebruikt / beschikbaar : 0,
-          bekend: beschikbaar > 0,
-        },
-      };
+      return { ok: true, value: await meetOpslag(deps.schatting ?? BROWSERSCHATTING) };
     } catch (fout) {
       return mislukt(fout);
     }
   }
 
-  return { create, read, list, listDeleted, update, softDelete, purge, usage };
+  return {
+    create,
+    read,
+    list,
+    listDeleted,
+    update,
+    softDelete,
+    schrijfAggregaat,
+    purge,
+    usage,
+  };
 }
 
 export type StorageService = ReturnType<typeof createStorageService>;

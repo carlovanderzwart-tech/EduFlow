@@ -18,7 +18,15 @@ import { TABELLEN, type RecordVan, type TabelNaam } from "./tabellen";
 
 export const DATABASENAAM = "eduflow-v1";
 
-/** Zoals §8.6 hem bedoelt: de versie die Dexie beheert, naast de `schemaVersion` per record. */
+/**
+ * Zoals §8.6 hem bedoelt: de versie die Dexie beheert, naast de `schemaVersion`
+ * per record.
+ *
+ * De browser meldt hier `10` en niet `1`. Dat is Dexie: hij vermenigvuldigt zijn
+ * eigen versienummer met tien om ruimte te houden voor tussenstappen. `dbVersion`
+ * in het manifest van §8.7 is de 1 die hier staat, niet de 10 die je in de
+ * ontwikkelaarsgereedschappen ziet.
+ */
 export const DB_VERSIE = 1;
 
 /** De ringbuffer van §8.3.13 houdt vijfduizend regels vast. */
