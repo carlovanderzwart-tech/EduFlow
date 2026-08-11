@@ -4,8 +4,8 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { SaveStatus, type SaveState } from "@/components/common/SaveStatus";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { SaveStatus, type SaveState } from "@/ui/SaveStatus";
 import { Button } from "@/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";

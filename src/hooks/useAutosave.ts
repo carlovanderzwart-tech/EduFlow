@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { SaveState } from "@/components/common/SaveStatus";
+import type { SaveState } from "@/ui/SaveStatus";
 
 const SAVE_DELAY_MS = 1000;
 const SAVED_VISIBLE_MS = 2000;

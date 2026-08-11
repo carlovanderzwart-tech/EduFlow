@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { SaveStatus, type SaveState } from "@/components/common/SaveStatus";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { SaveStatus, type SaveState } from "@/ui/SaveStatus";
 import { Button } from "@/ui/button";
 import { Checkbox } from "@/ui/checkbox";
 import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/ui/field";

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { opslag } from "@/services/storage/start";
 import { OPSLAGDREMPEL } from "@/services/storage/StorageService";
 
-import { ErrorMessage } from "./ErrorMessage";
+import { ErrorMessage } from "@/ui/ErrorMessage";
 
 /**
  * Waarschuwt wanneer de opslag voor tachtig procent vol zit (INV-53, T-09).
