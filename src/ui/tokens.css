@@ -1,0 +1,279 @@
+/* EduFlow — ontwerptekens
+ * Bron: Product Bible §5.3 t/m §5.6 en §5.8. Bindend (T-33).
+ *
+ * DR-55: geen vaste waarden in componenten. Kleuren, ruimtes, straal en duur komen
+ * hier vandaan. Staat een waarde die je nodig hebt hier niet, dan is dat een besluit
+ * (DR-01) en geen aanleiding om er een in de component te zetten.
+ *
+ * De palet-laag (--palette-*) noemt kleuren bij hun naam. De rol-laag (--color-*)
+ * zegt waar ze voor dienen. Componenten gebruiken uitsluitend de rol-laag: dat is
+ * waarom de donkere modus hieronder één blok is en geen tweede stylesheet.
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Palet — grijs (§5.5)                                            */
+/*    Contrast op wit / op gray-950. Tekst nooit lichter dan gray-600  */
+/*    (4,5:1). Veldrand gray-500 (3:1).                                */
+/* ------------------------------------------------------------------ */
+:root {
+  --palette-gray-0:   #FFFFFF; /* 1,00 / 17,82 */
+  --palette-gray-25:  #FBFCFD; /* 1,03 / 17,35 */
+  --palette-gray-50:  #F6F7F9; /* 1,07 / 16,63 */
+  --palette-gray-100: #EDEFF2; /* 1,15 / 15,47 */
+  --palette-gray-200: #DFE3E8; /* 1,29 / 13,83 */
+  --palette-gray-300: #C9CFD6; /* 1,57 / 11,36 */
+  --palette-gray-400: #A3ACB7; /* 2,30 /  7,76 */
+  --palette-gray-500: #7C8794; /* 3,65 /  4,88 */
+  --palette-gray-600: #5C6672; /* 5,84 /  3,05 */
+  --palette-gray-700: #444C57; /* 8,69 /  2,05 */
+  --palette-gray-800: #2E353E; /* 12,39 / 1,44 */
+  --palette-gray-900: #1D232A; /* 15,84 / 1,13 */
+  --palette-gray-950: #14181D; /* 17,82 / 1,00 */
+
+  /* Accent — inktblauw. Wit op accent-500 = 6,01:1 */
+  --palette-accent-50:  #EEF3FC;
+  --palette-accent-100: #D9E4F8;
+  --palette-accent-200: #B6CBF0;
+  --palette-accent-300: #88A9E4;
+  --palette-accent-400: #5583D3;
+  --palette-accent-500: #2E5FBE;
+  --palette-accent-600: #1F4CA6;
+  --palette-accent-700: #1A3E86;
+  --palette-accent-800: #17346D; /* gereserveerd */
+  --palette-accent-900: #152C5A; /* gereserveerd */
+
+  /* Semantiek — 50 is achtergrond, 500 tekst op licht, 300 tekst op donker */
+  --palette-success-50:  #E9F6EE;
+  --palette-success-300: #66B78C;
+  --palette-success-500: #1E7A4B;
+  --palette-success-600: #186340;
+  --palette-warning-50:  #FDF3E2;
+  --palette-warning-300: #E0A83C;
+  --palette-warning-500: #9A6300;
+  --palette-warning-600: #7E5100;
+  --palette-danger-50:   #FDEDEC;
+  --palette-danger-300:  #E8837A;
+  --palette-danger-500:  #B42318;
+  --palette-danger-600:  #95190F;
+  --palette-info-50:     #E8F4F9;
+  --palette-info-300:    #5FB4D4;
+  --palette-info-500:    #0B6E99;
+  --palette-info-600:    #095A7E;
+
+  /* Reeksen — alleen als staaf van 3px links of stip van 8px (§5.5).
+     Na acht begint de toekenning opnieuw. Kleur is nooit de enige
+     betekenisdrager (NFR-38). */
+  --palette-series-1: #2E5FBE; /* 6,01 */
+  --palette-series-2: #0B6E99; /* 5,67 */
+  --palette-series-3: #1E7A4B; /* 5,33 */
+  --palette-series-4: #6B7A17; /* 4,75 */
+  --palette-series-5: #9A6300; /* 5,05 */
+  --palette-series-6: #A8452B; /* 5,91 */
+  --palette-series-7: #8E3A6B; /* 7,08 */
+  --palette-series-8: #5B4BA8; /* 6,96 */
+
+  /* ---------------------------------------------------------------- */
+  /* 2. Rollen — licht (§5.6)                                         */
+  /* ---------------------------------------------------------------- */
+  --color-surface:          var(--palette-gray-0);
+  --color-sunken:           var(--palette-gray-25);
+  --color-hover:            var(--palette-gray-50);
+  --color-selected:         var(--palette-accent-50);
+  --color-overlay:          var(--palette-gray-0);
+  --color-scrim:            rgb(20 24 29 / 0.45);
+
+  --color-text-primary:     var(--palette-gray-900);
+  --color-text-heading:     var(--palette-gray-800);
+  --color-text-secondary:   var(--palette-gray-700);
+  --color-text-tertiary:    var(--palette-gray-600);
+  --color-text-placeholder: var(--palette-gray-600);
+  --color-text-disabled:    var(--palette-gray-400);
+  --color-text-on-accent:   var(--palette-gray-0);
+
+  --color-border-subtle:    var(--palette-gray-200);
+  --color-border-default:   var(--palette-gray-300);
+  --color-border-input:     var(--palette-gray-500);
+  --color-border-strong:    var(--palette-gray-700);
+
+  --color-accent:           var(--palette-accent-500);
+  --color-accent-hover:     var(--palette-accent-600);
+  --color-accent-active:    var(--palette-accent-700);
+  --color-accent-quiet:     var(--palette-accent-50);
+  --color-focus:            var(--palette-accent-500);
+
+  --color-success:          var(--palette-success-500);
+  --color-success-bg:       var(--palette-success-50);
+  --color-warning:          var(--palette-warning-500);
+  --color-warning-bg:       var(--palette-warning-50);
+  --color-danger:           var(--palette-danger-500);
+  --color-danger-hover:     var(--palette-danger-600);
+  --color-danger-bg:        var(--palette-danger-50);
+  --color-info:             var(--palette-info-500);
+  --color-info-bg:          var(--palette-info-50);
+
+  /* ---------------------------------------------------------------- */
+  /* 3. Ruimte (§5.3) — schaal van 4, pixelwaarde als naam            */
+  /*    Verticale marges zijn een veelvoud van 4px, in de leeskolom    */
+  /*    van 8px. Regelvak is 24px.                                     */
+  /* ---------------------------------------------------------------- */
+  --space-0:  0;
+  --space-2:  2px;
+  --space-4:  4px;
+  --space-8:  8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px; /* = de goot op lg t/m 2xl */
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-80: 80px;
+  --space-96: 96px;
+
+  /* ---------------------------------------------------------------- */
+  /* 4. Typografie (§5.4)                                             */
+  /*    Gewicht 700 bestaat niet. Geen lettertype van een netwerk      */
+  /*    (DR-35): Inter en Source Sans 3 worden meegeleverd.            */
+  /* ---------------------------------------------------------------- */
+  --font-screen: "Inter var", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-print:  "Source Sans 3", "Source Sans Pro", sans-serif;
+  --font-mono:   ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", monospace;
+
+  --text-3xl: 32px;  --leading-3xl: 40px;  --tracking-3xl: -0.02em;   /* paginakop   */
+  --text-2xl: 24px;  --leading-2xl: 32px;  --tracking-2xl: -0.015em;  /* sectiekop   */
+  --text-xl:  20px;  --leading-xl:  28px;  --tracking-xl:  -0.01em;   /* blokkop     */
+  --text-lg:  18px;  --leading-lg:  28px;  --tracking-lg:  0;         /* leidend     */
+  --text-md:  16px;  --leading-md:  24px;  --tracking-md:  0;         /* brood       */
+  --text-sm:  14px;  --leading-sm:  20px;  --tracking-sm:  0;         /* ondersteun. */
+  --text-xs:  12px;  --leading-xs:  16px;  --tracking-xs:  0.01em;    /* chip, teller*/
+  --text-2xs: 11px;  --leading-2xs: 14px;  --tracking-2xs: 0.04em;    /* statusbadge */
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+
+  /* 66 tekens. Groeit niet mee met het scherm — dat is het hele punt. */
+  --measure-read: 33rem; /* 528px */
+
+  /* ---------------------------------------------------------------- */
+  /* 5. Straal, schaduw, randen (§5.6)                                */
+  /* ---------------------------------------------------------------- */
+  --radius-0:    0;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgb(20 24 29 / 0.06), 0 1px 1px rgb(20 24 29 / 0.04);
+  --shadow-2: 0 2px 6px rgb(20 24 29 / 0.08), 0 1px 2px rgb(20 24 29 / 0.06);
+  --shadow-3: 0 8px 24px rgb(20 24 29 / 0.12), 0 2px 6px rgb(20 24 29 / 0.08);
+  --shadow-4: 0 16px 48px rgb(20 24 29 / 0.18);
+
+  --border-thin:  1px;
+  --border-thick: 2px;
+  --focus-width:  2px;
+  --focus-offset: 2px;
+
+  /* ---------------------------------------------------------------- */
+  /* 6. Maten van de schil en de besturing (§5.2, §5.6, §5.7)         */
+  /* ---------------------------------------------------------------- */
+  --size-rail:         240px;
+  --size-rail-compact: 64px;   /* onder 1280 */
+  --size-rail-wide:    280px;  /* vanaf 1920 */
+  --size-panel:        400px;  /* exportpaneel, controlescherm */
+  --size-topbar:       56px;
+  --size-bottombar:    56px;
+  --size-control-sm:   32px;
+  --size-control-md:   40px;
+  --size-control-lg:   48px;
+  --size-touch-min:    44px;   /* NFR-33 op aanraakschermen */
+  --size-icon-sm:      16px;
+  --size-icon-md:      20px;
+  --size-icon-lg:      24px;
+  --size-content-max:  1440px;
+
+  --layer-base:   0;
+  --layer-sticky: 10;
+  --layer-menu:   100;
+  --layer-panel:  200;
+  --layer-dialog: 300;
+  --layer-toast:  400;
+
+  /* ---------------------------------------------------------------- */
+  /* 7. Beweging (§5.8)                                               */
+  /* ---------------------------------------------------------------- */
+  --duration-0: 0ms;
+  --duration-1: 120ms; /* zweven, focus, aanvinken             */
+  --duration-2: 180ms; /* melding in, paneel uit, lijstrij weg */
+  --duration-3: 240ms; /* paneel in, dialoog in                */
+
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --easing-enter:    cubic-bezier(0, 0, 0.2, 1);
+  --easing-exit:     cubic-bezier(0.4, 0, 1, 1);
+
+  /* Iconen: Lucide, lijnstijl, raster 24px, lijndikte 1,5px op elke maat. */
+  --icon-stroke: 1.5px;
+  --tooltip-delay: 400ms;
+}
+
+/* ------------------------------------------------------------------ */
+/* 8. Donker (§5.6)                                                   */
+/*    Alleen de rol-laag wisselt. Semantiek gaat naar de -300 treden,  */
+/*    want -500 op donker haalt het contrast niet.                     */
+/*    Staat op de planning voor v1.1 (B-42) — de tekens zijn er nu al  */
+/*    zodat het één regel is en geen verbouwing.                       */
+/* ------------------------------------------------------------------ */
+[data-theme="dark"] {
+  --color-surface:          var(--palette-gray-950);
+  --color-sunken:           #0E1216;
+  --color-hover:            var(--palette-gray-900);
+  --color-selected:         #1B2536;
+  --color-overlay:          var(--palette-gray-900);
+  --color-scrim:            rgb(0 0 0 / 0.60);
+
+  --color-text-primary:     var(--palette-gray-300);
+  --color-text-heading:     var(--palette-gray-200);
+  --color-text-secondary:   var(--palette-gray-400);
+  --color-text-tertiary:    var(--palette-gray-500);
+  --color-text-placeholder: var(--palette-gray-500);
+  --color-text-disabled:    var(--palette-gray-600);
+
+  --color-border-subtle:    var(--palette-gray-800);
+  --color-border-default:   var(--palette-gray-700);
+  --color-border-input:     var(--palette-gray-500);
+
+  --color-accent:           var(--palette-accent-300);
+  --color-accent-hover:     var(--palette-accent-400);
+  --color-focus:            var(--palette-accent-300);
+
+  --color-success:          var(--palette-success-300);
+  --color-warning:          var(--palette-warning-300);
+  --color-danger:           var(--palette-danger-300);
+  --color-info:             var(--palette-info-300);
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Minder beweging (NFR-36)                                        */
+/*    Alle overgangen uit, behalve de focusrand — die moet zichtbaar   */
+/*    blijven omdat hij navigatie is, geen versiering.                 */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-1: 0ms;
+    --duration-2: 0ms;
+    --duration-3: 0ms;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 10. Focus — één regel voor de hele app (§5.7)                      */
+/*     :focus-visible, dus niet bij een muisklik. 2px in de            */
+/*     focuskleur, 2px offset, overal hetzelfde.                       */
+/* ------------------------------------------------------------------ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
