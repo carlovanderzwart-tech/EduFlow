@@ -75,6 +75,20 @@ export default tseslint.config(
           { target: "./lib", from: "./ui" },
           { target: "./lib", from: "./app" },
 
+          // T-51 — hooks/ is de zesde zone: de gedeelde applicatiehook uit §11.2.
+          // hooks/ mag services, domain en lib; alleen modules/ importeert eruit.
+          { target: "./hooks", from: "./modules",
+            message: "T-51: hooks/ kent geen scherm. Draai de afhankelijkheid om." },
+          { target: "./hooks", from: "./ui",
+            message: "T-51: hooks/ kent het ontwerpsysteem niet." },
+          { target: "./hooks", from: "./app" },
+          { target: "./ui", from: "./hooks",
+            message: "T-51: ui/ haalt geen gegevens op, ook niet via een hook." },
+          { target: "./services", from: "./hooks",
+            message: "T-51: een service kent geen hook." },
+          { target: "./domain", from: "./hooks" },
+          { target: "./lib", from: "./hooks" },
+
           // DR-13 — alleen services/storage/ raakt de database aan.
           { target: "./modules", from: "./services/storage/db.ts",
             message: "DR-13: niemand buiten services/storage/ raakt db aan. Ook niet 'even snel'." },

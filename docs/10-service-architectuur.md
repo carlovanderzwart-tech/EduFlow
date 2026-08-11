@@ -98,11 +98,18 @@ src/
 
 | Van | Mag importeren uit |
 |---|---|
-| `modules/` | `services/`, `domain/`, `ui/`, `lib/` |
+| `modules/` | `services/`, `domain/`, `ui/`, `lib/`, `hooks/` |
 | `services/` | `domain/`, `lib/`, andere `services/` |
 | `domain/` | `lib/` |
 | `ui/` | `lib/` |
+| `hooks/` | `services/`, `domain/`, `lib/` |
 | `lib/` | niets uit dit project |
+
+`hooks/` is de zesde zone en bestaat door **T-51**. Hij herbergt de gedeelde applicatiehook die
+§11.2 voorschrijft — "een component vraagt gegevens op via een hook die een service aanroept" —
+en die niet in één module thuishoort omdat vier modules hem gebruiken. Alleen `modules/`
+importeert eruit. Een hook die bij één module hoort, staat niet hier maar in
+`modules/<module>/hooks/`, zoals `useAutosave`.
 
 `modules/` importeert nooit uit een andere `modules/`-map. Heeft het dashboard iets van documentaties nodig, dan komt dat uit `DocumentationService`, niet uit `modules/documentaties/`.
 

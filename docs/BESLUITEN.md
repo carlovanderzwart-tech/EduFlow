@@ -4,6 +4,64 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026. D
 bestand is het vervolg: elke keuze die daarna de documenten verandert, met datum en
 reden. Nieuwste bovenaan. Nummering loopt door op hoofdstuk 19.
 
+> **Waarschuwing bij de nummering.** De zin hierboven — "nummering loopt door op hoofdstuk 19"
+> — klopt niet. Hoofdstuk 19 loopt tot B-97 en T-38, niet tot B-83 en T-31, en alle tien
+> besluiten in dit bestand botsen daardoor met een bestaand nummer. Zie
+> [`registerconflicten.md`](registerconflicten.md). Zolang dat niet is opgelost, krijgt een
+> nieuw besluit een nummer boven het hoogste dat ooit is vergeven (B-102 en T-50).
+
+---
+
+# 11 augustus 2026 — na D00, de structuur naar §10.2
+
+## T-51 — `useDienst` is een gedeelde applicatiehook in `src/hooks/`
+
+**Probleem.** §10.2 kent vijf zones: `modules/`, `services/`, `domain/`, `ui/` en `lib/`. De
+hook `useDienst` past in geen van vijf. Hij heeft vijf importeurs uit vier modules, en zonder
+plek stond hij in een map `hooks/` die het handboek niet noemt — waardoor de lintregel achter
+DR-11 hem niet ziet en de vijf imports `modules → hooks` onzichtbaar overtreden bleven.
+
+**Besluit.** `src/hooks/` is een zesde zone met één bewoner: `useDienst`. De importregel is:
+
+| Van | Mag importeren uit |
+|---|---|
+| `hooks/` | `services/`, `domain/`, `lib/` |
+| `modules/` | `services/`, `domain/`, `ui/`, `lib/`, **`hooks/`** |
+
+Niemand anders importeert uit `hooks/`. `ui/` niet, `services/` niet, `domain/` niet.
+
+**Waarom hij niet in `ui/` hoort.** `useDienst` roept `diensten()` zelf aan en is getypeerd op
+`Diensten`. §10.2 zegt bij `ui/` letterlijk dat een component geen gegevens ophaalt, en de
+importtabel verbiedt `ui → services`. Een ontwerpsysteem dat de servicelaag kent, is niet meer
+los te toetsen — dat is §10.10.
+
+**Waarom hij niet in één module hoort.** Vier modules gebruiken hem. Hem in
+`modules/documentaties/` zetten maakt van de andere drie een import uit een vreemde
+modules-map, en dat verbiedt §10.2 met zoveel woorden. Hem viermaal kopiëren is dezelfde regel
+op vier plekken, en dat is U-03.
+
+**Waarom hij niet in `lib/` hoort.** `lib/` importeert niets uit dit project, en `useDienst`
+importeert `services/diensten` en `lib/result`. Bovendien is `lib/` gereedschap zonder
+domeinkennis; een hook die op de geopende opslag wacht, is dat niet.
+
+**Waarom hij bestaat.** §11 schrijft hem voor: *"een component vraagt gegevens op via een hook
+die een service aanroept. Nooit rechtstreeks via Dexie (DR-13)."* `useDienst` ís die ene brug.
+Het handboek eiste het patroon en gaf het geen adres; dit besluit geeft het adres.
+
+**Gevolg.** `src/hooks/` blijft bestaan met alleen `useDienst.ts`. §10.2 krijgt de zesde rij in
+de importtabel en `eslint.config.mjs` krijgt de bijbehorende zones, zodat de regel wordt
+afgedwongen en niet afgesproken (DR-11). `useAutosave` blijft **wel** modulegebonden en staat
+sinds D00 stap 5 in `modules/documentaties/hooks/`: hij is het autosave-mechanisme van §10.7
+en hoort bij het schrijfscherm, niet bij de app.
+
+**Waarom T-51 en niet T-39.** T-39 t/m T-50 zijn vergeven maar staan sinds `9cfd900` nergens
+meer opgeschreven. §19.1 regel 1 verbiedt hergebruik, dus een nummer uit dat gat zou botsen
+met een besluit dat wél genomen is. T-51 ligt boven het hoogste ooit vergeven nummer en is
+daarmee vrij, ongeacht hoe de registerbreuk wordt opgelost.
+
+**Herziening.** Bij de eerste tweede bewoner van `hooks/`. Eén gedeelde hook is een brug; drie
+zijn een laag, en dan hoort de vraag opnieuw gesteld te worden.
+
 ---
 
 # 11 augustus 2026 — na de afwijzing van Microsoft 365
