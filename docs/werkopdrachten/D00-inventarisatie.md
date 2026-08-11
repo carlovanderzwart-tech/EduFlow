@@ -223,21 +223,36 @@ scherm stellen.
 ### 3.4 De lintregels bewaken dit vandaag níét
 
 `eslint.config.mjs` zet `import/no-restricted-paths` op `error` met veertien zones. Toch levert
-`pnpm lint` **nul** laagmeldingen op. Reden: de zones wijzen naar de doelstructuur, niet naar de
-huidige.
+`pnpm lint` **nul** laagmeldingen op. Reden: de zones benoemen alleen mappen die §10.2 kent, en de
+overtredingen van §3.1 zitten juist in de drie mappen die §10.2 niet kent.
 
-- `{ target: "./ui", from: "./modules" }` vangt overgang 1 niet, want de map heet `components`.
+In dit lintregel is `target` de importerende kant en `from` de kant die niet geïmporteerd mag
+worden. `{ target: "./ui", from: "./services" }` betekent dus: *`ui/` mag niet uit `services/`
+importeren.*
+
+- **Er is geen enkele zone die `components/` of `hooks/` noemt.** Daarmee zijn de 43 imports
+  `modules → components`, de 5 `modules → hooks` en de 1 `hooks → components` voor de regel
+  onzichtbaar — niet omdat de richting verkeerd staat, maar omdat de map in geen enkele zone
+  voorkomt.
+- De zone die de echte overtreding zou vangen, `{ target: "./ui", from: "./services" }`, wijst
+  naar `./ui` — en die map bevatte tot D00 stap 2 alleen `tokens.css`. Er was dus niets te vangen.
+  Zodra `StorageWarning.tsx` in `ui/` staat, grijpt deze zone wél aan; dat is overgang 4 uit §3.1.
 - `{ target: "./modules/documentaties", … }` en `./modules/instellingen` bestaan niet; de mappen
-  heten `documentation` en `settings`.
+  heten `documentation` en `settings`. Het verbod op onderling importeren tussen modules dekt nu
+  dus alleen `agenda`, `mail` en `dashboard`.
 - `{ target: "./modules", from: "./services/storage/db.ts" }` staat er, maar er is geen scherm
   dat `db` aanraakt — de overtreding die er wél is, staat in `services/` en valt buiten deze zone.
 
 **Dit corrigeert de aanname in D00 stap 3.** Die stap gaat ervan uit dat de regels op `error`
 honderden meldingen geven en daarom eerst op `warn` moeten. Dat gebeurt niet: het getal is nu nul
-en blijft nul tot de mappen hun §10.2-naam hebben. De regels zijn geen muur om af te breken maar
-een muur die nog niet staat. Zet ze dus niet op `warn` — laat ze op `error` en verwacht dat elke
-verplaatsing uit §5 het getal tijdelijk laat oplopen. Dat oplopen is het bewijs dat de zone
-eindelijk aangrijpt.
+en blijft nul tot `components/` en `hooks/` niet meer bestaan. De regels zijn geen muur om af te
+breken maar een muur die nog niet staat. Zet ze dus niet op `warn` — laat ze op `error` en
+verwacht dat de verplaatsingen uit §5 het getal tijdelijk laten oplopen. Dat oplopen is het bewijs
+dat de zone eindelijk aangrijpt.
+
+*Nagemeten na D00 stap 1 en 2: nog steeds nul laagmeldingen, en lint nog steeds 48 fouten en 8
+waarschuwingen. Dat is het verwachte gedrag — `ui/` bevat na stap 2 alleen bladcomponenten die
+niets uit `services/` halen.*
 
 ---
 
