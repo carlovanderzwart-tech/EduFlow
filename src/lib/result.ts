@@ -12,13 +12,25 @@
  */
 
 /**
- * De foutcodes die de Product Bible met naam noemt.
+ * De foutcodes.
  *
- * §10.3 geeft er drie en sluit af met een beletselteken; de volledige verzameling
- * staat nergens. Daarom staan hier alleen deze drie. Elke volgende code komt erbij
- * op het moment dat de Bible hem noemt of dat er een besluit over is — niet eerder.
+ * §10.3 noemt er drie met naam en sluit af met een beletselteken; de volledige
+ * verzameling staat nergens. Elke volgende code komt erbij op het moment dat de
+ * Bible hem noemt of dat er een besluit over is — niet eerder.
+ *
+ * `INVALID_INPUT` is de vierde, en hij volgt uit het handboek zonder dat het hem
+ * benoemt. Vier invarianten eisen dat opslaan **faalt met een melding**: INV-16
+ * (de datum van een documentatie), INV-25 (overlappende lidmaatschappen), INV-29
+ * (twee kinderen die Noa heten) en INV-54 (overlappende basisweken). Een melding
+ * aan de gebruiker is volgens §10.3 een `Result` en geen uitzondering, en dus is
+ * er een code nodig om hem te dragen.
+ *
+ * Het is er met opzet **één** en niet één per invariant. §10.3 legt de tekst bij
+ * de service die de fout kent en verbiedt een scherm dat codes vertaalt; het
+ * onderscheid zit dus al in `message`. Een code per regel zou een indeling zijn
+ * die niemand leest.
  */
-export type ErrorCode = "STORAGE_FULL" | "AI_UNREACHABLE" | "PRIVACY_GATE";
+export type ErrorCode = "STORAGE_FULL" | "AI_UNREACHABLE" | "PRIVACY_GATE" | "INVALID_INPUT";
 
 /** Wat het scherm de gebruiker aanbiedt om verder te komen. */
 export interface AppErrorAction {
@@ -38,3 +50,14 @@ export interface AppError {
 }
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: AppError };
+
+/**
+ * Een afwijzing die de gebruiker zelf kan oplossen.
+ *
+ * Eén plek waar de vorm van zo'n fout staat, zodat de vier invarianten die
+ * "opslaan faalt met een melding" eisen niet elk hun eigen variant krijgen. De
+ * tekst komt van de aanroeper, want die kent de regel; hij volgt §4.7.
+ */
+export function ongeldig(message: string, action?: AppErrorAction): Result<never> {
+  return { ok: false, error: { code: "INVALID_INPUT", message, recoverable: true, action } };
+}

@@ -268,8 +268,8 @@ const POORTEN = [
     activeertBij: "stap 8 — PrivacyService",
     waarom:
       "De toets luidt restore(pseudonymise(t)) === t voor elke tekst in een set van minimaal " +
-      "120 gevallen (§12.5). PrivacyService kent vandaag alleen toInitial en getInitialsMasker; " +
-      "pseudonymise en restore bestaan nog niet.",
+      "120 gevallen (§12.5). PrivacyService bestaat nog niet: de stub die op de archiefdocumenten " +
+      "stond, is met de oude opslaglaag verdwenen.",
     voorwaarde: () => {
       if (!bestaat("src/services/PrivacyService.ts")) return null;
       const bron = lees("src/services/PrivacyService.ts");
