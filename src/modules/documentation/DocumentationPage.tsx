@@ -7,9 +7,9 @@ import { useCallback } from "react";
 
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { Button } from "@/components/ui/button";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/ui/button";
+import { Item, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
+import { Skeleton } from "@/ui/skeleton";
 import { useDienst } from "@/hooks/useDienst";
 import { datumKort } from "@/lib/weergave";
 import type { Diensten } from "@/services/diensten";
