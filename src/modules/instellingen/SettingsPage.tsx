@@ -98,7 +98,7 @@ export function SettingsPage() {
         <ItemContent>
           <ItemTitle>
             <Link
-              href="/settings/students"
+              href="/instellingen/leerlingen"
               className="after:absolute after:inset-0 after:content-['']"
             >
               Leerlingen

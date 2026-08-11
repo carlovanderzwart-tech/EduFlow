@@ -87,7 +87,7 @@ const VOL: AppError = {
   code: "STORAGE_FULL",
   message: "De opslag op dit apparaat is vol. Je werk staat nog in het scherm.",
   recoverable: true,
-  action: { label: "Ruim opslag op", kind: "navigate", target: "/settings" },
+  action: { label: "Ruim opslag op", kind: "navigate", target: "/instellingen" },
 };
 
 /** Een volle opslag meldt zich bij elke browser anders; alleen de naam is gelijk. */

@@ -34,7 +34,7 @@ export function DocumentationPage() {
     <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
       {documentaties && documentaties.length > 0 ? (
         <div className="flex justify-end">
-          <Button onClick={() => router.push("/documentation/nieuw")}>
+          <Button onClick={() => router.push("/documentaties/nieuw")}>
             <Plus aria-hidden="true" />
             Nieuwe documentatie
           </Button>
@@ -55,7 +55,7 @@ export function DocumentationPage() {
           icon={NotebookPen}
           title="Nog geen documentaties"
           description="Leg vast wat er vandaag gebeurde. Een titel en een paar regels zijn genoeg om te beginnen."
-          action={{ label: "Nieuwe documentatie", onClick: () => router.push("/documentation/nieuw") }}
+          action={{ label: "Nieuwe documentatie", onClick: () => router.push("/documentaties/nieuw") }}
         />
       ) : null}
 
@@ -67,7 +67,7 @@ export function DocumentationPage() {
                 <ItemContent>
                   <ItemTitle>
                     <Link
-                      href={`/documentation/${documentatie.id}`}
+                      href={`/documentaties/${documentatie.id}`}
                       className="after:absolute after:inset-0 after:content-['']"
                     >
                       {documentatie.title || "Zonder titel"}

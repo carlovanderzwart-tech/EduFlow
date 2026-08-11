@@ -30,12 +30,12 @@ const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
  */
 const SCHERMEN = [
   { naam: "dashboard", pad: "/" },
-  { naam: "overzicht documentaties", pad: "/documentation" },
-  { naam: "schrijfscherm", pad: "/documentation/nieuw" },
+  { naam: "overzicht documentaties", pad: "/documentaties" },
+  { naam: "schrijfscherm", pad: "/documentaties/nieuw" },
   { naam: "agenda", pad: "/agenda" },
   { naam: "mail", pad: "/mail" },
-  { naam: "instellingen", pad: "/settings" },
-  { naam: "leerlingen", pad: "/settings/students" },
+  { naam: "instellingen", pad: "/instellingen" },
+  { naam: "leerlingen", pad: "/instellingen/leerlingen" },
 ];
 
 interface AxeOvertreding {

@@ -14,10 +14,10 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/documentation", label: "Documentatie", icon: NotebookPen },
+  { href: "/documentaties", label: "Documentatie", icon: NotebookPen },
   { href: "/mail", label: "Mail", icon: Mail },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/settings", label: "Instellingen", icon: Settings },
+  { href: "/instellingen", label: "Instellingen", icon: Settings },
 ];
 
 /** Root ("/") is alleen actief op een exacte match, overige items ook op subroutes. */

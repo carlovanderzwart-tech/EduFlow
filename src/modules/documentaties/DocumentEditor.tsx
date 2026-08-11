@@ -137,7 +137,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     if (sleutel === NIEUW) {
       const nieuweSleutel = uitkomst.value.documentatie.id;
       setGemaakt(nieuweSleutel);
-      window.history.replaceState(null, "", `/documentation/${nieuweSleutel}`);
+      window.history.replaceState(null, "", `/documentaties/${nieuweSleutel}`);
     }
   }
 
@@ -164,7 +164,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         <ErrorMessage
           message="Deze documentatie bestaat niet meer."
           nextStep="Ga terug naar het overzicht."
-          action={{ label: "Naar het overzicht", onClick: () => router.push("/documentation") }}
+          action={{ label: "Naar het overzicht", onClick: () => router.push("/documentaties") }}
         />
       </div>
     );
