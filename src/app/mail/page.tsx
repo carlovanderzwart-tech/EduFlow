@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { MailPage } from "@/modules/mail/components/MailPage";
+import { MailPage } from "@/modules/mail/MailPage";
 
 export const metadata: Metadata = {
   title: "Mail",
