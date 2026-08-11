@@ -19,12 +19,19 @@ Zie besluit B-82 in `docs/BESLUITEN.md` voor waarom de doorloop vóór de sprint
 | [D06](D06-ai-meeschrijven.md) | Laat AI meeschrijven + het controlescherm | 1½ | — |
 | [D07](D07-overzicht.md) | Overzicht met zoeken en filters | 1 | — |
 | [D08](D08-export.md) | Export: één layout, deelbare afbeelding | 1½ | — |
-| [D09](D09-agenda.md) | Agenda: maand, jaar, vakantiebestand | 1½ | — |
-| [D10](D10-mail-dashboard.md) | Mail met nepmap + dashboard | 2 | — |
+| [D09a](D09a-agenda-weergaven.md) | Agenda: dag, week, maand, jaar + vakanties | 2 | D09b |
+| [D09b](D09b-agenda-afspraken.md) | Herhalen, slepen, snelveld, meldingen, ICS | 2 | — |
+| [D10](D10-mail.md) | Mail: opdracht in, mail uit | 1½ | — |
+| [D11](D11-dashboard.md) | Dashboard (vier blokken) | ½ | — |
 
-**Totaal ±15 dagdelen.** D01 t/m D04 zijn het fundament en moeten op volgorde. D05 t/m
-D10 kunnen in principe in elke volgorde, maar de bovenstaande geeft het snelst iets om
+**Totaal ±18 dagdelen.** D01 t/m D04 zijn het fundament en moeten op volgorde. D05 t/m
+D11 kunnen in principe in elke volgorde, maar de bovenstaande geeft het snelst iets om
 te laten zien.
+
+> **Bijgewerkt op 11 augustus 2026.** De agenda is uitgebreid tot een volwaardige agenda
+> (B-85) en daarmee gesplitst in D09a en D09b: +2½ dagdeel. De mailmodule is kleiner
+> geworden doordat de postbuskoppeling vervalt (B-84): −2 dagdelen, en het dashboard is
+> een eigen halve opdracht geworden nu het blok Postvak weg is. Netto ±3 dagdelen erbij.
 
 ## Doorloop-DoD (B-83)
 
@@ -46,7 +53,8 @@ hoort; niets hiervan is geschrapt.
 
 | Onderdeel | Doorloop | Komt terug in |
 |---|---|---|
-| Mailkoppeling | Nepmap uit een JSON-bestand | Sprint 5 (Graph + Gmail, OAuth/PKCE) |
+| ~~Mailkoppeling~~ | **Vervallen (B-84)** — er komt geen postbus | Fase 2, als een bestuur het aanvraagt |
+| Meldingen | Alleen terwijl de app open is (B-86) | Blijft zo; de ICS-export naar je eigen agenda-app is de route naar echte herinneringen |
 | Print-PDF | Browserprint, alleen Chrome op de laptop | Sprint 2 (`pdf-lib` + `pdf.js`, T-03) |
 | Layouts | Eén: `A-fotoraster` | Sprint 2 (vijf, met overloopregels) |
 | Foto's | Eén variant, geen bijsnijden | Sprint 1/2 (drie varianten, bijsnijden, draaien) |
