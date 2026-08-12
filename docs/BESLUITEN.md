@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-116** · **T-46**
+> ## Laatst uitgegeven nummers: **B-119** · **T-46** · **INV-57**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,102 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 12 augustus 2026 — tijdens het uitvoeren van D02 en D03
+
+## B-117 — Hoofdletterongevoelig zoeken wint van de tabelrij "Roos plukte een roos"
+
+**Probleem.** §12.5 beschrijft de afscherming in acht stappen en geeft daarna een tabel
+met verplichte gevallen. Die twee spreken elkaar op één punt tegen.
+
+| | |
+|---|---|
+| Stap 4 | "Hoofdletterongevoelig zoeken, hoofdletters herstellen." |
+| Tabelrij *Naam die ook woord is* | `"Roos plukte een roos"` → `[LEERLING-19]` plukte een roos |
+
+Bij hoofdletterongevoelig zoeken is de bloem "roos" niet te onderscheiden van de leerling
+Roos: beide staan tussen woordgrenzen en verschillen alleen in een hoofdletter. De rij
+verwacht dat de tweede blijft staan. Dat kan alleen als stap 4 niet geldt.
+
+**Besluit.** **Stap 4 wint.** Beide voorkomens worden vervangen; `"Roos plukte een roos"`
+wordt `[LEERLING-19] plukte een [LEERLING-19]`. De tabelrij in §12.5 is hierop gewijzigd.
+
+**Waarom.** De fout is niet symmetrisch. Eén keer te veel vervangen levert een lelijke
+opdracht op die de gebruiker in het controlescherm ziet en die de rondgang exact terugzet
+— hij leest gewoon weer "Roos plukte een roos". Eén keer te weinig vervangen is een naam
+die het apparaat verlaat, en dat is fout 1 uit §20.6: "de tekst is weg en komt niet
+terug". §12.5 kiest bij de diakrieten al dezelfde kant, met dezelfde reden: zoeken gebeurt
+op de gevouwen vorm zodat "Hanaë" ook op "Hanae" gevonden wordt, liever één keer te veel
+dan één keer te weinig.
+
+Het alternatief — alleen matchen wanneer de hoofdletter klopt — is geen kleine
+versoepeling maar een gat: het laat elke naam door die klein getypt is, en juist in een
+snelle notitie tussen twee lessen door typt niemand consequent hoofdletters.
+
+**Gevolg.** De rij *Naam die ook woord is* in §12.5 luidt nu
+`[LEERLING-19]` plukte een `[LEERLING-19]`. `PrivacyService.test.ts` legt het gedrag vast
+met de reden erbij, zodat het geen stille toets wordt (DR-45).
+
+**Herziening.** Zodra er een betrouwbare manier is om een naam van een gelijkluidend woord
+te onderscheiden. Dat is D7 uit de review — "het aanwijzen van namen die niet in de lijst
+staan" — en dat is nog niet besloten.
+
+## B-118 — De rondgang krijgt INV-57; INV-30 blijft van de agenda
+
+**Probleem.** `restore(pseudonymise(t)) === t` heet op twee plaatsen **INV-30**: in §12.5
+("Dat is INV-30") en in werkopdracht D03. In §9.5.4 draagt INV-30 een heel andere regel:
+"Een agenda-item heeft een begin en een einde, en het einde ligt niet vóór het begin." Eén
+nummer, twee regels.
+
+**Besluit.** **Hoofdstuk 9 is het register en is leidend.** INV-30 blijft de agendaregel.
+De rondgang wordt **INV-57** en staat vanaf nu in §9.5.6, bij de andere privacy- en
+AI-invarianten.
+
+**Waarom.** Hoofdstuk 9 is de plek waar invarianten wonen, met per regel een kolom
+*Afgedwongen in* en *Bij schending*; §12.5 is een beschrijving van een service die ernaar
+verwijst. Bij een botsing verliest de verwijzing, niet het register. De agendaregel
+hernummeren zou bovendien `AgendaService` en zijn toetsen raken, terwijl de rondgang tot
+vandaag nergens onder een nummer was vastgelegd — hij was alleen een zin in §12.5.
+
+**Waarom 57 en niet 54.** INV-54, INV-55 en INV-56 worden al door de code gebruikt
+(`weekPattern.ts`, `weekPattern.test.ts`, `lib/result.ts`) maar staan in geen enkel
+hoofdstuk. Ze opnieuw uitgeven zou twee betekenissen aan één nummer geven — precies de
+fout die dit besluit repareert. Zie **O-11**.
+
+**Gevolg.** §9.5.6 krijgt de rij INV-57. De zin in §12.5 verwijst nu naar INV-57.
+`PrivacyService.ts` en `PrivacyService.test.ts` noemen het nummer in hun toelichting en
+zijn meegewijzigd. De rij staat achteraan in §9.5.6 en niet op numerieke plek, omdat
+hoofdstuk 9 op onderwerp geordend is en dit een privacyregel is.
+
+## B-119 — Het schooljaar hoort binnen werkopdracht D02
+
+**Probleem.** Een groep hoort bij precies één schooljaar (INV-27), en `Group.schoolYearId`
+is verplicht. Werkopdracht D02 bouwt groepen en lidmaatschappen, maar noemt het schooljaar
+niet — niet in wat je bouwt, en ook niet in wat je bewust níet bouwt. Zonder schooljaar is
+er geen groep aan te maken, en dan doet het scherm Groepen niets: het toont een lege
+toestand die de gebruiker nergens kan oplossen.
+
+**Besluit.** Het **minimale** schooljaarveld — naam, eerste schooldag, laatste schooldag —
+hoort binnen D02 en is daar gebouwd. Het staat in `AgendaService`, want §9.5.3 legt INV-28
+("een schooljaar begint vóór het eindigt en overlapt geen ander schooljaar") daar neer.
+
+**Waarom.** De uitsluitingslijst van D02 noemt CSV-import, samenvoegen, het overzicht per
+kind, het stijlprofiel, de privacy-instellingen, de provider, de back-up, de opslag, de
+toegangscode en zoeken. Het schooljaar staat er niet bij, en DR-01 verbiedt vooruitbouwen,
+niet het bouwen van wat een eis nodig heeft. Het alternatief was een scherm Groepen dat
+alleen werkt na de knop "Vul de verzonnen groep" — en dat is precies de soort halve deur
+waar §4.7 tegen waarschuwt.
+
+**Gevolg.** `FR-INS-26` is voor het deel "een ingesteld schooljaar met een eerste en
+laatste schooldag" eerder ingebouwd dan de volgorde van de werkopdrachten suggereert. Het
+tweede deel — de snelkeuze "dit schooljaar" in een filter op periode — is er niet en hoort
+bij het scherm dat dat filter heeft. `AgendaService.zetSchooljaar()` houdt er hoogstens
+één tegelijk lopend; dat is de helft van INV-28 die zonder jaarovergang af te dwingen is.
+
+**Herziening.** Bij de jaarovergang (`FR-INS-09`), want die maakt een tweede schooljaar en
+daarmee wordt de overlapcontrole van INV-28 pas echt nodig.
 
 ---
 
@@ -536,3 +632,14 @@ De donkere modus uit §18.4 is dan een tweede verbouwing in plaats van één reg
   `package.json`. Dat is schrijfwerk aan het handboek en hoort niet in een D00-commit.
   **Vóór `claude-design/BRIEF.md` wordt geschreven**, want anders bouwt Claude Design op
   de verkeerde primitieven.
+- **O-11 — Zeven nummers staan in de code maar in geen enkel hoofdstuk.** Gevonden bij
+  B-118. De code beroept zich op `T-47` t/m `T-50` (`domain/schemas/base.ts`,
+  `domain/types/index.ts`, `services/storage/tabellen.ts`) en op `INV-54` t/m `INV-56`
+  (`domain/schemas/weekPattern.ts`, `domain/types/weekPattern.ts`, `lib/result.ts`). Geen
+  van de zeven staat in hoofdstuk 19, in dit bestand of in enig hoofdstuk; de regel
+  "Laatst uitgegeven nummers" bovenaan wist er dus ook niets van en stond op `T-46`.
+  Nodig: uitzoeken welk besluit er achter elk nummer zat en ze alsnog opschrijven, óf de
+  code naar bestaande nummers laten wijzen. Zolang dat niet gebeurd is, mogen `T-47` t/m
+  `T-50` en `INV-54` t/m `INV-56` **niet opnieuw uitgegeven worden** — vandaar dat de
+  rondgang INV-57 kreeg en niet INV-54. Dit blokkeert niets, maar het is precies de
+  tweede fout uit §20.6: een regel die op twee plaatsen iets anders betekent.
