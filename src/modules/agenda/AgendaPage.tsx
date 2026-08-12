@@ -124,7 +124,7 @@ export function AgendaPage() {
   );
 }
 
-/** Wanneer een item is, in de vorm die bij zijn variant past (T-48). */
+/** Wanneer een item is, in de vorm die bij zijn variant past (INV-31). */
 function wanneer(item: CalendarEvent): string {
   const soort = SOORTNAMEN[item.kind as EigenSoort] ?? item.kind;
 

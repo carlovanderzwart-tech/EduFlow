@@ -148,7 +148,7 @@ Dit scherm maakt B-23 waar: wat de app over jouw schrijven geleerd heeft, kun je
 #### 6.5.11 Toegangscode en apparaten
 
 **FR-INS-37 — De toegangscode wordt per apparaat één keer gevraagd.**
-*Gegeven* een nieuw apparaat, *wanneer* je de app opent, *dan* vraagt zij één keer om de toegangscode en zet zij daarna een cookie met een looptijd van een jaar. Geen account, geen wachtwoord dat je moet onthouden. Volgt uit T-05 en B-21.
+*Gegeven* een nieuw apparaat, *wanneer* je de app opent, *dan* vraagt zij één keer om de toegangscode en zet zij daarna een cookie met een looptijd van negentig dagen (B-120; §8.2.3 legt de cookie vast). Geen account, geen wachtwoord dat je moet onthouden. Volgt uit T-05 en B-21.
 
 **FR-INS-38 — De code is te wijzigen en apparaten zijn los in te trekken.**
 *Gegeven* het apparatenscherm, *wanneer* je een apparaat intrekt, *dan* moet dat apparaat de code opnieuw invoeren. De lijst toont per apparaat een zelfgekozen naam, de browser, en de datum van het laatste gebruik. Er staan geen IP-adressen in.

@@ -2,8 +2,8 @@
  * De basisweek en wat er per dag van afwijkt (§6.2.11, §8.3.15, §8.3.16, B-98).
  *
  * De leerkracht vult zijn normale week één keer in; de app zet die door naar zijn
- * schooldagen. Wat dat oplevert wordt **berekend en nooit opgeslagen** (B-100,
- * INV-56) — er is geen type voor, want er is geen record.
+ * schooldagen. Wat dat oplevert wordt **berekend en nooit opgeslagen** (B-100):
+ * er is geen type voor, want er is geen record.
  *
  * Een wijziging aan de basisweek werkt vanaf een datum (B-99). Daarom is er niet
  * één basisweek per schooljaar maar één per geldigheidsperiode: elke wijziging

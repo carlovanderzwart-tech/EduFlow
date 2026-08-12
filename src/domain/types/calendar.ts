@@ -1,7 +1,7 @@
 /**
  * Het agenda-item (§6.2.2, §8.3.8).
  *
- * **Eén begrip in twee vormen** (T-48). `allDay` bepaalt het type van `start` en
+ * **Eén begrip in twee vormen** (INV-31). `allDay` bepaalt het type van `start` en
  * `end`: een hele-dag-item draagt kalenderdagen, een item met tijden draagt
  * tijdstippen in UTC. Dat volgt uit §8.1.4 — een kalenderdag wordt nooit als
  * tijdstip opgeslagen, want dan verschuift 1 januari op de helft van de apparaten

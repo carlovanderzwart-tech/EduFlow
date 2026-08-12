@@ -1,5 +1,5 @@
 /**
- * De instellingen die persoonsgegevens raken of afleiden (§8.3.14, T-50).
+ * De instellingen die persoonsgegevens raken of afleiden (§8.3.14).
  *
  * Precies één record, altijd aanwezig (INV-49). Er is **geen** `User`-record in
  * versie 1.0: §9.4 noemt naam, rol, school en standaardtoon, maar alle vier

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { instellingen, zonderVeld } from "../toetsgegevens";
 import { zSettings } from "./settings";
 
-describe("zSettings — §8.3.14, T-50", () => {
+describe("zSettings — §8.3.14, §9.4", () => {
   it("laat een geldig instellingenrecord door", () => {
     expect(zSettings.safeParse(instellingen()).success).toBe(true);
   });
@@ -56,7 +56,7 @@ describe("wat hier niet hoort te staan — §8.2.2", () => {
     }
   });
 
-  it("weigert een gebruikersnaam, want er is geen User in 1.0 (T-50)", () => {
+  it("weigert een gebruikersnaam, want er is geen User in 1.0 (§9.4)", () => {
     expect(zSettings.safeParse({ ...instellingen(), userName: "Ilse" }).success).toBe(false);
   });
 });

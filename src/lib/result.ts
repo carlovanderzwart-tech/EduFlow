@@ -19,13 +19,13 @@
  * Bible hem noemt of dat er een besluit over is — niet eerder.
  *
  * `INVALID_INPUT` is de vierde, en hij volgt uit het handboek zonder dat het hem
- * benoemt. Vier invarianten eisen dat opslaan **faalt met een melding**: INV-16
+ * benoemt. Vier regels eisen dat opslaan **faalt met een melding**: INV-16
  * (de datum van een documentatie), INV-25 (overlappende lidmaatschappen), INV-29
- * (twee kinderen die Noa heten) en INV-54 (overlappende basisweken). Een melding
+ * (twee kinderen die Noa heten) en B-115 (overlappende basisweken). Een melding
  * aan de gebruiker is volgens §10.3 een `Result` en geen uitzondering, en dus is
  * er een code nodig om hem te dragen.
  *
- * Het is er met opzet **één** en niet één per invariant. §10.3 legt de tekst bij
+ * Het is er met opzet **één** en niet één per regel. §10.3 legt de tekst bij
  * de service die de fout kent en verbiedt een scherm dat codes vertaalt; het
  * onderscheid zit dus al in `message`. Een code per regel zou een indeling zijn
  * die niemand leest.

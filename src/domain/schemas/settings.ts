@@ -1,5 +1,5 @@
 /**
- * Schema van `settings` (§8.3.14, T-50).
+ * Schema van `settings` (§8.3.14).
  *
  * Zes velden plus het apparaat-id. Wat hier níét staat, staat in `localStorage`
  * (§8.2.2): de regio, de standaardtoon, de providerkeuze, de laatste weergave, de

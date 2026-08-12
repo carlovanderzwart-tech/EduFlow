@@ -8,7 +8,7 @@
  * INV-32 en INV-33 — welke vakanties aanpasbaar zijn en of een aanpassing bij
  * een bestaande periode hoort — horen bij `HolidayService`.
  *
- * `holidayPeriods` is een leescache van `schoolvakanties.json` (T-49). De
+ * `holidayPeriods` is een leescache van `schoolvakanties.json` (§13.4). De
  * bestandsversie staat op elke rij, want de tabel wordt in één keer geleegd en
  * opnieuw gevuld; één rij lezen is genoeg om te weten of het bestand nieuwer is.
  */

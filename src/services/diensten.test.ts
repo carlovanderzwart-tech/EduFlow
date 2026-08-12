@@ -270,7 +270,7 @@ describe("AgendaService — §6.2.2, INV-30, INV-31", () => {
     expect(item.source).toBe("own");
   });
 
-  it("bewaart een hele-dag-item als kalenderdagen (INV-31, T-48)", async () => {
+  it("bewaart een hele-dag-item als kalenderdagen (INV-31)", async () => {
     const item = waarde(
       await agenda.maak({
         title: "Studiedag",

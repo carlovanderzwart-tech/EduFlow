@@ -4,7 +4,7 @@
  * Dit is de enige plek in het project waar Dexie wordt aangeraakt (DR-13). Alles
  * daarbuiten gaat via `StorageService`.
  *
- * De naam is `eduflow-v1` en de versie is 1 (T-40, T-47). Versie 1.0 begint op een
+ * De naam is `eduflow-v1` en de versie is 1 (T-40, §8.6). Versie 1.0 begint op een
  * schone database: er komt geen migratieketen vanaf de ontwikkelversie, want die
  * zou precies één keer draaien op nul records en daarna jarenlang onderhouden
  * moeten worden (U-05, DR-02).
