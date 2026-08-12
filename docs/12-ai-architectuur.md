@@ -177,7 +177,7 @@ De bevestiging "Toch doorgaan" zet `emptyListConfirmedAt` en schrijft een `Audit
 | Geval | Invoer | Verwachte uitkomst |
 |---|---|---|
 | Gewoon woord | "De rozen in de schooltuin" | ongewijzigd |
-| Naam die ook woord is | "Roos plukte een roos" | `[LEERLING-19]` plukte een roos |
+| Naam die ook woord is | "Roos plukte een roos" | `[LEERLING-19]` plukte een `[LEERLING-19]` (B-117) |
 | Deelwoord | "samenwerken" met leerling Sam | ongewijzigd |
 | Bezitsvorm | "Kjelds idee" | `[LEERLING-11]s idee` |
 | Verkleinwoord | "Kjeldje" | `[LEERLING-11]je` |
@@ -187,7 +187,9 @@ De bevestiging "Toch doorgaan" zet `emptyListConfirmedAt` en schrijft een `Audit
 | Twee gelijke namen | "Noa deed het" met beide Noa's gekoppeld | `[LEERLING-AMBIGU-1]` plus melding |
 | Rondgang | pseudonimiseren en terugvertalen | exact de oorspronkelijke tekst |
 
-De laatste is de belangrijkste: `restore(pseudonymise(t)) === t` moet gelden voor elke tekst in de set. Dat is INV-30.
+De laatste is de belangrijkste: `restore(pseudonymise(t)) === t` moet gelden voor elke tekst in de set. Dat is INV-57 (B-118; dit heette hier eerst INV-30, maar dat nummer draagt in §9.5.4 de agendaregel).
+
+De rij *Naam die ook woord is* volgt B-117: stap 4 hierboven zoekt hoofdletterongevoelig, en dan is de bloem "roos" niet van de leerling Roos te onderscheiden. Beide worden vervangen. Dat is de veilige kant — de rondgang zet de tekst exact terug, terwijl een gemiste naam het apparaat verlaat.
 
 ### 12.6 De serverroute
 

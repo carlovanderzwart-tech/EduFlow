@@ -9,9 +9,9 @@
  * niet willekeurig gekozen: elke naam dekt een geval dat hieronder staat.
  *
  * De **rondgang** is de belangrijkste toets: `restore(pseudonymise(t)) === t` voor
- * elk van de vijftien gevallen uit `PRIVACY_GEVALLEN`. Werkopdracht D03 en §12.5
- * noemen die eis `INV-30`. Let op: in §9.5.4 draagt dat nummer een agendaregel —
- * de eis zelf staat in §12.5 en is hier bindend.
+ * elk van de vijftien gevallen uit `PRIVACY_GEVALLEN`. Dat is `INV-57` (§9.5.6).
+ * Werkopdracht D03 en §12.5 noemden die eis `INV-30`; dat nummer draagt in §9.5.4
+ * al een agendaregel, en B-118 heeft de rondgang daarom INV-57 gegeven.
  */
 
 import { describe, expect, it } from "vitest";
@@ -82,7 +82,7 @@ describe("PRIVACY_GEVALLEN — T-04, §12.5", () => {
   );
 
   it.each(PRIVACY_GEVALLEN.map((geval) => [geval.naam, geval] as const))(
-    "rondgang op %s (INV-30 uit §12.5)",
+    "rondgang op %s (INV-57)",
     (_naam, geval) => {
       const uitkomst = pseudonymise(geval.invoer, LIJST);
 
