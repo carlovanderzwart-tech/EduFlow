@@ -33,6 +33,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.0",
@@ -43,10 +44,13 @@
     "axe-core": "^4.11.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.32.0",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "typescript-eslint": "^8.66.0",
     "vitest": "^4.1.10"
   }
 }
