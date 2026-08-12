@@ -26,6 +26,27 @@ export function foldDiacritics(waarde: string): string {
 }
 
 /**
+ * Dezelfde vouwing, maar **met behoud van lengte** (§12.5 stap 6).
+ *
+ * `foldDiacritics` mag korter worden; hier mag dat niet. De afscherming zoekt in
+ * de gevouwen vorm en vervangt op de oorspronkelijke tekenreeks, en dan moet een
+ * positie in de een dezelfde positie in de ander zijn. Eén teken verschuiving
+ * zet een code midden in een woord.
+ *
+ * Een los combinatieteken — tekst die al in NFD staat — blijft staan, want het
+ * weglaten zou de tekst korter maken. Wie deze functie gebruikt normaliseert de
+ * invoer eerst naar NFC; dan is "e" plus trema weer één "ë" en klapt hij wel om.
+ */
+export function foldDiacriticsPerChar(waarde: string): string {
+  return [...waarde]
+    .map((teken) => {
+      const gevouwen = foldDiacritics(teken);
+      return gevouwen.length === teken.length ? gevouwen : teken;
+    })
+    .join("");
+}
+
+/**
  * Splitst tekst in tokens voor de zoekindex (§8.5).
  *
  * Kleine letters, diakrieten behouden, splitsen op niet-letters, en woorden van

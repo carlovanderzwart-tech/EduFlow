@@ -89,39 +89,43 @@ export const SOORTNAMEN: Record<EigenSoort, string> = {
   documentatiemoment: "Documentatiemoment",
 };
 
-export function createAgendaService(deps: AgendaDeps) {
-  /** Alle regels die een item tegenhouden, in één plek zodat de melding er één is. */
-  function bezwaar(invoer: Agendainvoer): string | null {
-    if (!invoer.title.trim()) {
-      return "Een agenda-item heeft een titel nodig. Vul er een in.";
-    }
-
-    if (invoer.kind === "verjaardag") {
-      return "Verjaardagen komen uit je leerlingenlijst. Vul daar een geboortedatum in.";
-    }
-    if (invoer.kind === "vakantie") {
-      return "Vakanties komen uit het vakantiebestand. Ze zijn hier niet aan te maken.";
-    }
-
-    // FR-AGE-04: het gesprek gaat over één kind, en de koppeling stuurt de mail.
-    if (invoer.kind === "oudergesprek" && (invoer.studentIds ?? []).length !== 1) {
-      return "Een oudergesprek gaat over precies één leerling. Kies er een.";
-    }
-
-    const klopt = invoer.allDay ? isIsoDate : isIsoDateTime;
-    if (!klopt(invoer.start) || !klopt(invoer.end)) {
-      return "Deze datum klopt niet. Vul een begin en een einde in.";
-    }
-
-    // INV-30. Vergelijken op de tekenreeks mag binnen één variant: beide vormen
-    // hebben een vaste breedte, dus alfabetische volgorde ís chronologische.
-    if (invoer.end < invoer.start) {
-      return "Het einde ligt vóór het begin. Zet het einde later.";
-    }
-
-    return null;
+/**
+ * Alle regels die een item tegenhouden, in één plek zodat de melding er één is.
+ *
+ * Buiten de fabriek, want hij raakt de opslag niet: hij leest alleen de invoer.
+ */
+function bezwaar(invoer: Agendainvoer): string | null {
+  if (!invoer.title.trim()) {
+    return "Een agenda-item heeft een titel nodig. Vul er een in.";
   }
 
+  if (invoer.kind === "verjaardag") {
+    return "Verjaardagen komen uit je leerlingenlijst. Vul daar een geboortedatum in.";
+  }
+  if (invoer.kind === "vakantie") {
+    return "Vakanties komen uit het vakantiebestand. Ze zijn hier niet aan te maken.";
+  }
+
+  // FR-AGE-04: het gesprek gaat over één kind, en de koppeling stuurt de mail.
+  if (invoer.kind === "oudergesprek" && (invoer.studentIds ?? []).length !== 1) {
+    return "Een oudergesprek gaat over precies één leerling. Kies er een.";
+  }
+
+  const klopt = invoer.allDay ? isIsoDate : isIsoDateTime;
+  if (!klopt(invoer.start) || !klopt(invoer.end)) {
+    return "Deze datum klopt niet. Vul een begin en een einde in.";
+  }
+
+  // INV-30. Vergelijken op de tekenreeks mag binnen één variant: beide vormen
+  // hebben een vaste breedte, dus alfabetische volgorde ís chronologische.
+  if (invoer.end < invoer.start) {
+    return "Het einde ligt vóór het begin. Zet het einde later.";
+  }
+
+  return null;
+}
+
+export function createAgendaService(deps: AgendaDeps) {
   async function maak(invoer: Agendainvoer): Promise<Result<CalendarEvent>> {
     const reden = bezwaar(invoer);
     if (reden) return ongeldig(reden);
