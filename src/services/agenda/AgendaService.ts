@@ -19,7 +19,7 @@
 import { isIsoDate, isIsoDateTime, type IsoDate, type IsoDateTime } from "@/lib/dates";
 import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
-import type { CalendarEvent, CalendarEventKind } from "@/domain/types";
+import type { CalendarEvent, CalendarEventKind, Region, SchoolYear } from "@/domain/types";
 
 import type { StorageService } from "../storage/StorageService";
 
@@ -179,7 +179,66 @@ export function createAgendaService(deps: AgendaDeps) {
     return deps.storage.softDelete("calendarEvents", id);
   }
 
-  return { maak, lijst, verwijder };
+  return {
+    maak,
+    lijst,
+    verwijder,
+    huidigSchooljaar: () => huidigSchooljaar(deps.storage),
+    zetSchooljaar: (invoer: Schooljaarinvoer) => zetSchooljaar(deps.storage, invoer),
+  };
+}
+
+/**
+ * Wat het instellingenscherm invult (FR-INS-26, §8.3.8).
+ *
+ * De regio staat erbij omdat een schooljaar hem draagt: de vakanties horen bij een
+ * landsdeel én bij een jaar, en `holidayPeriods` sleutelt op allebei.
+ */
+export interface Schooljaarinvoer {
+  name: string;
+  firstSchoolDay: IsoDate;
+  lastSchoolDay: IsoDate;
+  region: Region;
+}
+
+/** Het lopende schooljaar, of `null` zolang er geen is ingesteld (FR-INS-26). */
+async function huidigSchooljaar(storage: StorageService): Promise<Result<SchoolYear | null>> {
+  const uitkomst = await storage.list("schoolYears");
+  if (!uitkomst.ok) return uitkomst;
+
+  const lopend = uitkomst.value.find((jaar) => jaar.isCurrent) ?? uitkomst.value[0] ?? null;
+  return { ok: true, value: lopend };
+}
+
+/**
+ * Stelt het schooljaar in (FR-INS-26, INV-28).
+ *
+ * Er is er hoogstens één tegelijk lopend, dus een tweede aanroep wijzigt het
+ * bestaande in plaats van er een naast te zetten. Dat is ook wat INV-28 afdwingbaar
+ * houdt zonder jaarovergang: overlap kan alleen ontstaan als er twee zijn.
+ */
+async function zetSchooljaar(
+  storage: StorageService,
+  invoer: Schooljaarinvoer,
+): Promise<Result<SchoolYear>> {
+  const name = invoer.name.trim();
+  if (!name) return ongeldig("Een schooljaar heeft een naam nodig, bijvoorbeeld 2026-2027.");
+
+  if (!isIsoDate(invoer.firstSchoolDay) || !isIsoDate(invoer.lastSchoolDay)) {
+    return ongeldig("Deze datum klopt niet. Vul een eerste en een laatste schooldag in.");
+  }
+  // INV-28, eerste helft.
+  if (invoer.lastSchoolDay <= invoer.firstSchoolDay) {
+    return ongeldig("De laatste schooldag ligt vóór de eerste. Zet hem later in het jaar.");
+  }
+
+  const bestaand = await huidigSchooljaar(storage);
+  if (!bestaand.ok) return bestaand;
+
+  const velden = { ...invoer, name, isCurrent: true };
+  return bestaand.value
+    ? storage.update("schoolYears", bestaand.value.id, velden)
+    : storage.create("schoolYears", velden);
 }
 
 export type AgendaService = ReturnType<typeof createAgendaService>;

@@ -16,6 +16,9 @@ import {
   createDocumentationService,
   type DocumentationService,
 } from "./documentation/DocumentationService";
+import { createGroupService, type GroupService } from "./groups/GroupService";
+import { createSampleDataService, type SampleDataService } from "./sampledata/SampleDataService";
+import { createSeriesService, type SeriesService } from "./series/SeriesService";
 import { createSettingsService, type SettingsService } from "./settings/SettingsService";
 import type { Voorkeurenopslag } from "./settings/voorkeuren";
 import { opslag } from "./storage/start";
@@ -40,19 +43,37 @@ export interface Diensten {
   storage: StorageService;
   settings: SettingsService;
   students: StudentService;
+  groups: GroupService;
+  series: SeriesService;
   documentation: DocumentationService;
   agenda: AgendaService;
+  /** Doorloopgereedschap; gaat eruit vóór v1.0 (werkopdracht D02). */
+  sampleData: SampleDataService;
 }
 
 async function bouw(): Promise<Diensten> {
   const storage = await opslag();
 
+  const settings = createSettingsService({ storage, voorkeurenOpslag: browserVoorkeuren() });
+  const students = createStudentService({ storage });
+  const groups = createGroupService({ storage });
+  const series = createSeriesService({ storage });
+
   return {
     storage,
-    settings: createSettingsService({ storage, voorkeurenOpslag: browserVoorkeuren() }),
-    students: createStudentService({ storage }),
+    settings,
+    students,
+    groups,
+    series,
     documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
     agenda: createAgendaService({ storage }),
+    sampleData: createSampleDataService({
+      storage,
+      students,
+      groups,
+      series,
+      region: settings.voorkeur("region"),
+    }),
   };
 }
 
