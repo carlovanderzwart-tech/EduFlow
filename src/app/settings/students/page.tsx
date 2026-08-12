@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { StudentsPage } from "@/modules/settings/components/StudentsPage";
+import { StudentsPage } from "@/modules/settings/StudentsPage";
 
 export const metadata: Metadata = {
   title: "Leerlingen",

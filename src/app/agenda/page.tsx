@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AgendaPage } from "@/modules/agenda/components/AgendaPage";
+import { AgendaPage } from "@/modules/agenda/AgendaPage";
 
 export const metadata: Metadata = {
   title: "Agenda",

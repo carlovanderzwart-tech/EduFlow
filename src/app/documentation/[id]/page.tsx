@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DocumentEditor } from "@/modules/documentation/components/DocumentEditor";
+import { DocumentEditor } from "@/modules/documentation/DocumentEditor";
 
 export const metadata: Metadata = {
   title: "Documentatie",
