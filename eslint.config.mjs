@@ -155,6 +155,17 @@ const eslintConfig = defineConfig([
             { target: "./lib", from: "./ui" },
             { target: "./lib", from: "./app" },
 
+            // T-46 — modules/ mag uit app/ alleen providers/ importeren.
+            // Een scherm haalt daar zijn diensten op en verder niets: niet uit
+            // _shell/, niet uit een route.
+            {
+              target: "./modules",
+              from: "./app",
+              except: ["./providers"],
+              message:
+                "T-46: een module importeert uit app/ alleen app/providers/. De schil en de routes zijn van app/ zelf.",
+            },
+
             // DR-13 — alleen services/storage/ raakt de database aan.
             {
               target: "./modules",
