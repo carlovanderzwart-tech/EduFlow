@@ -3,14 +3,14 @@
 import { Trash2, UserPlus } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemTitle } from "@/components/ui/item";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDienst } from "@/hooks/useDienst";
+import { EmptyState } from "@/ui/EmptyState";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { Button } from "@/ui/button";
+import { Field, FieldLabel } from "@/ui/field";
+import { Input } from "@/ui/input";
+import { Item, ItemActions, ItemContent, ItemTitle } from "@/ui/item";
+import { Skeleton } from "@/ui/skeleton";
+import { useDienst } from "@/app/providers/useDienst";
 import { diensten, type Diensten } from "@/services/diensten";
 import { weergavenaam } from "@/services/students/StudentService";
 

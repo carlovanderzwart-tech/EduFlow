@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SettingsPage } from "@/modules/settings/components/SettingsPage";
+import { SettingsPage } from "@/modules/settings/SettingsPage";
 
 export const metadata: Metadata = {
   title: "Instellingen",

@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-116** · **T-44**
+> ## Laatst uitgegeven nummers: **B-116** · **T-46**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,79 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 12 augustus 2026 — tijdens het uitvoeren van D00
+
+## T-45 — Base UI blijft; B-116 vervalt
+
+**Probleem.** B-116 besloot "Radix blijft; er komt geen tweede componentbibliotheek",
+met als vertrekpunt dat `components/ui/` negentien primitieven "gebouwd op Radix" bevat.
+Dat vertrekpunt klopt niet. Gemeten op de code van D00 stap 2:
+
+| | |
+|---|---|
+| `@base-ui/react` | geïmporteerd door **elf** bestanden in `ui/`, en staat in `package.json` |
+| `@radix-ui/*` | **nul** bestanden, en staat **niet** in `package.json` |
+
+De negentien primitieven hebben shadcn-vorm, maar de primitievenlaag eronder is Base UI.
+
+**Besluit.** **Base UI blijft.** Er komt geen tweede bibliotheek en geen migratie. B-116
+vervalt en wordt door dit besluit vervangen.
+
+**Waarom.** Dit is dezelfde redenering als B-116, toegepast op de werkelijke code. B-116
+zegt: *"De bewijslast ligt bij het wisselen, niet bij het houden. Negentien primitieven
+omzetten is een week werk waarvan geen enkele eis in hoofdstuk 6 of 17 beter wordt."* Dat
+argument is juist — het wees alleen de verkeerde kant op, omdat het uitging van een
+bibliotheek die er niet staat. "Radix blijft" zou uitgevoerd wórden wat het wilde
+voorkomen: een migratie van negentien componenten, midden in de doorloop, in dezelfde
+bestanden die net verhuisd zijn.
+
+Base UI komt bovendien van hetzelfde team als Radix en levert dezelfde toegankelijkheid
+waar §11.6 om vraagt: focusopsluiting, `aria-modal`, afhandeling van Escape en het
+herstellen van de focus.
+
+**Gevolg.** `claude-design/BRIEF.md` krijgt de regel dat componenten op de bestaande
+**Base UI**-primitieven gebouwd worden en niet vanaf nul — hetzelfde gevolg dat B-116
+beoogde, met de juiste bibliotheek. Drie plaatsen in het handboek schrijven nog Radix
+voor en spreken de code dus tegen: de afhankelijkhedentabel in §16.8, de zin "geen
+componentbibliotheek buiten Radix" daaronder, en §11.6. Hoofdstuk 5 noemt Radix in vier
+componentrijen. Die vier bestanden zijn hiermee **niet** gewijzigd; dat is redactiewerk aan
+het handboek en hoort niet in een D00-commit. Het staat als openstaand punt hieronder.
+
+**Herziening.** Zodra Base UI geen ondersteuning meer krijgt, of een tekort tegen WCAG 2.2
+AA vertoont dat `axe-core` in de bouwstraat aantoont.
+
+## T-46 — De importregel voor `app/providers/` en `app/(app)/_shell/`
+
+**Probleem.** B-111 voegt `src/app/providers/` toe aan §10.2 en zet de schil in
+`src/app/(app)/_shell/`, maar noemt geen importregel. Gevolg na D00 stap 4: vijf modules
+importeren `useDienst` uit `@/app/providers/`, en die overgang valt in geen enkele zone van
+`import/no-restricted-paths`. De lintregel laat hem door omdat hij er niet over gaat — niet
+omdat hij is toegestaan. Dat is precies het gat waardoor `components/` en `hooks/` een week
+lang onzichtbaar bleven.
+
+**Besluit.** De importtabel van §10.2 krijgt twee rijen:
+
+| Van | Mag importeren uit |
+|---|---|
+| `modules/` | `services/`, `domain/`, `ui/`, `lib/`, **`app/providers/`** |
+| `app/` | alles |
+
+`modules/` mag **alleen** uit `app/providers/` importeren en uit geen andere map onder
+`app/` — een scherm haalt zijn diensten daar op en verder niets. `app/(app)/_shell/` is
+van `app/` zelf; niemand daarbuiten importeert eruit. `ui/` mag nog steeds niets uit
+`app/`, want dan zou het ontwerpsysteem raamwerkbewust worden en dat is juist de reden
+achter B-111.
+
+**Waarom `app/` alles mag.** `app/` is de buitenste laag: hij stelt de andere lagen samen
+en niemand importeert eruit behalve via `providers/`. Een beperking daar zou niets
+beschermen wat niet al door de andere rijen wordt beschermd.
+
+**Gevolg.** §10.2 krijgt de twee mappen in zijn boom en de twee rijen in zijn tabel.
+`eslint.config.mjs` krijgt de zones die het afdwingen, zodat de regel bewaakt wordt en niet
+alleen afgesproken (DR-11).
 
 ---
 
@@ -83,6 +156,14 @@ gegenereerd item, *dan* toont het detailvenster "uit je basisweek" als herkomst.
 de basisweek daarna, *dan* raakt dat de reeds gewijzigde items niet.
 
 ## B-116 — Radix blijft; er komt geen tweede componentbibliotheek
+
+> **Vervallen op 12 augustus 2026, vervangen door T-45.** Het probleem hieronder gaat uit
+> van primitieven "gebouwd op Radix", en dat is niet wat er in de repo staat: elf bestanden
+> importeren `@base-ui/react`, `@radix-ui/*` komt in nul bestanden voor en staat niet in
+> `package.json`. Daardoor wees de conclusie de verkeerde kant op — "Radix blijft" zou een
+> migratie van negentien componenten betekenen in plaats van die te voorkomen. De
+> redenering blijft staan en leidt op de werkelijke code tot **Base UI blijft**; zie T-45.
+> Blijft leesbaar volgens §19.1 regel 2.
 
 **Probleem.** `components/ui/` bevat negentien primitieven in shadcn-vorm, gebouwd op
 Radix. De vraag is of `ui/` daarop verder gaat of overstapt naar Base UI.
@@ -443,3 +524,15 @@ De donkere modus uit §18.4 is dan een tweede verbouwing in plaats van één reg
 - **O-09 — De bestaande repository naar §10.2.** De repository is 35 pull requests diep;
   de opzet-opdracht in `SETUP.md` ging uit van een leeg project. Zie werkopdracht
   `D00-bestaande-repo.md`, die die opdracht vervangt.
+- **O-10 — Vier hoofdstukken schrijven nog Radix voor.** Volgt uit T-45. Het handboek
+  spreekt de code tegen op vier plaatsen: de afhankelijkhedentabel in §16.8, de zin "geen
+  componentbibliotheek buiten Radix" daaronder, §11.6 ("panelen en dialoogvensters komen
+  uit Radix"), en vier componentrijen in hoofdstuk 5 die Radix Select, Switch, Checkbox,
+  Tabs en Dialog noemen. Dezelfde tabel in §16.8 schrijft bovendien `zustand`, `pdf-lib`
+  en `pdfjs-dist` voor, die geen van drieën in `package.json` staan, en noemt
+  `@base-ui/react`, `lucide-react`, `clsx`, `tailwind-merge`,
+  `class-variance-authority`, `sonner` en `tw-animate-css` niet, die er wel in staan.
+  Nodig: één redactieronde over die vier bestanden, met §16.8 gelijkgetrokken aan
+  `package.json`. Dat is schrijfwerk aan het handboek en hoort niet in een D00-commit.
+  **Vóór `claude-design/BRIEF.md` wordt geschreven**, want anders bouwt Claude Design op
+  de verkeerde primitieven.

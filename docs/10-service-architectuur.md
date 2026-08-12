@@ -41,11 +41,15 @@ Dit lost B11v uit de review op: services stonden zowel op topniveau als in elke 
 src/
   app/                        Next.js App Router: routes en route handlers
     (app)/
+      _shell/                 de vaste schil uit §5: navigatiebalk, bovenbalk (B-111)
+        AppShell.tsx, Sidebar.tsx, Topbar.tsx, BottomNav.tsx, nav-items.ts
       dashboard/page.tsx
       documentaties/…
       agenda/…
       mail/…
       instellingen/…
+    providers/                React-context die diensten in de boom hangt (B-111)
+      useDienst.ts
     api/
       ai/route.ts
       mail/[...path]/route.ts
@@ -98,13 +102,16 @@ src/
 
 | Van | Mag importeren uit |
 |---|---|
-| `modules/` | `services/`, `domain/`, `ui/`, `lib/` |
+| `modules/` | `services/`, `domain/`, `ui/`, `lib/`, `app/providers/` |
 | `services/` | `domain/`, `lib/`, andere `services/` |
 | `domain/` | `lib/` |
 | `ui/` | `lib/` |
+| `app/` | alles |
 | `lib/` | niets uit dit project |
 
 `modules/` importeert nooit uit een andere `modules/`-map. Heeft het dashboard iets van documentaties nodig, dan komt dat uit `DocumentationService`, niet uit `modules/documentaties/`.
+
+De twee rijen met `app/` komen uit **T-46**. Een scherm haalt zijn diensten op uit `app/providers/` en importeert verder niets uit `app/` — niet uit `_shell/`, niet uit een route. `app/` zelf mag alles, want het is de buitenste laag: het stelt de andere lagen samen en niemand importeert eruit behalve via `providers/`. `ui/` mag nog steeds niets uit `app/`; zou dat wel mogen, dan werd het ontwerpsysteem raamwerkbewust en dat is precies wat B-111 voorkomt.
 
 ### 10.3 Het patroon van een service
 

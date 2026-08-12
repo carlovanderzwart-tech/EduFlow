@@ -4,17 +4,17 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { SaveStatus, type SaveState } from "@/components/common/SaveStatus";
-import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
-import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { useDienst } from "@/hooks/useDienst";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { SaveStatus, type SaveState } from "@/ui/SaveStatus";
+import { Button } from "@/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/ui/field";
+import { Input } from "@/ui/input";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
+import { Label } from "@/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
+import { Skeleton } from "@/ui/skeleton";
+import { Switch } from "@/ui/switch";
+import { useDienst } from "@/app/providers/useDienst";
 import type { PupilNoun, Region } from "@/domain/types";
 import { diensten, type Diensten } from "@/services/diensten";
 

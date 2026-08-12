@@ -3,17 +3,17 @@
 import { CalendarDays, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
-import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { useDienst } from "@/hooks/useDienst";
+import { EmptyState } from "@/ui/EmptyState";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { Button } from "@/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/ui/field";
+import { Input } from "@/ui/input";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
+import { Label } from "@/ui/label";
+import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
+import { Skeleton } from "@/ui/skeleton";
+import { Switch } from "@/ui/switch";
+import { useDienst } from "@/app/providers/useDienst";
 import {
   datumKort,
   naarLokaleInvoer,

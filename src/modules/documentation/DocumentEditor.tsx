@@ -3,16 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-import { ErrorMessage } from "@/components/common/ErrorMessage";
-import { SaveStatus, type SaveState } from "@/components/common/SaveStatus";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { useDienst } from "@/hooks/useDienst";
+import { ErrorMessage } from "@/ui/ErrorMessage";
+import { SaveStatus, type SaveState } from "@/ui/SaveStatus";
+import { Button } from "@/ui/button";
+import { Checkbox } from "@/ui/checkbox";
+import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/ui/field";
+import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
+import { Skeleton } from "@/ui/skeleton";
+import { Textarea } from "@/ui/textarea";
+import { useDienst } from "@/app/providers/useDienst";
 import { vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
 import { weergavenaam } from "@/services/students/StudentService";

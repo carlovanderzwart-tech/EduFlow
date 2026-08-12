@@ -1,13 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/ui/button";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
+} from "@/ui/empty";
 
 interface EmptyStateAction {
   label: string;
