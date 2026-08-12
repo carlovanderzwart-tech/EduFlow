@@ -13,6 +13,7 @@ export type { BaseRecord, Colour, IsoDate, IsoDateTime, Uuid } from "./base";
 export type { Student } from "./student";
 export type { Group, GroupKind, GroupMembership, MembershipRole } from "./group";
 export type { Series } from "./series";
+export type { PseudonymEntry, PseudonymKind, PseudonymMap } from "./pseudonym";
 export type { Documentation, DocumentationStatus } from "./documentation";
 export type {
   AttributionStyle,
