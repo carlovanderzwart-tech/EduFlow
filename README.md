@@ -1,86 +1,78 @@
-# EduFlow
+# Werkopdrachten — de doorloop (v0.1)
 
-EduFlow is een platform voor onderwijsprofessionals die omkomen in de administratie.
+Tien opdrachten. Elke opdracht is **één sessie met Claude Code, één commit, en eindigt
+met iets dat je op het scherm ziet**. Een sessie die twee opdrachten doet, weet van geen
+van beide meer precies wat er is afgesproken — begin een nieuwe sessie, niet een nieuwe
+alinea.
 
-`docs/EduFlow - Product Bible v1.0.md` is de enige normatieve bron. Spreekt de code dat
-document tegen, dan wint het document. Oudere architectuurdocumenten staan in
-`docs/archief/` en zijn niet meer leidend.
+Zie besluit B-82 in `docs/BESLUITEN.md` voor waarom de doorloop vóór de sprints komt.
 
-## Aan de slag
+## De volgorde
 
-Vereist: Node.js 20.9 of nieuwer. De pakketbeheerder is **pnpm**; de versie staat in het veld
-`packageManager` van `package.json` en komt uit corepack, dat bij Node zit.
+| # | Opdracht | Dagdelen | Blokkeert |
+|---|---|---:|---|
+| [D01](D01-storage.md) | `StorageService`, `BaseRecord` en het schema | 1 | alles |
+| [D02](D02-instellingen.md) | Instellingen: leerlingen, groepen, reeksen | 1 | D03, D05 |
+| [D03](D03-privacy.md) | `PrivacyService` met de volledige toetsset | 1½ | D04 |
+| [D04](D04-ai-route.md) | `/api/ai`, `AIService`, `PromptService` | 1 | D06 |
+| [D05](D05-schrijfmodus.md) | Schrijfmodus: velden, autosave, foto's | 2 | D06, D08 |
+| [D06](D06-ai-meeschrijven.md) | Laat AI meeschrijven + het controlescherm | 1½ | — |
+| [D07](D07-overzicht.md) | Overzicht met zoeken en filters | 1 | — |
+| [D08](D08-export.md) | Export: één layout, deelbare afbeelding | 1½ | — |
+| [D09a](D09a-agenda-weergaven.md) | Agenda: dag, week, maand, jaar + vakanties | 2 | D09b |
+| [D09b](D09b-agenda-afspraken.md) | Herhalen, slepen, snelveld, meldingen, ICS | 2 | — |
+| [D10](D10-mail.md) | Mail: opdracht in, mail uit | 1½ | — |
+| [D11](D11-dashboard.md) | Dashboard (vier blokken) | ½ | — |
 
-```bash
-corepack enable
-pnpm install
-pnpm dev
-```
+**Totaal ±18 dagdelen.** D01 t/m D04 zijn het fundament en moeten op volgorde. D05 t/m
+D11 kunnen in principe in elke volgorde, maar de bovenstaande geeft het snelst iets om
+te laten zien.
 
-De app draait daarna op [http://localhost:3000](http://localhost:3000).
+> **Bijgewerkt op 11 augustus 2026.** De agenda is uitgebreid tot een volwaardige agenda
+> (B-85) en daarmee gesplitst in D09a en D09b: +2½ dagdeel. De mailmodule is kleiner
+> geworden doordat de postbuskoppeling vervalt (B-84): −2 dagdelen, en het dashboard is
+> een eigen halve opdracht geworden nu het blok Postvak weg is. Netto ±3 dagdelen erbij.
 
-## Commando's
+## Doorloop-DoD (B-83)
 
-De zes commando's uit §20.5 van de Product Bible:
+Drie punten, niet acht:
 
-```bash
-pnpm dev           # ontwikkelserver
-pnpm lint          # ESLint, inclusief de importregels uit §10.2
-pnpm typecheck     # tsc --noEmit
-pnpm test          # eenheids- en componenttoetsen (Vitest)
-pnpm test:golden   # de gouden testset zonder netwerk (§12.9)
-pnpm e2e           # schermtoetsen met axe-core (Playwright)
-```
+1. Het draait zonder fouten in de console.
+2. De geautomatiseerde toetsen zijn groen, inclusief de toets die het `FR-`nummer in
+   zijn naam heeft (DR-40).
+3. De opdrachtgever heeft het één keer zelf gedaan met de verzonnen groep.
 
-Daarnaast:
+De acht punten uit §18.6 gelden vanaf v0.9. Eén punt daaruit geldt óók nu al, want het
+is geen kwaliteitspoort maar een grens: **een nieuwe gegevensstroom staat in hoofdstuk 15
+en is besproken met de functionaris gegevensbescherming vóór het eerste echte kind.**
 
-```bash
-pnpm build         # productiebouw
-pnpm start         # productiebouw draaien
-pnpm gates         # de elf poorten uit §16.9, met hun stand
-```
+## Wat in de doorloop bewust dun blijft
 
-Voor `pnpm e2e` zijn de browsers van Playwright nodig:
+Dit is de tabel die de snelheid maakt. Alles hieronder komt terug in de sprint waar het
+hoort; niets hiervan is geschrapt.
 
-```bash
-pnpm exec playwright install --with-deps chromium
-```
+| Onderdeel | Doorloop | Komt terug in |
+|---|---|---|
+| ~~Mailkoppeling~~ | **Vervallen (B-84)** — er komt geen postbus | Fase 2, als een bestuur het aanvraagt |
+| Meldingen | Alleen terwijl de app open is (B-86) | Blijft zo; de ICS-export naar je eigen agenda-app is de route naar echte herinneringen |
+| Print-PDF | Browserprint, alleen Chrome op de laptop | Sprint 2 (`pdf-lib` + `pdf.js`, T-03) |
+| Layouts | Eén: `A-fotoraster` | Sprint 2 (vijf, met overloopregels) |
+| Foto's | Eén variant, geen bijsnijden | Sprint 1/2 (drie varianten, bijsnijden, draaien) |
+| Gespreksmodus | Niet | Sprint 3 |
+| Reeksen en stijlprofiel | Reeks als veld, geen vervolgzin | Sprint 3 (`StyleService`) |
+| Back-up | Alleen exporteren | Sprint 1 (met terugzetten en samenvoegen) |
+| Toegankelijkheid | Toetsenbordbediening waar hij gratis is | Sprint 6 (WCAG 2.2 AA met `axe-core`) |
+| Snelheidseisen | Geen meting | Sprint 6 (`NFR-01` t/m `NFR-17`) |
+| Telefoon | Werkt, maar niet mooi | Sprint 6 (plus "op het beginscherm zetten", B-02) |
+| Archiveren en prullenbak | `deletedAt` wordt gezet, geen scherm | Sprint 2 |
 
-## De bouwstraat
+## Wat je in de doorloop **niet** mag afzwakken
 
-§16.9 van de Product Bible schrijft elf controles voor. Elke controle heeft precies één van
-twee standen. **Actief** betekent dat hij nu draait en de bouw kan laten falen. **Wacht**
-betekent dat het onderdeel dat hij bewaakt pas bij een latere implementatiestap ontstaat.
+Later inbouwen is hier duurder dan nu bouwen, en bij de eerste twee is "later" te laat:
 
-`pnpm gates` toont die stand:
-
-| # | Controle | Stand | Waar |
-|---|---|---|---|
-| 1 | Geen persoonsgegevens naar een logfunctie (DR-44) | wacht op stap 3 | typegebaseerd; vier van de zes typen bestaan nog niet |
-| 2 | Geen Dexie buiten `StorageService` (DR-13) | actief | `pnpm lint` |
-| 3 | Geen import uit een andere `modules/`-map (§10.2) | actief | `pnpm lint` |
-| 4 | Geen verwijzing naar een verzendeindpunt (DR-42) | actief | `pnpm gates` |
-| 5 | Geen sleutel in de broncode (DR-36) | actief | `pnpm gates` |
-| 6 | Geen kritieke kwetsbaarheid (§16.8) | actief | `pnpm gates` |
-| 7 | `axe-core` op elk scherm (NFR-30) | actief | `pnpm e2e` |
-| 8 | Bundelomvang binnen §11.8 (T-31) | actief | `pnpm gates`, na `pnpm build` |
-| 9 | `restore(pseudonymise(t)) === t` (INV-30) | wacht op stap 8 | `PrivacyService` bestaat nog niet in deze vorm |
-| 10 | Gouden testset zonder netwerk (§12.9) | wacht op stap 16 | er is nog geen `PromptService` |
-| 11 | Gouden testset met netwerk (§12.9) | wacht op stap 16 | er is nog geen provider |
-
-Een wachtende poort is een grendel en geen belofte: zodra het onderdeel dat hij bewaakt
-bestaat, **faalt** de poort met de melding dat hij nu geïmplementeerd moet worden. Zo kan een
-controle niet stilzwijgend blijven wachten nadat zijn onderwerp is gebouwd.
-
-De poorten draaien in GitHub Actions bij elke wijziging; de kwetsbaarhedencontrole en de
-gouden testset met netwerk draaien daarnaast wekelijks. Zie `.github/workflows/ci.yml`.
-
-## Techniek
-
-Next.js (App Router), React, TypeScript, Tailwind CSS, Base UI (T-39), Lucide Icons.
-Hoofdstuk 10 en 11 van de Product Bible beschrijven de architectuur en de mappenstructuur;
-T-45 legt vast welke afhankelijkheden zijn toegestaan.
-
-De codebase volgt die architectuur nog niet volledig. De implementatievolgorde staat in de
-architectuurreview bij §19.5; `idb` en `jspdf` zijn tijdelijk en verdwijnen bij respectievelijk
-stap 4 en stap 13.
+- `PrivacyService` met de harde poort bij een lege leerlingenlijst (DR-31, FR-INS-20).
+- Het volledige controlescherm vóór elke AI-aanroep (FR-DOC-72, FR-DOC-73).
+- Geen enkel beeldgegeven richting `/api/ai` (DR-32).
+- IndexedDB als enige opslag voor persoonsgegevens (T-01, DR-33).
+- `BaseRecord` op elke entiteit, met `rev`, `origin` en `schemaVersion` (DR-25) — ook al
+  synchroniseert er nog niets. Dit er later in verbouwen raakt elk record dat er dan is.
