@@ -13,7 +13,7 @@ import { Label } from "@/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import { Skeleton } from "@/ui/skeleton";
 import { Switch } from "@/ui/switch";
-import { useDienst } from "@/hooks/useDienst";
+import { useDienst } from "@/app/providers/useDienst";
 import {
   datumKort,
   naarLokaleInvoer,

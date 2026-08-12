@@ -12,7 +12,7 @@ import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Skeleton } from "@/ui/skeleton";
 import { Textarea } from "@/ui/textarea";
-import { useDienst } from "@/hooks/useDienst";
+import { useDienst } from "@/app/providers/useDienst";
 import { vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
 import { weergavenaam } from "@/services/students/StudentService";

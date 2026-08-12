@@ -10,7 +10,7 @@ import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
 import { Skeleton } from "@/ui/skeleton";
-import { useDienst } from "@/hooks/useDienst";
+import { useDienst } from "@/app/providers/useDienst";
 import { datumKort } from "@/lib/weergave";
 import type { Diensten } from "@/services/diensten";
 

@@ -10,7 +10,7 @@ import { Field, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";
 import { Item, ItemActions, ItemContent, ItemTitle } from "@/ui/item";
 import { Skeleton } from "@/ui/skeleton";
-import { useDienst } from "@/hooks/useDienst";
+import { useDienst } from "@/app/providers/useDienst";
 import { diensten, type Diensten } from "@/services/diensten";
 import { weergavenaam } from "@/services/students/StudentService";
 
