@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
+import { EmptyState } from "@/ui/EmptyState";
+import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
 import { Skeleton } from "@/ui/skeleton";

@@ -1,6 +1,6 @@
 import { Mail as MailIcon } from "lucide-react";
 
-import { EmptyState } from "@/components/common/EmptyState";
+import { EmptyState } from "@/ui/EmptyState";
 
 export function MailPage() {
   return (

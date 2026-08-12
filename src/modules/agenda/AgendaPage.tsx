@@ -3,8 +3,8 @@
 import { CalendarDays, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { EmptyState } from "@/components/common/EmptyState";
-import { ErrorMessage } from "@/components/common/ErrorMessage";
+import { EmptyState } from "@/ui/EmptyState";
+import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";
