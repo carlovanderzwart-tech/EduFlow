@@ -76,10 +76,17 @@ function ontsnap(waarde: string): string {
   return waarde.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
-/** Het patroon van §12.5 stap 3 plus de verbuigingen van stap 5. */
+/**
+ * Het patroon van §12.5 stap 3 plus de verbuigingen van stap 5.
+ *
+ * Het achtervoegsel staat in een **vangende** groep, want het hoort niet bij de
+ * code: "Kjelds" wordt `[LEERLING-11]s`. Uit de lengte van die groep volgt waar de
+ * naam ophoudt, en dat is betrouwbaarder dan de lengte van de zoekterm — kleine
+ * letters maken een naam niet altijd even lang (de Turkse "İ" wordt er twee).
+ */
 function patroonVoor(zoek: string): RegExp {
   return new RegExp(
-    `${GRENS_VOOR}${ontsnap(zoek)}(?:${ACHTERVOEGSELS.join("|")})?${GRENS_NA}`,
+    `${GRENS_VOOR}${ontsnap(zoek)}(${ACHTERVOEGSELS.join("|")})?${GRENS_NA}`,
     "giu",
   );
 }
@@ -113,8 +120,17 @@ function bouwTermen(lijst: Afschermlijst): { termen: Zoekterm[]; meldingen: stri
 
   // Stap 2. Bij gelijke lengte de alfabetische volgorde, zodat twee aanroepen op
   // dezelfde lijst dezelfde uitkomst geven (INV-41).
-  termen.sort((a, b) => b.zoek.length - a.zoek.length || a.zoek.localeCompare(b.zoek));
-  return { termen, meldingen };
+  //
+  // De lege term valt eerst af. Hij komt niet voor bij een gevalideerd record —
+  // de schema's van `students` en `privacyTerms` eisen minstens één teken — maar
+  // een patroon dat de lege tekenreeks matcht loopt in `exec` eeuwig door, en dat
+  // zou deze poort laten hangen in plaats van blokkeren.
+  return {
+    termen: termen
+      .filter((term) => term.zoek.length > 0)
+      .sort((a, b) => b.zoek.length - a.zoek.length || a.zoek.localeCompare(b.zoek)),
+    meldingen,
+  };
 }
 
 function leerlingcode(leerling: Student): string {
@@ -197,7 +213,7 @@ function zoekVervangingen(gevouwen: string, termen: readonly Zoekterm[]): Vervan
 
     while ((treffer = patroon.exec(gevouwen)) !== null) {
       const start = treffer.index;
-      const eind = start + term.zoek.length;
+      const eind = start + treffer[0].length - (treffer[1]?.length ?? 0);
       // Een kortere term binnen een al gevonden langere overslaan: dat is stap 2
       // in de praktijk. "Noa" binnen "Noa B." hoort niet nog eens vervangen.
       const botst = gevonden.some((eerder) => start < eerder.eind && eerder.start < eind);

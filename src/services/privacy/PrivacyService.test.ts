@@ -386,6 +386,15 @@ describe("de poort — T-08, FR-INS-20", () => {
   });
 });
 
+describe("een lijst die niet klopt laat de poort niet hangen", () => {
+  it("slaat een lege naam over in plaats van eeuwig te zoeken", () => {
+    const lijst: Afschermlijst = { leerlingen: [leerling("", 1), leerling("Bram", 2)] };
+    const uitkomst = pseudonymise("Bram bouwde een toren.", lijst);
+
+    expect(uitkomst.tekst).toBe("[LEERLING-2] bouwde een toren.");
+  });
+});
+
 describe("de belofte van INV-38", () => {
   it("laat geen enkele naam uit de lijst achter in de uitgaande tekst", () => {
     const zin = GROEP_4.map((kind) => `${kind.voornaam} deed mee.`).join(" ");
