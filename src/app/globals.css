@@ -1,3 +1,24 @@
+/* T-44 — tokens.css is de bron voor maten, kleuren, letters en duren (§5, DR-55).
+
+   Let op de cascade, want die werkt hier omgekeerd aan wat de leesvolgorde suggereert.
+   De blokken hieronder staan in `@theme inline`, en Tailwind zet die in een
+   cascade-laag. `tokens.css` gebruikt `:root` en is ongelaagd, en ongelaagde regels
+   winnen van gelaagde — ongeacht wie eerst staat. Zes namen staan in beide bestanden
+   en `tokens.css` wint ze dus alle zes:
+
+     --color-accent  bijna-wit      ->  #2e5fbe
+     --font-mono     Geist Mono     ->  ui-monospace-stapel
+     --radius-md     8px            ->  6px
+     --radius-sm     6px            ->  4px
+     --radius-xl     14px           ->  16px
+     --radius-lg     10px           ->  10px   (gelijk)
+
+   Dat is de bedoeling van T-44 en niet een ongeluk: het ontwerpsysteem uit hoofdstuk 5
+   neemt het over van de shadcn-standaarden die hier stonden (DR-55). De vaste waarden
+   hieronder vervangen door tokens is een volgende stap; zolang ze er staan, zijn ze
+   dood gewicht voor deze zes en nog wél in gebruik voor de rest. */
+@import "../ui/tokens.css";
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
