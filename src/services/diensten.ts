@@ -12,6 +12,8 @@
  */
 
 import { createAgendaService, type AgendaService } from "./agenda/AgendaService";
+import { createAIService, type AIService } from "./ai/AIService";
+import { createPromptService } from "./ai/PromptService";
 import {
   createDocumentationService,
   type DocumentationService,
@@ -47,6 +49,8 @@ export interface Diensten {
   series: SeriesService;
   documentation: DocumentationService;
   agenda: AgendaService;
+  /** De enige aanroeper van `/api/ai` (DR-16). */
+  ai: AIService;
   /** Doorloopgereedschap; gaat eruit vóór v1.0 (werkopdracht D02). */
   sampleData: SampleDataService;
 }
@@ -67,6 +71,13 @@ async function bouw(): Promise<Diensten> {
     series,
     documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
     agenda: createAgendaService({ storage }),
+    ai: createAIService({
+      storage,
+      prompts: createPromptService(),
+      clock: SYSTEEMKLOK,
+      fetch: (...argumenten) => globalThis.fetch(...argumenten),
+      provider: settings.voorkeur("aiProvider"),
+    }),
     sampleData: createSampleDataService({
       storage,
       students,

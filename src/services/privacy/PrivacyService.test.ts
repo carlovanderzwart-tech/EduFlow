@@ -386,6 +386,69 @@ describe("de poort — T-08, FR-INS-20", () => {
   });
 });
 
+/* ------------------------------------------------------------------ */
+/* De set van minimaal 120 gevallen uit §12.5                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Zeven zinsvormen over alle twintig namen: honderdveertig rondgangen.
+ *
+ * §12.5 eist een set van **minimaal 120 gevallen**, en poort 9 van §16.9 bewaakt
+ * dat. De vijftien gevallen uit bijlage A dekken de lastige uitzonderingen; deze
+ * matrix dekt de breedte — elke naam in elke vorm die T-04 noemt: kaal, met
+ * bezitsvorm, met verkleinvorm, in hoofdletters, aan het begin en aan het eind van
+ * een zin, en naast een woord dat erop lijkt.
+ *
+ * De vormen staan hier als sjabloon en niet uitgeschreven, omdat honderdveertig
+ * met de hand geschreven zinnen een lijst is die niemand naleest — en dan toetst
+ * hij niet meer wat hij belooft.
+ */
+const ZINSVORMEN = [
+  (naam: string) => `${naam} bouwde een toren van negen blokken.`,
+  (naam: string) => `Het laatste blok legde ${naam}.`,
+  (naam: string) => `"Kijk, hij staat!" riep ${naam}.`,
+  (naam: string) => `${naam}s idee werkte niet meteen.`,
+  (naam: string) => `${naam}je mocht als eerste.`,
+  (naam: string) => `${naam.toUpperCase()} stond op de tekening.`,
+  (naam: string) => `Samen met ${naam} ruimden ze de bouwhoek op.`,
+];
+
+const RONDGANGSET: string[] = GROEP_4.flatMap((kind) =>
+  ZINSVORMEN.map((vorm) => vorm(kind.voornaam)),
+);
+
+describe("de rondgang over de volledige set — §12.5, INV-57, poort 9", () => {
+  it("telt minstens honderdtwintig gevallen", () => {
+    expect(RONDGANGSET.length).toBeGreaterThanOrEqual(120);
+  });
+
+  it.each(RONDGANGSET)("restore(pseudonymise(%s)) is de oorspronkelijke tekst", (zin) => {
+    const uitkomst = pseudonymise(zin, LIJST);
+
+    expect(restore(uitkomst.tekst, uitkomst.kaart)).toBe(zin);
+  });
+
+  it("laat in geen van de honderdveertig een naam achter (INV-38)", () => {
+    // Als **woord**, niet als letterreeks. "Samen" bevat "sam" en hoort te blijven
+    // staan; dat is precies de woordgrens uit §12.5 stap 3, en een toets die die
+    // grens negeert zou de service dwingen hem te overtreden.
+    const alsWoord = (naam: string) =>
+      new RegExp(
+        `(?<![\\p{L}\\p{N}])${naam.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}(?![\\p{L}\\p{N}])`,
+        "iu",
+      );
+
+    for (const zin of RONDGANGSET) {
+      const uit = pseudonymise(zin, LIJST).tekst;
+      for (const kind of GROEP_4) {
+        expect(alsWoord(kind.voornaam).test(uit), `${kind.voornaam} bleef staan in: ${uit}`).toBe(
+          false,
+        );
+      }
+    }
+  });
+});
+
 describe("een lijst die niet klopt laat de poort niet hangen", () => {
   it("slaat een lege naam over in plaats van eeuwig te zoeken", () => {
     const lijst: Afschermlijst = { leerlingen: [leerling("", 1), leerling("Bram", 2)] };
