@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2, UserPlus } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { EmptyState } from "@/ui/EmptyState";
@@ -158,11 +159,20 @@ export function StudentsPage() {
         <ul className="space-y-2">
           {leerlingen.map((leerling) => (
             <li key={leerling.id}>
-              <Item variant="outline">
+              <Item variant="outline" className="relative">
                 <ItemContent>
-                  <ItemTitle>{weergavenaam(leerling)}</ItemTitle>
+                  <ItemTitle>
+                    {/* Het scherm erachter toont "Zit in" — FR-INS-06 vraagt daarom. */}
+                    <Link
+                      href={`/settings/students/${leerling.id}`}
+                      className="after:absolute after:inset-0 after:content-['']"
+                    >
+                      {weergavenaam(leerling)}
+                    </Link>
+                  </ItemTitle>
                 </ItemContent>
-                <ItemActions>
+                {/* Boven de overlay van de link, anders is de knop niet te raken. */}
+                <ItemActions className="relative z-10">
                   <Button
                     variant="ghost"
                     size="icon"
