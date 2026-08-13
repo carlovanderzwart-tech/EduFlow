@@ -1,11 +1,13 @@
 /**
  * Schema's van `weekPatterns` en `weekPatternOverrides` (§8.3.15, §8.3.16, B-98).
  *
- * INV-55 staat hier: een weekonderdeel eindigt ná zijn begin, op dezelfde dag.
+ * Eén regel staat hier: een weekonderdeel eindigt ná zijn begin, op dezelfde dag.
  * Vergelijken op de tekenreeks mag, want `UU:MM` heeft een vaste breedte.
  *
- * INV-54 — de geldigheidsperiodes binnen één schooljaar overlappen niet — staat
- * hier **niet**. Die vraagt om andere records en hoort in `AgendaService`.
+ * De regel dat de geldigheidsperiodes binnen één schooljaar niet overlappen staat
+ * hier **niet**. Die vraagt om andere records en hoort in `AgendaService`. Beide
+ * volgen uit B-115, dat de basisweek een invoerscherm maakt en geen tweede
+ * gegevensmodel; er is geen invariantnummer voor, en dat is geen omissie (B-121).
  *
  * En de regel dat een aangepaste dag naar een bestaand weekonderdeel verwijst,
  * staat er ook niet: die kán niet altijd waar zijn. Wijzigt de basisweek vanaf een
@@ -18,7 +20,7 @@ import { z } from "zod";
 
 import { recordSchema, zIsoDate, zLocalTime, zUuid } from "./base";
 
-/** Het einde ligt ná het begin, op dezelfde dag (INV-55). */
+/** Het einde ligt ná het begin, op dezelfde dag (B-115). */
 function eindeNaBegin(onderdeel: { startTime: string; endTime: string }): boolean {
   return onderdeel.endTime > onderdeel.startTime;
 }

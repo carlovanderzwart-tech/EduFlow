@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { agendaItem, heleDagItem, zonderVeld } from "../toetsgegevens";
 import { zCalendarEvent } from "./calendar";
 
-describe("zCalendarEvent — §6.2.2, T-48", () => {
+describe("zCalendarEvent — §6.2.2, INV-31", () => {
   it("laat beide vormen door", () => {
     expect(zCalendarEvent.safeParse(agendaItem()).success).toBe(true);
     expect(zCalendarEvent.safeParse(heleDagItem()).success).toBe(true);
@@ -42,7 +42,7 @@ describe("zCalendarEvent — §6.2.2, T-48", () => {
 
 describe("INV-31 — een hele-dag-item heeft geen tijden", () => {
   it("weigert tijdstippen op een hele-dag-item", () => {
-    // Dit is de kern van T-48: de twee vormen sluiten elkaar uit. Een studiedag
+    // Dit is de kern van INV-31: de twee vormen sluiten elkaar uit. Een studiedag
     // met een tijdstip is niet uit te drukken.
     const metTijd = { ...heleDagItem(), start: "2026-10-12T08:30:00.000Z" };
 
@@ -82,7 +82,7 @@ describe("INV-30 — een item heeft een begin en een einde", () => {
   });
 
   it("weigert een item zonder einde, ook als het een hele dag beslaat", () => {
-    // §6.2.2 zei "ja bij niet-hele-dag"; INV-30 eist het altijd, en T-48 kiest
+    // §6.2.2 zei "ja bij niet-hele-dag"; INV-30 eist het altijd, en INV-31 kiest
     // INV-30. Zonder einde is een meerdaagse vakantie niet uit te drukken.
     expect(zCalendarEvent.safeParse(zonderVeld(heleDagItem(), "end")).success).toBe(false);
     expect(zCalendarEvent.safeParse(zonderVeld(agendaItem(), "end")).success).toBe(false);

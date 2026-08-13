@@ -5,8 +5,8 @@
  * losse paden. De verzameling is precies wat hoofdstuk 8 beschrijft en niets
  * meer (DR-01).
  *
- * **Alle zesentwintig tabellen uit §8.3 staan hier.** De laatste vijf kwamen erbij
- * toen T-47 tot en met T-50 de openstaande punten O-08 tot en met O-13 beslechtten.
+ * **Alle zesentwintig tabellen uit §8.3 staan hier.** Ook de laatste vijf, die in
+ * §8.3 wel staan maar in een eerdere stap nog geen type hadden.
  */
 
 export type { BaseRecord, Colour, IsoDate, IsoDateTime, Uuid } from "./base";

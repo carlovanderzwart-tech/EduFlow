@@ -20,7 +20,7 @@ import { createStorageService, type Clock, type StorageService } from "./Storage
 
 const SYSTEEMKLOK: Clock = { now: () => new Date() };
 
-/** De standaardinstellingen van een verse installatie (§8.3.14, T-50). */
+/** De standaardinstellingen van een verse installatie (§8.3.14). */
 function verseInstellingen(deviceId: Uuid) {
   return {
     deviceId,

@@ -6,7 +6,7 @@
  * Wie ze gebruikt, weet niet waar ze staan.
  *
  * In IndexedDB staat het ene `settings`-record: de waarden die persoonsgegevens
- * raken of afleiden (T-50). Er is er altijd precies één (INV-49); `startOpslag`
+ * raken of afleiden (§9.4). Er is er altijd precies één (INV-49); `startOpslag`
  * maakt hem bij de eerste start aan, zodat elke lezer erop kan rekenen.
  *
  * In `localStorage` staan de zes sleutels van §8.2.2. Zie `voorkeuren.ts`.

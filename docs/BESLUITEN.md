@@ -1,6 +1,9 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-119** · **T-46** · **INV-57**
+> ## Laatst uitgegeven nummers: **B-121** · **T-46** · **INV-57**
+>
+> Vrij vanaf: **B-122**, **T-47**, **INV-58**. `INV-54` t/m `INV-56` blijven met opzet
+> ongebruikt; zie B-121.
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +12,86 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 13 augustus 2026 — vóór D04
+
+## B-120 — De toegangscode-cookie leeft negentig dagen, niet een jaar
+
+**Probleem.** Twee hoofdstukken geven de cookie `eduflow_access` een andere looptijd.
+
+| | |
+|---|---|
+| FR-INS-37 (§6.5.11) | "een cookie met een looptijd van **een jaar**" |
+| §8.2.3, tabelrij `Max-Age` | "**90 dagen** — lang genoeg om niet te irriteren, kort genoeg om een vergeten apparaat te laten verlopen" |
+
+D04 zet die cookie en kan er maar één kiezen.
+
+**Besluit.** **Negentig dagen.** FR-INS-37 is hierop gewijzigd; §8.2.3 blijft zoals hij is.
+
+**Waarom.** §8.2.3 is de plek waar de cookie technisch is vastgelegd — naam, `httpOnly`,
+`Secure`, `SameSite`, `Path` — en is de enige van de twee die een **reden** bij de looptijd
+geeft. FR-INS-37 noemt het jaar terloops, in een zin die over gemak gaat: "geen account,
+geen wachtwoord dat je moet onthouden".
+
+De weging zelf: deze cookie is de enige sleutel tot documentaties over kinderen. Er zijn
+geen accounts (B-21), dus er is ook geen manier om op afstand toegang in te trekken —
+FR-INS-38 laat je een apparaat intrekken, maar dat werkt alleen zolang jij eraan denkt. Een
+laptop die kwijtraakt en een jaar lang binnenkomt is een risico dat niet opweegt tegen één
+keer per kwartaal een code overtikken. Negentig dagen is bovendien wat §8.2.3 zelf al als
+afweging opschrijft; het jaar heeft nergens een onderbouwing.
+
+**Gevolg.** De zin in FR-INS-37 luidt nu "negentig dagen". `/api/ai` zet `Max-Age` op
+90 dagen (7.776.000 seconden), als benoemde constante (DR-54).
+
+**Herziening.** Zodra er een manier is om toegang op afstand in te trekken die niet van het
+geheugen van de gebruiker afhangt.
+
+## B-121 — Verzonnen nummerverwijzingen gaan uit de code, ze krijgen geen betekenis
+
+**Probleem.** Sluit O-11. De code beriep zich op zeven nummers die nooit zijn uitgegeven —
+`T-47` t/m `T-50` en `INV-54` t/m `INV-56` — en op één nummer dat wél bestaat maar ergens
+anders over gaat: `T-46` staat in de code bij "wandkloktijd zonder dag", terwijl T-46 de
+importregel voor `app/providers/` is. Nagekeken in alle 9.115 regels van het volledige
+handboek: achter die zeven zat niets. Ze zijn nooit uitgegeven en er is dus niets
+kwijtgeraakt.
+
+**Besluit.** Een verwijzing naar een nummer dat de regel niet draagt, **gaat eruit**. Hij
+krijgt óf een echt nummer of een echte paragraaf uit het register, óf hij verdwijnt en de
+onderbouwing blijft staan zonder nummer. Wat er **niet** gebeurt: het nummer alsnog een
+betekenis geven die bij de code past.
+
+De zeven nummers blijven daarna ongebruikt. `T-47` is weer vrij, `INV-54` t/m `INV-56`
+worden overgeslagen — INV-57 is al uitgegeven, en teruggrijpen naar 54 zou de verwarring
+opnieuw uitnodigen bij iedereen die de oude commits leest.
+
+**Waarom.** Een nummer achteraf een betekenis geven die bij de code past, is de
+onderbouwing naar de code toe schrijven. Dan lijkt elke regel besloten en is er geen manier
+meer om te zien wat er werkelijk is afgewogen. Dat is de tweede fout uit §20.6, met een
+extra draai: hij is dan ook nog onzichtbaar.
+
+**Oorzaak, en waarom hij niet terugkomt.** Er was geen plek waar stond welk nummer als
+laatste was uitgegeven, dus werd er gegokt. Sinds B-114 staat die regel bovenaan dit
+bestand en draagt hij nu ook de `INV-`reeks. Dit is het laatste spoor van de oude
+werkwijze.
+
+**Gevolg.** Achttien commentaarregels in `src/` wijzen nu naar wat de regel werkelijk
+draagt:
+
+| Verwijzing | Wordt | Waarom |
+|---|---|---|
+| `T-48` (unie van twee varianten) | `INV-31` | §9.5.4 zegt letterlijk "twee varianten in één unie" |
+| `T-49` (vakantiebestand als leescache) | `§13.4` | daar staat het bestand met zijn versie beschreven |
+| `T-50` (het ene `settings`-record) | `§8.3.14` en `§9.4` | daar staat het schema, en dat er geen `User` is in 1.0 |
+| `T-47` (schemaversie begint op 1) | `T-40` en `§8.6` | die twee zeggen het al, en T-47 voegde niets toe |
+| `INV-54`, `INV-55`, `INV-56` (basisweek) | `B-115` | de basisweek bestaat door dat besluit, niet door een invariant |
+| `T-46` (wandkloktijd zonder dag) | `§8.3` | het type bestaat omdat `weekPatterns` tijden zonder dag draagt |
+
+Geen enkele regel, controle of toets is gewijzigd; alleen waar de onderbouwing naar wijst.
+
+**Herziening.** Niet nodig. Wordt een van deze regels alsnog een besluit waard, dan krijgt
+hij een nummer via de regel bovenaan dit bestand.
 
 ---
 
@@ -632,14 +715,9 @@ De donkere modus uit §18.4 is dan een tweede verbouwing in plaats van één reg
   `package.json`. Dat is schrijfwerk aan het handboek en hoort niet in een D00-commit.
   **Vóór `claude-design/BRIEF.md` wordt geschreven**, want anders bouwt Claude Design op
   de verkeerde primitieven.
-- **O-11 — Zeven nummers staan in de code maar in geen enkel hoofdstuk.** Gevonden bij
-  B-118. De code beroept zich op `T-47` t/m `T-50` (`domain/schemas/base.ts`,
-  `domain/types/index.ts`, `services/storage/tabellen.ts`) en op `INV-54` t/m `INV-56`
-  (`domain/schemas/weekPattern.ts`, `domain/types/weekPattern.ts`, `lib/result.ts`). Geen
-  van de zeven staat in hoofdstuk 19, in dit bestand of in enig hoofdstuk; de regel
-  "Laatst uitgegeven nummers" bovenaan wist er dus ook niets van en stond op `T-46`.
-  Nodig: uitzoeken welk besluit er achter elk nummer zat en ze alsnog opschrijven, óf de
-  code naar bestaande nummers laten wijzen. Zolang dat niet gebeurd is, mogen `T-47` t/m
-  `T-50` en `INV-54` t/m `INV-56` **niet opnieuw uitgegeven worden** — vandaar dat de
-  rondgang INV-57 kreeg en niet INV-54. Dit blokkeert niets, maar het is precies de
-  tweede fout uit §20.6: een regel die op twee plaatsen iets anders betekent.
+- ~~**O-11 — Zeven nummers staan in de code maar in geen enkel hoofdstuk.**~~ **Afgesloten
+  op 13 augustus 2026.** Zie B-121. Nagekeken in alle 9.115 regels van het volledige
+  handboek: achter `T-47` t/m `T-50` en `INV-54` t/m `INV-56` zat niets — ze zijn nooit
+  uitgegeven. De verwijzingen zijn uit de code gehaald en wijzen nu naar wat de regel
+  werkelijk draagt. Dit staat er doorgestreept en niet verwijderd, omdat een openstaand
+  punt dat verdwijnt zonder uitkomst er over een jaar uitziet als vergeten werk.

@@ -1,7 +1,7 @@
 /**
  * De agenda (§10.4, §6.2, §9.5.4).
  *
- * Twee vormen van hetzelfde begrip (T-48): een hele-dag-item draagt kalenderdagen,
+ * Twee vormen van hetzelfde begrip (INV-31): een hele-dag-item draagt kalenderdagen,
  * een item met tijden draagt tijdstippen in UTC. Ze sluiten elkaar uit, en dat is
  * wat INV-31 met "twee varianten in één unie" bedoelt.
  *
@@ -145,7 +145,7 @@ export function createAgendaService(deps: AgendaDeps) {
     };
 
     // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
-    // unie van T-48 valt anders terug op `string` en dan is de winst weg.
+    // unie van INV-31 valt anders terug op `string` en dan is de winst weg.
     return invoer.allDay
       ? deps.storage.create("calendarEvents", {
           ...gemeenschappelijk,
@@ -166,7 +166,7 @@ export function createAgendaService(deps: AgendaDeps) {
    *
    * Een kalenderdag en een tijdstip van dezelfde dag sorteren goed door elkaar: de
    * dag is het voorvoegsel van het tijdstip, dus `2026-08-11` komt vóór
-   * `2026-08-11T09:00:00.000Z` (T-48).
+   * `2026-08-11T09:00:00.000Z` (INV-31).
    */
   async function lijst(): Promise<Result<CalendarEvent[]>> {
     const uitkomst = await deps.storage.list("calendarEvents");

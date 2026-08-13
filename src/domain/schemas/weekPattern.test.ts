@@ -33,7 +33,7 @@ describe("zWeekPattern — §8.3.15, B-98", () => {
   });
 });
 
-describe("INV-55 — een weekonderdeel eindigt ná zijn begin", () => {
+describe("B-115 — een weekonderdeel eindigt ná zijn begin", () => {
   function metOnderdeel(velden: Record<string, unknown>): unknown {
     const week = basisweek();
     return { ...week, lines: [{ ...week.lines[0]!, ...velden }] };
@@ -47,7 +47,7 @@ describe("INV-55 — een weekonderdeel eindigt ná zijn begin", () => {
     expect(zWeekPattern.safeParse(metOnderdeel({ endTime: "08:30" })).success).toBe(false);
   });
 
-  it("weigert een tijd die geen wandkloktijd is (T-46)", () => {
+  it("weigert een tijd die geen wandkloktijd is (§8.3.15)", () => {
     expect(zWeekPattern.safeParse(metOnderdeel({ startTime: "8:30" })).success).toBe(false);
     expect(zWeekPattern.safeParse(metOnderdeel({ startTime: "24:00" })).success).toBe(false);
     expect(
@@ -86,7 +86,7 @@ describe("zWeekPatternOverride — §8.3.16", () => {
   });
 });
 
-describe("zHolidayPeriod — §8.3.8, T-49", () => {
+describe("zHolidayPeriod — §8.3.8, §13.4", () => {
   it("laat een geldige vakantieperiode door", () => {
     expect(zHolidayPeriod.safeParse(vakantieperiode()).success).toBe(true);
   });

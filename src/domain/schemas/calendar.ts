@@ -1,5 +1,5 @@
 /**
- * Schema van `calendarEvents` (§6.2.2, §8.3.8, T-48).
+ * Schema van `calendarEvents` (§6.2.2, §8.3.8, INV-31).
  *
  * Een gediscrimineerde unie op `allDay`, en dat is wat INV-31 met "twee varianten
  * in één unie" bedoelt: de vorm met tijden en de vorm zonder sluiten elkaar uit.

@@ -2,7 +2,7 @@
  * Schooljaar en vakantieaanpassing (§8.3.8).
  *
  * `holidayPeriods` is een leescache van `schoolvakanties.json` en geen bron
- * (T-49). Bij een update van het bestand wordt de tabel leeggemaakt en opnieuw
+ * (§13.4). Bij een update van het bestand wordt de tabel leeggemaakt en opnieuw
  * gevuld; `holidayOverrides` blijft staan en wordt eroverheen gelegd (B-50).
  */
 
@@ -29,7 +29,7 @@ export interface SchoolYear extends BaseRecord {
  * passen; die controle staat in `HolidayService` (INV-32).
  */
 /**
- * Eén vakantieperiode uit het meegeleverde bestand (T-49, §6.2.4).
+ * Eén vakantieperiode uit het meegeleverde bestand (§13.4, §6.2.4).
  *
  * Schooljaar en regio staan uit de omhullende structuur van het bestand op de rij
  * zelf, zodat een rij op zichzelf leesbaar is en te koppelen aan een

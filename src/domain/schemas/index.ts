@@ -8,8 +8,8 @@
  * Alle schema's zijn `strict`: een onbekend veld wordt geweigerd, niet
  * genegeerd. Dat is de voorwaarde waaronder INV-23 iets betekent.
  *
- * **Alle zesentwintig tabellen uit §8.3 hebben een schema.** De laatste vijf
- * kwamen erbij met T-47 tot en met T-50.
+ * **Alle zesentwintig tabellen uit §8.3 hebben een schema.** Ook de laatste vijf,
+ * die in §8.3 wel staan maar in een eerdere stap nog geen schema hadden.
  */
 
 export {

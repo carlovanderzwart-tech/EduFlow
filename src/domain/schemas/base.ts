@@ -33,11 +33,11 @@ export const zIsoDateTime = z
   .string()
   .refine(isIsoDateTime, "Verwacht een tijdstip in UTC met milliseconden");
 export const zIsoDate = z.string().refine(isIsoDate, "Verwacht JJJJ-MM-DD");
-/** Wandkloktijd zonder dag (T-46). */
+/** Wandkloktijd zonder dag (§8.3.15). */
 export const zLocalTime = z.string().refine(isLocalTime, "Verwacht UU:MM");
 
 /**
- * De schemaversie waarin versie 1.0 begint (T-47).
+ * De schemaversie waarin versie 1.0 begint (T-40, §8.6).
  *
  * Eén en niet zeven. §8.1.5 gaf 7, maar T-40 en §8.6 zeggen dat versie 1.0 op de
  * database `eduflow-v1` begint en "telt vanaf schemaversie 1 van dat schema".
@@ -51,7 +51,7 @@ export const CURRENT_SCHEMA_VERSION = 1;
  * De zes velden die elk opgeslagen record draagt.
  *
  * Uitgevoerd naar buiten zodat een tabel die géén enkel object is — `calendarEvents`
- * is een unie van twee varianten (T-48) — dezelfde basis kan gebruiken zonder
+ * is een unie van twee varianten (INV-31) — dezelfde basis kan gebruiken zonder
  * `recordSchema`, dat een verfijnd schema oplevert en daarom niet in een
  * gediscrimineerde unie past.
  */
@@ -97,7 +97,7 @@ export function recordSchema<Vorm extends z.ZodRawShape>(vorm: Vorm) {
 /**
  * Legt INV-04 op een schema dat niet met `recordSchema` gebouwd is.
  *
- * Nodig voor `calendarEvents`, dat een unie van twee varianten is (T-48) en dus
+ * Nodig voor `calendarEvents`, dat een unie van twee varianten is (INV-31) en dus
  * niet uit één `strictObject` bestaat. Zonder deze functie zou de invariant daar
  * met de hand herhaald moeten worden, en dat is precies de tweede plek die U-03
  * verbiedt.
