@@ -19,8 +19,9 @@
 import { toIsoDateTime, type IsoDate } from "@/lib/dates";
 import { ongeldig, type Result } from "@/lib/result";
 import { newId, type Uuid } from "@/lib/uuid";
-import type { Block, Documentation, Page, TextBlock } from "@/domain/types";
+import type { Block, Documentation, Page, PhotoBlock, TextBlock } from "@/domain/types";
 
+import { MAX_FOTOS } from "../photo/PhotoService";
 import type { Clock, StorageService } from "../storage/StorageService";
 
 export interface DocumentationDeps {
@@ -33,9 +34,33 @@ export interface Documentatieinvoer {
   title: string;
   date: IsoDate;
   studentIds: Uuid[];
-  /** De lopende tekst. Belandt als één tekstblok op de eerste pagina. */
+  /** Hoogstens één reeks, als verwijzing — nooit in de titel (INV-19, FR-DOC-05). */
+  seriesId?: Uuid | null;
+  /** Nul of meer groepen, náást de leerlingen (FR-DOC-06). */
+  groupIds?: Uuid[];
+  /** De lopende tekst. Belandt als tekstblok(ken) op de eerste pagina. */
   text: string;
+  /** Nooit in een export, nooit naar AI (FR-DOC-08, §8.3.5). */
+  privateNote?: string;
+  /** De foto's, in de volgorde waarin ze staan (FR-DOC-46). */
+  photoIds?: Uuid[];
 }
+
+/**
+ * De grens van één tekstblok (§8.3.6).
+ *
+ * FR-DOC-40 laat de gebruiker tot 50.000 tekens typen, maar `zBlock` staat er per
+ * blok 20.000 toe. Die twee spreken elkaar niet tegen zolang een lange tekst over
+ * meerdere blokken wordt verdeeld — dat gebeurt hieronder, en `tekstVan` plakt hem
+ * weer aan elkaar. Het knippen is verliesloos: er wordt niets tussen gezet.
+ */
+const MAX_TEKST_PER_BLOK = 20_000;
+
+/** FR-DOC-40: het tekstvlak stopt bij 50.000 tekens. */
+export const MAX_TEKST = 50_000;
+
+/** FR-DOC-40: vanaf hier waarschuwt het scherm, zonder iets tegen te houden. */
+export const WAARSCHUW_VANAF = 20_000;
 
 /** Een documentatie met haar pagina's: het hele aggregaat in één keer (§9.4.1). */
 export interface GeopendeDocumentatie {
@@ -57,6 +82,17 @@ function kalenderdag(moment: Date): IsoDate {
   return toIsoDateTime(moment).slice(0, 10);
 }
 
+/** De twee harde grenzen van het schrijfscherm (FR-DOC-40, FR-DOC-45). */
+function tekstbezwaar(text: string, photoIds: readonly Uuid[]): string | null {
+  if (text.length > MAX_TEKST) {
+    return `Deze tekst is te lang. Hij telt ${text.length} tekens en er passen er ${MAX_TEKST}. Splits hem in twee documentaties.`;
+  }
+  if (photoIds.length > MAX_FOTOS) {
+    return `Er passen hoogstens ${MAX_FOTOS} foto's in één documentatie. Haal er een paar weg.`;
+  }
+  return null;
+}
+
 function dagenLater(dag: IsoDate, dagen: number): IsoDate {
   const moment = new Date(`${dag}T00:00:00.000Z`);
   moment.setUTCDate(moment.getUTCDate() + dagen);
@@ -67,9 +103,52 @@ function isTekstblok(blok: Block): blok is TextBlock {
   return blok.kind === "text";
 }
 
-/** Eén tekstblok. De slotnummering hoort bij `LayoutService` en bestaat nog niet. */
-function tekstblok(text: string): TextBlock {
-  return { id: newId(), slot: 0, order: 1, kind: "text", text };
+function isFotoblok(blok: Block): blok is PhotoBlock {
+  return blok.kind === "photo";
+}
+
+/**
+ * De tekst als blokken. De slotnummering hoort bij `LayoutService` en bestaat nog niet.
+ *
+ * Eén blok zolang de tekst binnen §8.3.6 past, en anders net zoveel als nodig. Het
+ * knippen gebeurt op tekens en niet op woorden: `tekstVan` plakt de stukken zonder
+ * scheidingsteken weer aaneen, dus wat je terugkrijgt is teken voor teken wat je
+ * intypte. Op een woordgrens knippen zou dat kapotmaken.
+ */
+function tekstblokken(text: string): TextBlock[] {
+  if (!text) return [];
+
+  const blokken: TextBlock[] = [];
+  for (let plaats = 0; plaats < text.length; plaats += MAX_TEKST_PER_BLOK) {
+    blokken.push({
+      id: newId(),
+      slot: 0,
+      order: blokken.length + 1,
+      kind: "text",
+      text: text.slice(plaats, plaats + MAX_TEKST_PER_BLOK),
+    });
+  }
+  return blokken;
+}
+
+/** De foto's als blokken, in de volgorde die het scherm aanhoudt (FR-DOC-46). */
+function fotoblokken(photoIds: readonly Uuid[], vanafOrder: number): PhotoBlock[] {
+  return photoIds.map((photoId, plaats) => ({
+    id: newId(),
+    slot: 1,
+    order: vanafOrder + plaats,
+    kind: "photo",
+    photoId,
+    // Bijsnijden is FR-DOC-50 en komt later; zonder uitsnede is de hele foto in beeld.
+    crop: null,
+    altText: "",
+  }));
+}
+
+/** De blokken van één pagina, in de vaste volgorde tekst-dan-foto's. */
+function blokkenVan(text: string, photoIds: readonly Uuid[]): Block[] {
+  const tekst = tekstblokken(text);
+  return [...tekst, ...fotoblokken(photoIds, tekst.length + 1)];
 }
 
 export function createDocumentationService(deps: DocumentationDeps) {
@@ -110,10 +189,22 @@ export function createDocumentationService(deps: DocumentationDeps) {
   async function maak(invoer: Documentatieinvoer): Promise<Result<GeopendeDocumentatie>> {
     const title = invoer.title.trim();
     const text = invoer.text.trim();
+    const photoIds = invoer.photoIds ?? [];
 
-    if (!title && !text && invoer.studentIds.length === 0) {
+    // FR-DOC-01: pas een record zodra er titel, tekst, een foto of een koppeling is.
+    const leeg =
+      !title &&
+      !text &&
+      photoIds.length === 0 &&
+      invoer.studentIds.length === 0 &&
+      (invoer.groupIds ?? []).length === 0 &&
+      !invoer.seriesId;
+    if (leeg) {
       return ongeldig("Er is nog niets om op te slaan. Typ een titel of een stukje tekst.");
     }
+
+    const grens = tekstbezwaar(text, photoIds);
+    if (grens) return ongeldig(grens);
 
     const bezwaar = await datumbezwaar(invoer.date);
     if (bezwaar) return ongeldig(bezwaar);
@@ -130,7 +221,7 @@ export function createDocumentationService(deps: DocumentationDeps) {
         // INV-22: een eerste pagina is nooit `E-vervolg`.
         layoutId: "B-verhaal",
         autoCreated: false,
-        blocks: text ? [tekstblok(text)] : [],
+        blocks: blokkenVan(text, photoIds),
       });
 
       const documentatie = await schrijver.maak(
@@ -138,11 +229,11 @@ export function createDocumentationService(deps: DocumentationDeps) {
         {
           title,
           date: invoer.date,
-          seriesId: null,
+          seriesId: invoer.seriesId ?? null,
           studentIds: invoer.studentIds,
-          groupIds: [],
+          groupIds: invoer.groupIds ?? [],
           pageIds: [pagina.id],
-          privateNote: "",
+          privateNote: (invoer.privateNote ?? "").trim(),
           // INV-15: de status is afgeleid en wordt nooit door de gebruiker gezet.
           status: "concept",
           firstExportedAt: null,
@@ -180,21 +271,26 @@ export function createDocumentationService(deps: DocumentationDeps) {
     if (!eerste) throw new Error(`Documentatie ${id} heeft geen pagina; INV-08 is geschonden`);
 
     const text = invoer.text.trim();
+    const photoIds = invoer.photoIds ?? [];
+
+    const grens = tekstbezwaar(text, photoIds);
+    if (grens) return ongeldig(grens);
 
     return storage.schrijfAggregaat("documentations", ["pages"], async (schrijver) => {
-      // Eén tekstblok, en dat is de enige die deze versie schrijft. De overige
-      // blokken van de pagina blijven staan zodat een latere editor ze terugvindt.
-      const bestaand = eerste.blocks.find(isTekstblok);
-      const overige = eerste.blocks.filter((blok) => !isTekstblok(blok));
-      const tekstblokken = text ? [bestaand ? { ...bestaand, text } : tekstblok(text)] : [];
+      // Tekst en foto's worden opnieuw opgebouwd; wat er verder op de pagina staat —
+      // citaten, koppen — blijft staan zodat een latere editor het terugvindt.
+      const overige = eerste.blocks.filter((blok) => !isTekstblok(blok) && !isFotoblok(blok));
 
       const pagina = await schrijver.wijzig("pages", eerste.id, {
-        blocks: [...tekstblokken, ...overige],
+        blocks: [...blokkenVan(text, photoIds), ...overige],
       });
       const documentatie = await schrijver.wijzig("documentations", id, {
         title: invoer.title.trim(),
         date: invoer.date,
+        seriesId: invoer.seriesId ?? null,
         studentIds: invoer.studentIds,
+        groupIds: invoer.groupIds ?? [],
+        privateNote: (invoer.privateNote ?? "").trim(),
       });
 
       return { documentatie, paginas: [pagina, ...huidig.paginas.slice(1)] };
@@ -230,12 +326,29 @@ export function createDocumentationService(deps: DocumentationDeps) {
     };
   }
 
-  /** De lopende tekst van een documentatie: het eerste tekstblok op de eerste pagina. */
+  /**
+   * De lopende tekst: alle tekstblokken van de eerste pagina, weer aaneen.
+   *
+   * Zonder scheidingsteken, want zo is hij ook geknipt. Wat je terugkrijgt is
+   * teken voor teken wat je intypte.
+   */
   function tekstVan(geopend: GeopendeDocumentatie): string {
-    return geopend.paginas[0]?.blocks.find(isTekstblok)?.text ?? "";
+    return (geopend.paginas[0]?.blocks ?? [])
+      .filter(isTekstblok)
+      .sort((a, b) => a.order - b.order)
+      .map((blok) => blok.text)
+      .join("");
   }
 
-  return { maak, bewaar, open, lijst, tekstVan };
+  /** De foto's van een documentatie, in de volgorde waarin ze staan (FR-DOC-46). */
+  function fotosVan(geopend: GeopendeDocumentatie): Uuid[] {
+    return (geopend.paginas[0]?.blocks ?? [])
+      .filter(isFotoblok)
+      .sort((a, b) => a.order - b.order)
+      .map((blok) => blok.photoId);
+  }
+
+  return { maak, bewaar, open, lijst, tekstVan, fotosVan };
 }
 
 export type DocumentationService = ReturnType<typeof createDocumentationService>;
