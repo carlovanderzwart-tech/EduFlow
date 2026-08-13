@@ -11,6 +11,8 @@
  * wachten in plaats van een half geopende database te krijgen.
  */
 
+import { hertekenViaCanvas } from "@/lib/beeld";
+
 import { createAgendaService, type AgendaService } from "./agenda/AgendaService";
 import { createAIService, type AIService } from "./ai/AIService";
 import { createPromptService } from "./ai/PromptService";
@@ -19,6 +21,7 @@ import {
   type DocumentationService,
 } from "./documentation/DocumentationService";
 import { createGroupService, type GroupService } from "./groups/GroupService";
+import { createPhotoService, type PhotoService } from "./photo/PhotoService";
 import { createSampleDataService, type SampleDataService } from "./sampledata/SampleDataService";
 import { createSeriesService, type SeriesService } from "./series/SeriesService";
 import { createSettingsService, type SettingsService } from "./settings/SettingsService";
@@ -48,6 +51,7 @@ export interface Diensten {
   groups: GroupService;
   series: SeriesService;
   documentation: DocumentationService;
+  photos: PhotoService;
   agenda: AgendaService;
   /** De enige aanroeper van `/api/ai` (DR-16). */
   ai: AIService;
@@ -70,6 +74,9 @@ async function bouw(): Promise<Diensten> {
     groups,
     series,
     documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
+    // De hertekenaar komt uit `lib/`, want hij heeft een canvas nodig en DR-12 wil
+    // `PhotoService` toetsbaar houden zonder browser.
+    photos: createPhotoService({ storage, tekenen: hertekenViaCanvas }),
     agenda: createAgendaService({ storage }),
     ai: createAIService({
       storage,

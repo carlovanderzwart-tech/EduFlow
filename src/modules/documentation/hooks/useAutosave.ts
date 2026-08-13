@@ -132,10 +132,20 @@ export function useAutosave<T>({ value, onSave, enabled = true }: UseAutosaveOpt
   // beforeunload niet).
   useEffect(() => {
     const handlePageHide = () => void flush();
+    // `visibilitychange` erbij (FR-DOC-33): een tabblad dat naar de achtergrond
+    // gaat vuurt op Android geen `pagehide`, en dat is precies het moment waarop
+    // het besturingssysteem hem mag opruimen. Zonder deze regel is NFR-18 —
+    // hoogstens één seconde werk kwijt — daar niet waar te maken.
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") void flush();
+    };
+
     window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibility);
       void flush();
     };
   }, [flush]);

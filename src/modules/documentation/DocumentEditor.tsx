@@ -1,65 +1,83 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ErrorMessage } from "@/ui/ErrorMessage";
-import { SaveStatus, type SaveState } from "@/ui/SaveStatus";
+import { SaveStatus } from "@/ui/SaveStatus";
 import { Button } from "@/ui/button";
-import { Checkbox } from "@/ui/checkbox";
-import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
 import { Skeleton } from "@/ui/skeleton";
 import { Textarea } from "@/ui/textarea";
 import { useDienst } from "@/app/providers/useDienst";
 import { vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
-import { weergavenaam } from "@/services/students/StudentService";
+import { MAX_TEKST, WAARSCHUW_VANAF } from "@/services/documentation/DocumentationService";
+
+import { useAutosave } from "./hooks/useAutosave";
+import { Koppelingen } from "./Koppelingen";
+import { PhotoStrip } from "./PhotoStrip";
 
 /** De sleutel in de URL van een documentatie die nog niet bestaat. */
 export const NIEUW = "nieuw";
 
-interface DocumentEditorProps {
-  documentId: string;
+interface Formulier {
+  title: string;
+  date: string;
+  seriesId: string;
+  studentIds: string[];
+  groupIds: string[];
+  text: string;
+  privateNote: string;
+  photoIds: string[];
 }
 
 /**
- * Het schrijfscherm (§6.1.1).
+ * Het schrijfscherm (§6.1.1, §5.2, §5.10).
  *
- * Vier velden: titel, datum, leerlingen en de tekst. Dat is wat INV-07 "inhoud"
- * noemt, en genoeg om een documentatie te laten bestaan.
+ * **Drie kolommen op de laptop, één op de telefoon zonder verlies** (FR-DOC-29,
+ * FR-DOC-30). De leeskolom draagt titel, datum en de tekst; de rechterkolom de
+ * koppelingen, de foto's en de notitie voor jezelf. Onder 768px staan ze onder
+ * elkaar en verdwijnt er niets — dat laatste is de eis, niet het aantal kolommen.
  *
- * **Opslaan gebeurt met een knop en niet automatisch.** §10.7 schrijft autosave voor
- * met een timer van 1.000 ms; die komt met `useAutosave` en de opslagindicator met
- * drie standen. Zolang dat er niet is, is een knop eerlijker dan een indicator die
- * doet alsof er iets bewaard wordt.
+ * **Er is geen opslaanknop** (FR-DOC-31 t/m FR-DOC-34). Er wordt opgeslagen na een
+ * seconde stilte, bij het verlaten van het scherm en bij het wegleggen van het
+ * tabblad. De indicator gebruikt **woorden** en niet alleen een kleurtje, want een
+ * kleur is geen mededeling voor wie hem niet ziet.
  *
- * Wat er verder nog niet is: pagina's, foto's, citaten, reeksen, koppelingen aan
- * groepen, de gespreksmodus, AI en exporteren. Alle acht staan in §6.1 en hebben hun
- * eigen service in §10.4.
+ * **Het tekstvlak is saai, en dat is een besluit** (FR-DOC-37, FR-DOC-38). Geen
+ * opmaakbalk, geen automatisch aanvullen, geen tags. Alle drie slopen dictaat, en
+ * dictaat is hoe een deel van de doelgroep werkt.
  */
-export function DocumentEditor({ documentId }: DocumentEditorProps) {
+export function DocumentEditor({ documentId }: { documentId: string }) {
   const router = useRouter();
-
-  const [status, setStatus] = useState<SaveState>("idle");
   const [fout, setFout] = useState<string | null>(null);
-  /** De sleutel die het aanmaken opleverde. Houdt een tweede keer opslaan bij dezelfde. */
-  const [gemaakt, setGemaakt] = useState<string | null>(null);
+  /** De sleutel die het aanmaken opleverde; houdt een tweede opslag bij dezelfde. */
+  const gemaakt = useRef<string | null>(null);
 
   const laad = useCallback(
-    async ({ documentation, students }: Diensten) => {
+    async ({ documentation, students, groups, series }: Diensten) => {
       const leerlingen = await students.lijst();
       if (!leerlingen.ok) return leerlingen;
+      const groepen = await groups.lijst();
+      if (!groepen.ok) return groepen;
+      const reeksen = await series.lijst();
+      if (!reeksen.ok) return reeksen;
+
+      const leeg: Formulier = {
+        title: "",
+        date: vandaag(),
+        seriesId: "",
+        studentIds: [],
+        groupIds: [],
+        text: "",
+        privateNote: "",
+        photoIds: [],
+      };
 
       if (documentId === NIEUW) {
-        return {
-          ok: true as const,
-          value: {
-            leerlingen: leerlingen.value,
-            formulier: { title: "", date: vandaag(), studentIds: [] as string[], text: "" },
-          },
-        };
+        return { ok: true as const, value: { leerlingen: leerlingen.value, groepen: groepen.value, reeksen: reeksen.value, formulier: leeg } };
       }
 
       const geopend = await documentation.open(documentId);
@@ -71,12 +89,18 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         ok: true as const,
         value: {
           leerlingen: leerlingen.value,
+          groepen: groepen.value,
+          reeksen: reeksen.value,
           formulier: {
             title: documentatie.title,
             date: documentatie.date,
+            seriesId: documentatie.seriesId ?? "",
             studentIds: documentatie.studentIds,
+            groupIds: documentatie.groupIds,
             text: documentation.tekstVan(geopend.value),
-          },
+            privateNote: documentatie.privateNote,
+            photoIds: documentation.fotosVan(geopend.value),
+          } satisfies Formulier,
         },
       };
     },
@@ -84,62 +108,69 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
   );
 
   const { waarde, fout: laadfout, bezig } = useDienst(laad);
-  const [concept, setConcept] = useState<{
-    title: string;
-    date: string;
-    studentIds: string[];
-    text: string;
-  } | null>(null);
-
+  const [concept, setConcept] = useState<Formulier | null>(null);
   const formulier = concept ?? waarde?.formulier ?? null;
 
-  function wijzig(deel: Partial<NonNullable<typeof formulier>>) {
-    if (!formulier) return;
-    setConcept({ ...formulier, ...deel });
-    setStatus("idle");
-  }
-
-  function zetLeerling(id: string, aan: boolean) {
-    if (!formulier) return;
-    wijzig({
-      studentIds: aan
-        ? [...formulier.studentIds, id]
-        : formulier.studentIds.filter((sleutel) => sleutel !== id),
-    });
-  }
-
-  async function bewaar() {
-    if (!formulier) return;
-    setStatus("saving");
-    setFout(null);
-
-    const sleutel = gemaakt ?? documentId;
+  const bewaar = useCallback(async (huidig: Formulier) => {
+    const sleutel = gemaakt.current ?? documentId;
     const { documentation } = await diensten();
+
+    const invoer = {
+      ...huidig,
+      seriesId: huidig.seriesId === "" ? null : huidig.seriesId,
+    };
+
     const uitkomst =
       sleutel === NIEUW
-        ? await documentation.maak(formulier)
-        : await documentation.bewaar(sleutel, formulier);
+        ? await documentation.maak(invoer)
+        : await documentation.bewaar(sleutel, invoer);
 
     if (!uitkomst.ok) {
-      setStatus("idle");
       setFout(uitkomst.error.message);
-      return;
+      // Werpen, zodat `useAutosave` de indicator niet op "Opgeslagen." zet.
+      throw new Error(uitkomst.error.message);
     }
 
-    setStatus("saved");
-
-    // Na het aanmaken staat de documentatie op zijn eigen adres, zodat vernieuwen
-    // hem terugvindt in plaats van een tweede aan te maken.
-    //
-    // Rechtstreeks via de geschiedenis en niet met `router.replace`: die laatste
-    // wisselt het routesegment, waardoor dit scherm opnieuw wordt gemonteerd en de
-    // melding "Opgeslagen." verdwijnt vóór je haar hebt gezien.
+    setFout(null);
     if (sleutel === NIEUW) {
       const nieuweSleutel = uitkomst.value.documentatie.id;
-      setGemaakt(nieuweSleutel);
+      gemaakt.current = nieuweSleutel;
+      // Rechtstreeks via de geschiedenis: `router.replace` monteert dit scherm
+      // opnieuw en dan verdwijnt de melding vóór je haar hebt gezien.
       window.history.replaceState(null, "", `/documentation/${nieuweSleutel}`);
     }
+  }, [documentId]);
+
+  // FR-DOC-01: pas opslaan zodra er inhoud is. Een leeg scherm openen en weggaan
+  // laat niets achter, omdat de autosave dan uit staat.
+  const heeftInhoud = Boolean(
+    formulier &&
+      (formulier.title.trim() ||
+        formulier.text.trim() ||
+        formulier.photoIds.length > 0 ||
+        formulier.studentIds.length > 0 ||
+        formulier.groupIds.length > 0 ||
+        formulier.seriesId),
+  );
+
+  const { state } = useAutosave({
+    value: formulier ?? ({} as Formulier),
+    onSave: bewaar,
+    enabled: Boolean(formulier) && heeftInhoud,
+  });
+
+  function wijzig(deel: Partial<Formulier>) {
+    if (!formulier) return;
+    setConcept({ ...formulier, ...deel });
   }
+
+  // FR-DOC-35: alleen waarschuwen bij het sluiten als er werkelijk werk open staat.
+  useEffect(() => {
+    if (state !== "saving") return;
+    const waarschuw = (gebeurtenis: BeforeUnloadEvent) => gebeurtenis.preventDefault();
+    window.addEventListener("beforeunload", waarschuw);
+    return () => window.removeEventListener("beforeunload", waarschuw);
+  }, [state]);
 
   if (laadfout) {
     return (
@@ -158,7 +189,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     );
   }
 
-  if (!formulier) {
+  if (!formulier || !waarde) {
     return (
       <div className="mx-auto max-w-3xl p-4 md:p-6">
         <ErrorMessage
@@ -170,80 +201,115 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     );
   }
 
+  const tekens = formulier.text.length;
+
   return (
-    <form
-      className="mx-auto max-w-3xl space-y-6 p-4 md:p-6"
-      onSubmit={(gebeurtenis) => {
-        gebeurtenis.preventDefault();
-        void bewaar();
-      }}
-    >
-      <Field>
-        <FieldLabel htmlFor="titel">Titel</FieldLabel>
-        <Input
-          id="titel"
-          value={formulier.title}
-          maxLength={120}
-          autoComplete="off"
-          placeholder="Waar ging het over?"
-          onChange={(gebeurtenis) => wijzig({ title: gebeurtenis.target.value })}
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="datum">Datum</FieldLabel>
-        <FieldDescription>De dag waarop het gebeurde. Hoogstens een week vooruit.</FieldDescription>
-        <Input
-          id="datum"
-          type="date"
-          className="max-w-44"
-          value={formulier.date}
-          onChange={(gebeurtenis) => wijzig({ date: gebeurtenis.target.value })}
-        />
-      </Field>
-
-      {waarde && waarde.leerlingen.length > 0 ? (
-        <FieldSet>
-          <FieldLegend variant="label">Leerlingen</FieldLegend>
-          <FieldDescription>Over wie gaat deze documentatie?</FieldDescription>
-          <div className="flex flex-wrap gap-x-6 gap-y-3">
-            {waarde.leerlingen.map((leerling) => (
-              <div key={leerling.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={`leerling-${leerling.id}`}
-                  checked={formulier.studentIds.includes(leerling.id)}
-                  onCheckedChange={(aan) => zetLeerling(leerling.id, aan === true)}
-                />
-                <Label htmlFor={`leerling-${leerling.id}`}>{weergavenaam(leerling)}</Label>
-              </div>
-            ))}
-          </div>
-        </FieldSet>
-      ) : (
-        <FieldDescription>
-          Je hebt nog geen leerlingen. Voeg ze toe bij Instellingen om ze hier te kunnen kiezen.
-        </FieldDescription>
-      )}
-
-      <Field>
-        <FieldLabel htmlFor="tekst">Tekst</FieldLabel>
-        <Textarea
-          id="tekst"
-          rows={10}
-          value={formulier.text}
-          placeholder="Wat gebeurde er? Wat viel je op?"
-          onChange={(gebeurtenis) => wijzig({ text: gebeurtenis.target.value })}
-        />
-      </Field>
-
-      {fout ? <ErrorMessage message={fout} nextStep="Pas het aan en probeer het opnieuw." /> : null}
-
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={status === "saving"}>
-          Opslaan
+    <div className="mx-auto max-w-6xl p-4 md:p-6">
+      <div className="flex items-center justify-between gap-4 pb-4">
+        <SaveStatus state={state} />
+        <Button variant="ghost" onClick={() => router.push("/documentation")}>
+          Naar het overzicht
         </Button>
-        <SaveStatus state={status} />
       </div>
-    </form>
+
+      {fout ? <ErrorMessage message={fout} nextStep="Pas het aan; je tekst blijft staan." /> : null}
+
+      {/* FR-DOC-29: op de laptop de leeskolom naast de rail. Onder 768px één kolom. */}
+      <div className="grid gap-6 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <div className="space-y-6">
+          <Field>
+            <FieldLabel htmlFor="titel">Titel</FieldLabel>
+            <FieldDescription>Mag leeg blijven.</FieldDescription>
+            <Input
+              id="titel"
+              value={formulier.title}
+              maxLength={120}
+              autoComplete="off"
+              placeholder="Waar ging het over?"
+              onChange={(gebeurtenis) => wijzig({ title: gebeurtenis.target.value })}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="datum">Datum</FieldLabel>
+            <FieldDescription>De dag waarop het gebeurde. Hoogstens een week vooruit.</FieldDescription>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                id="datum"
+                type="date"
+                className="max-w-44"
+                value={formulier.date}
+                onChange={(gebeurtenis) => wijzig({ date: gebeurtenis.target.value })}
+              />
+              <Button variant="outline" size="sm" onClick={() => wijzig({ date: vandaag() })}>
+                Vandaag
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => wijzig({ date: gisteren() })}>
+                Gisteren
+              </Button>
+            </div>
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="tekst">Tekst</FieldLabel>
+            <Textarea
+              id="tekst"
+              rows={16}
+              value={formulier.text}
+              maxLength={MAX_TEKST}
+              placeholder="Wat gebeurde er? Wat viel je op?"
+              onChange={(gebeurtenis) => wijzig({ text: gebeurtenis.target.value })}
+            />
+            {tekens >= WAARSCHUW_VANAF ? (
+              <FieldDescription>
+                {tekens.toLocaleString("nl-NL")} tekens. Boven de {MAX_TEKST.toLocaleString("nl-NL")}{" "}
+                kun je niet verder typen; splits hem dan in twee documentaties.
+              </FieldDescription>
+            ) : null}
+          </Field>
+        </div>
+
+        <div className="space-y-6">
+          <Koppelingen
+            formulier={formulier}
+            leerlingen={waarde.leerlingen}
+            groepen={waarde.groepen}
+            reeksen={waarde.reeksen}
+            onWijzig={wijzig}
+          />
+
+          <PhotoStrip
+            photoIds={formulier.photoIds}
+            onWijzig={(photoIds) => wijzig({ photoIds })}
+            onFout={setFout}
+            onDatumsuggestie={(datum) => {
+              // Alleen invullen zolang de gebruiker de datum niet zelf heeft gezet.
+              if (formulier.date === vandaag()) wijzig({ date: datum });
+            }}
+          />
+
+          <Field>
+            <FieldLabel htmlFor="notitie">Notitie voor jezelf</FieldLabel>
+            <FieldDescription>
+              Blijft binnen: staat niet in een export en gaat nooit mee naar de AI.
+            </FieldDescription>
+            <Textarea
+              id="notitie"
+              rows={3}
+              maxLength={2_000}
+              value={formulier.privateNote}
+              onChange={(gebeurtenis) => wijzig({ privateNote: gebeurtenis.target.value })}
+            />
+          </Field>
+        </div>
+      </div>
+    </div>
   );
+}
+
+/** De dag vóór vandaag, als snelknop naast Vandaag. */
+function gisteren(): string {
+  const moment = new Date();
+  moment.setDate(moment.getDate() - 1);
+  return vandaag(moment);
 }
