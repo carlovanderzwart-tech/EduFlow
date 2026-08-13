@@ -448,9 +448,6 @@ De vier soorten handhaving in de kolom *Afgedwongen in* betekenen het volgende. 
 | INV-46 | Een AI-resultaat wijzigt nooit iets zonder een handeling van de gebruiker. | Elk resultaat is een voorstel (U-10). Dit is de regel die de app onderscheidt van een tekstverwerker met een mening. | `DocumentationService` en `MailService` kennen geen schrijfpad vanuit `AIService` | Bestaat niet: `AIService` levert een voorstel terug en schrijft nergens. |
 | INV-47 | Na "Overnemen" is er altijd precies één stap ongedaan te maken die de vorige tekst volledig terugzet. | Autosave overschrijft de vorige versie direct; zonder deze regel wist één tik je werk (T-07, B-39). | `DocumentationService` en `MailService` | Overnemen zonder bewaarde vorige versie is niet aan te roepen: de vorige tekst is een verplicht argument. |
 | INV-48 | De eis aan zinslengte en alinealengte geldt alleen voor AI-uitvoer. | Wat jij zelf schrijft is jouw tekst; de app corrigeert je niet (B-41). | `AIService` bij het beoordelen van een antwoord | Op eigen tekst wordt de controle niet uitgevoerd; er is geen scherm dat hem toont. |
-| INV-57 | Afschermen en terugvertalen zijn elkaars omgekeerde: `restore(pseudonymise(t)) === t`, voor elke tekst in de toetsset. | Zonder deze gelijkheid komt de tekst niet ongeschonden terug, en dan verliest de gebruiker werk aan een functie die hem hoorde te helpen. Dit is de eigenschap waar §12.5 op rust. | `PrivacyService`, met de volledige toetsset op elk geval uit bijlage A (DR-41) | Het antwoord wordt niet als voorstel getoond; er gaat geen aanroep de deur uit met een afscherming die niet omkeerbaar is. |
-
-INV-57 staat achteraan en niet op numerieke plek: dit hoofdstuk is op onderwerp geordend, en de rondgang is een privacyregel. Hij kreeg zijn nummer pas bij B-118, omdat §12.5 hem tot dan INV-30 noemde — een nummer dat in §9.5.4 al aan de agenda toebehoorde.
 
 #### 9.5.7 Beheer en back-up
 

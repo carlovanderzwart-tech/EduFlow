@@ -1,9 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-121** · **T-46** · **INV-57**
->
-> Vrij vanaf: **B-122**, **T-47**, **INV-58**. `INV-54` t/m `INV-56` blijven met opzet
-> ongebruikt; zie B-121.
+> ## Laatst uitgegeven nummers: **B-119** · **T-45** · **INV-53** · **FR-AGE-31**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -15,252 +12,191 @@ door op hoofdstuk 19.
 
 ---
 
-# 13 augustus 2026 — vóór D04
+# 13 augustus 2026 — de AI gaat naar achteren
 
-## B-120 — De toegangscode-cookie leeft negentig dagen, niet een jaar
+## B-119 — De doorloop bouwt eerst alles zonder AI
 
-**Probleem.** Twee hoofdstukken geven de cookie `eduflow_access` een andere looptijd.
+**Probleem.** Vier dagen zijn opgegaan aan AI-randvoorwaarden: EU-residentie bij OpenAI die
+niet bestaat voor dit account, tegoed, residentie bij Anthropic die er helemaal niet is,
+providerkeuze, de grendel uit T-45. Er is in die dagen geen scherm bij gekomen. Ondertussen
+zijn `O-01` — de stijlvoorbeelden — nog steeds niet geleverd, en **zonder die voorbeelden is
+niet vast te stellen of de AI goed schrijft** (§12.9, bijlage A.4). We bouwen dus aan iets
+dat we niet kunnen beoordelen, terwijl zeven werkopdrachten die niets met AI te maken hebben
+staan te wachten.
 
-| | |
-|---|---|
-| FR-INS-37 (§6.5.11) | "een cookie met een looptijd van **een jaar**" |
-| §8.2.3, tabelrij `Max-Age` | "**90 dagen** — lang genoeg om niet te irriteren, kort genoeg om een vergeten apparaat te laten verlopen" |
+**Besluit.** De doorloop wordt in twee blokken geknipt.
 
-D04 zet die cookie en kan er maar één kiezen.
+**Blok 1 — zonder AI.** D00, D01, D02, **D03**, D05, D07, D08, D09a, D09b, D11. Dit levert
+een werkend documentatiegereedschap: foto's erin, tekst erbij, opmaak, export naar een
+deelbare afbeelding, agenda met vier weergaven, overzicht met zoeken, dashboard.
 
-**Besluit.** **Negentig dagen.** FR-INS-37 is hierop gewijzigd; §8.2.3 blijft zoals hij is.
+**Blok 2 — de AI, ná de stijlvoorbeelden.** D04 (de route), D06 (laat AI meeschrijven),
+D10 (mail). Deze drie beginnen pas als `O-01` er is.
 
-**Waarom.** §8.2.3 is de plek waar de cookie technisch is vastgelegd — naam, `httpOnly`,
-`Secure`, `SameSite`, `Path` — en is de enige van de twee die een **reden** bij de looptijd
-geeft. FR-INS-37 noemt het jaar terloops, in een zin die over gemak gaat: "geen account,
-geen wachtwoord dat je moet onthouden".
+**De uitzondering: D03 blijft in blok 1.** `PrivacyService` is geen AI-functie maar de
+fundering eronder, hij is volledig te toetsen zonder één netwerkaanroep (`INV-30` is tekst
+in, tekst uit), en het is precies wat Karin in september wil zien. Later inbouwen betekent
+elke route naar de AI opnieuw langslopen — fout 1 uit §20.6.
 
-De weging zelf: deze cookie is de enige sleutel tot documentaties over kinderen. Er zijn
-geen accounts (B-21), dus er is ook geen manier om op afstand toegang in te trekken —
-FR-INS-38 laat je een apparaat intrekken, maar dat werkt alleen zolang jij eraan denkt. Een
-laptop die kwijtraakt en een jaar lang binnenkomt is een risico dat niet opweegt tegen één
-keer per kwartaal een code overtikken. Negentig dagen is bovendien wat §8.2.3 zelf al als
-afweging opschrijft; het jaar heeft nergens een onderbouwing.
+**Waarom dit geen uitstel van het echte werk is.** §1.1.1 verdeelt de keten van 35 tot 50
+minuten over vijf fasen. Drie daarvan — overzetten, opmaken en uitleveren, samen 18 tot 28
+minuten — hebben niets met schrijven te maken, en dat is precies wat blok 1 wegneemt. Alleen
+de schrijffase van 15 tot 25 minuten raakt AI. **Blok 1 levert dus ongeveer twee derde van de
+tijdwinst op, zonder één AI-aanroep.**
 
-**Gevolg.** De zin in FR-INS-37 luidt nu "negentig dagen". `/api/ai` zet `Max-Age` op
-90 dagen (7.776.000 seconden), als benoemde constante (DR-54).
+Dat is ook geen nieuw idee: §1.7.2 beschrijft deze uitkomst al als de vooraf vastgelegde
+uitweg — *"wat overblijft is een documentatiegereedschap met opmaak, pagina's, export, agenda
+en zoeken, en dat bespaart nog steeds de achttien tot achtentwintig minuten"* — en §1.7.3
+eist dat AI een functieschakelaar per module is. **Blok 1 maakt die schakelaar echt in
+plaats van beloofd.** Als het gesprek met het bestuur ooit vastloopt op AI, is de uitwijk
+dan geen noodplan maar de versie die er al staat.
 
-**Herziening.** Zodra er een manier is om toegang op afstand in te trekken die niet van het
-geheugen van de gebruiker afhangt.
+**Wat je wél later beantwoordt.** De vraag waar het project op staat of valt — schrijft de
+AI zoals jij? — blijft langer open. Dat is een echte prijs en hij staat hier eerlijk. Maar
+hij was al niet te beantwoorden zonder `O-01`, dus dit besluit stelt niets uit dat vandaag
+mogelijk was; het stopt alleen met de rest gijzelen.
 
-## B-121 — Verzonnen nummerverwijzingen gaan uit de code, ze krijgen geen betekenis
+**Gevolg voor mail.** De herschreven §6.3 is volledig AI: opdracht erin, mail eruit. Zonder
+AI blijft er geen module over — een concept dat je zelf typt met een kopieerknop is een
+kladblok. **D10 verhuist dus in zijn geheel naar blok 2**, inclusief de detectoren, want die
+bestaan om iets af te schermen dat vervolgens verstuurd wordt. Het dashboard (D11) toont in
+blok 1 daarom **drie** blokken: Deze week, Verder werken aan (alleen documentaties), en
+Back-up. Aandacht en de mailconcepten komen erbij in blok 2.
 
-**Probleem.** Sluit O-11. De code beriep zich op zeven nummers die nooit zijn uitgegeven —
-`T-47` t/m `T-50` en `INV-54` t/m `INV-56` — en op één nummer dat wél bestaat maar ergens
-anders over gaat: `T-46` staat in de code bij "wandkloktijd zonder dag", terwijl T-46 de
-importregel voor `app/providers/` is. Nagekeken in alle 9.115 regels van het volledige
-handboek: achter die zeven zat niets. Ze zijn nooit uitgegeven en er is dus niets
-kwijtgeraakt.
+**Niet besloten:** dat EduFlow permanent zonder AI verder gaat. Dat blijft een geldige versie
+van dit product volgens §1.7.2, maar er is vandaag geen reden om dat te kiezen, en die keuze
+hoeft pas gemaakt te worden als de meting uit §1.7.1 criterium 4 er ligt.
 
-**Besluit.** Een verwijzing naar een nummer dat de regel niet draagt, **gaat eruit**. Hij
-krijgt óf een echt nummer of een echte paragraaf uit het register, óf hij verdwijnt en de
-onderbouwing blijft staan zonder nummer. Wat er **niet** gebeurt: het nummer alsnog een
-betekenis geven die bij de code past.
+---
 
-De zeven nummers blijven daarna ongebruikt. `T-47` is weer vrij, `INV-54` t/m `INV-56`
-worden overgeslagen — INV-57 is al uitgegeven, en teruggrijpen naar 54 zou de verwarring
-opnieuw uitnodigen bij iedereen die de oude commits leest.
+# 12 augustus 2026 — de EU-provider
 
-**Waarom.** Een nummer achteraf een betekenis geven die bij de code past, is de
-onderbouwing naar de code toe schrijven. Dan lijkt elke regel besloten en is er geen manier
-meer om te zien wat er werkelijk is afgewogen. Dat is de tweede fout uit §20.6, met een
-extra draai: hij is dan ook nog onzichtbaar.
+## B-118 — EU-verwerking geldt vanaf de eerste echte gegevens, niet vanaf de eerste aanroep
 
-**Oorzaak, en waarom hij niet terugkomt.** Er was geen plek waar stond welk nummer als
-laatste was uitgegeven, dus werd er gegokt. Sinds B-114 staat die regel bovenaan dit
-bestand en draagt hij nu ook de `INV-`reeks. Dit is het laatste spoor van de oude
-werkwijze.
+**Probleem.** D04 strandde op het EU-eindpunt van OpenAI. De gestelde oplossing — "zet
+EU data residency aan op het project" — bestaat niet als knop voor dit account.
+Volgens OpenAI's eigen documentatie is regionale dataresidentie voorbehouden aan
+**Enterprise-klanten die zijn goedgekeurd voor geavanceerde gegevenscontroles**, wordt hij
+alleen ingesteld bij het **aanmaken van een nieuw project**, en vereist hij een aanvraag
+via sales plus een aanvullende overeenkomst over bewaartermijnen. Een leerkracht met een
+persoonlijk API-account komt daar niet doorheen, hoeveel tegoed hij ook opwaardeert.
 
-**Gevolg.** Achttien commentaarregels in `src/` wijzen nu naar wat de regel werkelijk
-draagt:
+Dat raakt T-06 (standaardprovider met verwerking binnen de EU) rechtstreeks, en het is
+precies het punt waar §1.7.3 waarschuwt dat dit project kan vastlopen.
 
-| Verwijzing | Wordt | Waarom |
+**Besluit.** Twee delen, en het onderscheid ertussen is het hele besluit.
+
+1. **Tijdens de doorloop mag het wereldwijde eindpunt.** In de doorloop bestaat de app
+   uitsluitend uit de verzonnen groep uit bijlage A. Twintig bedachte namen in een bedachte
+   groep zijn geen persoonsgegeven; er is dus geen gegevensstroom die een EU-eis oproept.
+   Dit is geen versoepeling van T-06 maar een verduidelijking van waar hij op slaat.
+2. **Vóór het eerste echte kind draait de app op een EU-provider.** T-06 blijft onverkort
+   gelden en is een voorwaarde in de Definition of Done, naast het gesprek met de
+   functionaris (O-03).
+
+**De grens is hard en zichtbaar.** De app weigert een AI-aanroep zodra de leerlingenlijst
+iets anders bevat dan de verzonnen groep, tenzij de ingestelde provider EU-verwerking doet.
+Zie T-45. Zonder die grendel is dit besluit een voornemen, en voornemens overleven een
+drukke woensdag niet.
+
+**Waarom niet stilzwijgend terugvallen.** Claude Code weigerde terecht om zonder besluit
+naar het wereldwijde eindpunt te wijken. Dat is DR-04 in de praktijk. De juiste uitkomst is
+niet doorbouwen zonder AI en ook niet stil omzeilen, maar dit: een besluit met een nummer,
+een grens in code, en een datum waarop de echte oplossing er moet staan.
+
+**Gevolg voor de providerkeuze.** De standaard uit T-06 kan geen OpenAI-project met
+EU-residentie zijn. De twee zelfbedienbare routes die overblijven, allebei al genoemd in
+§12.7:
+
+| Route | Waarom | Wat het kost aan werk |
 |---|---|---|
-| `T-48` (unie van twee varianten) | `INV-31` | §9.5.4 zegt letterlijk "twee varianten in één unie" |
-| `T-49` (vakantiebestand als leescache) | `§13.4` | daar staat het bestand met zijn versie beschreven |
-| `T-50` (het ene `settings`-record) | `§8.3.14` en `§9.4` | daar staat het schema, en dat er geen `User` is in 1.0 |
-| `T-47` (schemaversie begint op 1) | `T-40` en `§8.6` | die twee zeggen het al, en T-47 voegde niets toe |
-| `INV-54`, `INV-55`, `INV-56` (basisweek) | `B-115` | de basisweek bestaat door dat besluit, niet door een invariant |
-| `T-46` (wandkloktijd zonder dag) | `§8.3` | het type bestaat omdat `weekPatterns` tijden zonder dag draagt |
+| **Google Vertex AI, regio `europe-west4` (Nederland)** | Zelf aan te zetten met een gewoon betaald account, geen verkoopgesprek. Verwerking in Nederland — de kortste zin in het gesprek met de functionaris | Een Google Cloud-project, Vertex AI aanzetten, een dienstaccount. Adapter `vertex-eu` staat al in §12.7 |
+| **AWS Bedrock, `eu-central-1` (Frankfurt)** | Idem zelfbedienbaar, en de route naar Claude binnen de EU | Vergelijkbaar. Adapter `bedrock-eu` staat al in §12.7. Welke modellen daar beschikbaar zijn, wordt geverifieerd in de werkopdracht — niet aangenomen |
+| ~~**Anthropic rechtstreeks**~~ | **Geen route.** Anthropic's eigen documentatie geeft voor de verwerkingsregio alleen `"global"` en `"us"`, en voor de opslagregio alleen `"us"` — die laatste is bovendien niet te wijzigen na het aanmaken van de werkruimte. Er is geen EU-optie, op geen enkel abonnement | — |
 
-Geen enkele regel, controle of toets is gewijzigd; alleen waar de onderbouwing naar wijst.
+**Een derde route die de moeite van het meten waard is: een model op het apparaat zelf.**
+Een lokaal model (bijvoorbeeld via Ollama op de laptop) is gratis en er gaat *niets* de
+deur uit — geen EU-vraag, geen verwerkersovereenkomst, geen provider. Dat zou de sterkste
+uitkomst zijn die dit product kan hebben: §12.13 wordt dan triviaal waar. Twee eerlijke
+bezwaren: de schrijfkwaliteit in het Nederlands voor déze taak is vermoedelijk lager dan
+criterium 4 uit §1.7.1 vraagt, en het vraagt een laptop die het aankan — wat de belofte
+"werkt op telefoon en laptop" raakt. **Niet afwijzen op gevoel: meenemen in dezelfde
+meting met de gouden testset.** Haalt het lokale model twee van de drie voorstellen
+bruikbaar, dan vervalt het hele providervraagstuk.
 
-**Herziening.** Niet nodig. Wordt een van deze regels alsnog een besluit waard, dan krijgt
-hij een nummer via de regel bovenaan dit bestand.
+**Gratis niveaus van cloudproviders zijn géén route.** Google zegt het zelf het duidelijkst:
+op het gratis niveau wordt de inhoud gebruikt om hun producten te verbeteren, op het betaalde
+niveau niet. Voor de verzonnen groep is dat onschadelijk, maar het betekent dat het gratis
+niveau een doodlopende weg is die je vóór echte gegevens toch moet verlaten — en dan doe je
+de verhuizing twee keer. Bovendien kost het hele doorloop-traject aan echte aanroepen
+minder dan tien euro; geld is hier de schaarste niet.
 
----
+**Let op — een abonnement is geen API-toegang.** Een account op claude.ai of chatgpt.com,
+inclusief een onderwijs- of teacheraccount, geeft geen sleutel voor `/api/ai`. Dat is een
+apart account met eigen tegoed. Dit is een veelgemaakte aanname en hij kost een avond.
 
-# 12 augustus 2026 — tijdens het uitvoeren van D02 en D03
+**Hoe de keuze straks gemaakt wordt.** Niet op voorkeur maar met de gouden testset uit
+§12.9: dezelfde ruwe notities door beide providers halen en tellen hoeveel voorstellen
+bruikbaar zijn zonder herschrijven. Dat is criterium 4 uit §1.7.1 en precies waarvoor die
+testset bestaat. Daarmee is de providerkeuze een meting en geen mening — en dat is ook het
+antwoord als het bestuur later vraagt waarom deze en niet die.
 
-## B-117 — Hoofdletterongevoelig zoeken wint van de tabelrij "Roos plukte een roos"
+Beide leveren een verwerkersovereenkomst die het bestuur kan tekenen — het punt waarop
+§1.7.3 zegt dat het gesprek doorgaat of stopt. De keuze tussen de twee is een `T-`besluit
+bij werkopdracht D04b en hoeft nu niet gemaakt te worden.
 
-**Probleem.** §12.5 beschrijft de afscherming in acht stappen en geeft daarna een tabel
-met verplichte gevallen. Die twee spreken elkaar op één punt tegen.
+## T-45 — De grendel op de leerlingenlijst
 
-| | |
-|---|---|
-| Stap 4 | "Hoofdletterongevoelig zoeken, hoofdletters herstellen." |
-| Tabelrij *Naam die ook woord is* | `"Roos plukte een roos"` → `[LEERLING-19]` plukte een roos |
+**Besluit.** `PrivacyService.gate()` krijgt er één controle bij, náást de bestaande poort op
+een lege lijst (FR-INS-20): staat de ingestelde provider niet op EU-verwerking, dan is een
+AI-aanroep alleen toegestaan als de leerlingenlijst exact de verzonnen groep uit
+`src/test/fixtures/testgegevens.ts` is. Wijkt hij af, dan blokkeert de app met de tekst
+*"Deze provider verwerkt buiten de EU. Kies in Instellingen een EU-provider voordat je met
+echte namen werkt."*
 
-Bij hoofdletterongevoelig zoeken is de bloem "roos" niet te onderscheiden van de leerling
-Roos: beide staan tussen woordgrenzen en verschillen alleen in een hoofdletter. De rij
-verwacht dat de tweede blijft staan. Dat kan alleen als stap 4 niet geldt.
+**Waarom in `PrivacyService` en niet in een scherm.** Omdat het een regel is en geen
+zichtbaarheid (DR-15), en omdat elke route naar de AI door deze functie gaat (DR-31). Een
+controle in het scherm is een controle die je omzeilt zodra er een tweede scherm komt.
 
-**Besluit.** **Stap 4 wint.** Beide voorkomens worden vervangen; `"Roos plukte een roos"`
-wordt `[LEERLING-19] plukte een [LEERLING-19]`. De tabelrij in §12.5 is hierop gewijzigd.
-
-**Waarom.** De fout is niet symmetrisch. Eén keer te veel vervangen levert een lelijke
-opdracht op die de gebruiker in het controlescherm ziet en die de rondgang exact terugzet
-— hij leest gewoon weer "Roos plukte een roos". Eén keer te weinig vervangen is een naam
-die het apparaat verlaat, en dat is fout 1 uit §20.6: "de tekst is weg en komt niet
-terug". §12.5 kiest bij de diakrieten al dezelfde kant, met dezelfde reden: zoeken gebeurt
-op de gevouwen vorm zodat "Hanaë" ook op "Hanae" gevonden wordt, liever één keer te veel
-dan één keer te weinig.
-
-Het alternatief — alleen matchen wanneer de hoofdletter klopt — is geen kleine
-versoepeling maar een gat: het laat elke naam door die klein getypt is, en juist in een
-snelle notitie tussen twee lessen door typt niemand consequent hoofdletters.
-
-**Gevolg.** De rij *Naam die ook woord is* in §12.5 luidt nu
-`[LEERLING-19]` plukte een `[LEERLING-19]`. `PrivacyService.test.ts` legt het gedrag vast
-met de reden erbij, zodat het geen stille toets wordt (DR-45).
-
-**Herziening.** Zodra er een betrouwbare manier is om een naam van een gelijkluidend woord
-te onderscheiden. Dat is D7 uit de review — "het aanwijzen van namen die niet in de lijst
-staan" — en dat is nog niet besloten.
-
-## B-118 — De rondgang krijgt INV-57; INV-30 blijft van de agenda
-
-**Probleem.** `restore(pseudonymise(t)) === t` heet op twee plaatsen **INV-30**: in §12.5
-("Dat is INV-30") en in werkopdracht D03. In §9.5.4 draagt INV-30 een heel andere regel:
-"Een agenda-item heeft een begin en een einde, en het einde ligt niet vóór het begin." Eén
-nummer, twee regels.
-
-**Besluit.** **Hoofdstuk 9 is het register en is leidend.** INV-30 blijft de agendaregel.
-De rondgang wordt **INV-57** en staat vanaf nu in §9.5.6, bij de andere privacy- en
-AI-invarianten.
-
-**Waarom.** Hoofdstuk 9 is de plek waar invarianten wonen, met per regel een kolom
-*Afgedwongen in* en *Bij schending*; §12.5 is een beschrijving van een service die ernaar
-verwijst. Bij een botsing verliest de verwijzing, niet het register. De agendaregel
-hernummeren zou bovendien `AgendaService` en zijn toetsen raken, terwijl de rondgang tot
-vandaag nergens onder een nummer was vastgelegd — hij was alleen een zin in §12.5.
-
-**Waarom 57 en niet 54.** INV-54, INV-55 en INV-56 worden al door de code gebruikt
-(`weekPattern.ts`, `weekPattern.test.ts`, `lib/result.ts`) maar staan in geen enkel
-hoofdstuk. Ze opnieuw uitgeven zou twee betekenissen aan één nummer geven — precies de
-fout die dit besluit repareert. Zie **O-11**.
-
-**Gevolg.** §9.5.6 krijgt de rij INV-57. De zin in §12.5 verwijst nu naar INV-57.
-`PrivacyService.ts` en `PrivacyService.test.ts` noemen het nummer in hun toelichting en
-zijn meegewijzigd. De rij staat achteraan in §9.5.6 en niet op numerieke plek, omdat
-hoofdstuk 9 op onderwerp geordend is en dit een privacyregel is.
-
-## B-119 — Het schooljaar hoort binnen werkopdracht D02
-
-**Probleem.** Een groep hoort bij precies één schooljaar (INV-27), en `Group.schoolYearId`
-is verplicht. Werkopdracht D02 bouwt groepen en lidmaatschappen, maar noemt het schooljaar
-niet — niet in wat je bouwt, en ook niet in wat je bewust níet bouwt. Zonder schooljaar is
-er geen groep aan te maken, en dan doet het scherm Groepen niets: het toont een lege
-toestand die de gebruiker nergens kan oplossen.
-
-**Besluit.** Het **minimale** schooljaarveld — naam, eerste schooldag, laatste schooldag —
-hoort binnen D02 en is daar gebouwd. Het staat in `AgendaService`, want §9.5.3 legt INV-28
-("een schooljaar begint vóór het eindigt en overlapt geen ander schooljaar") daar neer.
-
-**Waarom.** De uitsluitingslijst van D02 noemt CSV-import, samenvoegen, het overzicht per
-kind, het stijlprofiel, de privacy-instellingen, de provider, de back-up, de opslag, de
-toegangscode en zoeken. Het schooljaar staat er niet bij, en DR-01 verbiedt vooruitbouwen,
-niet het bouwen van wat een eis nodig heeft. Het alternatief was een scherm Groepen dat
-alleen werkt na de knop "Vul de verzonnen groep" — en dat is precies de soort halve deur
-waar §4.7 tegen waarschuwt.
-
-**Gevolg.** `FR-INS-26` is voor het deel "een ingesteld schooljaar met een eerste en
-laatste schooldag" eerder ingebouwd dan de volgorde van de werkopdrachten suggereert. Het
-tweede deel — de snelkeuze "dit schooljaar" in een filter op periode — is er niet en hoort
-bij het scherm dat dat filter heeft. `AgendaService.zetSchooljaar()` houdt er hoogstens
-één tegelijk lopend; dat is de helft van INV-28 die zonder jaarovergang af te dwingen is.
-
-**Herziening.** Bij de jaarovergang (`FR-INS-09`), want die maakt een tweede schooljaar en
-daarmee wordt de overlapcontrole van INV-28 pas echt nodig.
+**Toets.** Een toets met de naam `T-45` die faalt zodra er één naam buiten de verzonnen
+groep in de lijst staat bij een niet-EU-provider. Die toets is het bewijs dat je aan Karin
+laat zien.
 
 ---
 
-# 12 augustus 2026 — tijdens het uitvoeren van D00
+# 11 augustus 2026 — spooknummers
 
-## T-45 — Base UI blijft; B-116 vervalt
+## B-117 — `T-45` t/m `T-50` en `INV-54` t/m `INV-56` hebben nooit bestaan; O-11 vervalt
 
-**Probleem.** B-116 besloot "Radix blijft; er komt geen tweede componentbibliotheek",
-met als vertrekpunt dat `components/ui/` negentien primitieven "gebouwd op Radix" bevat.
-Dat vertrekpunt klopt niet. Gemeten op de code van D00 stap 2:
+**Probleem.** Er stond een openstaand punt `O-11`: uitzoeken wat er achter `T-47` t/m
+`T-50` en `INV-54` t/m `INV-56` zat.
 
-| | |
-|---|---|
-| `@base-ui/react` | geïmporteerd door **elf** bestanden in `ui/`, en staat in `package.json` |
-| `@radix-ui/*` | **nul** bestanden, en staat **niet** in `package.json` |
+**Bevinding.** Niets. Nagekeken in `product-bible-volledig.md`, alle 9.115 regels:
 
-De negentien primitieven hebben shadcn-vorm, maar de primitievenlaag eronder is Base UI.
+| Reeks | Loopt in het handboek tot | Uitgegeven daarna | Dus vrij vanaf |
+|---|---|---|---|
+| `T-` technische besluiten | `T-38` (§19.4) | `T-39` t/m `T-44` (B-114) | `T-45` |
+| `INV-` invarianten | `INV-53` (§9.5) | geen | `INV-54` |
 
-**Besluit.** **Base UI blijft.** Er komt geen tweede bibliotheek en geen migratie. B-116
-vervalt en wordt door dit besluit vervangen.
+`T-45` t/m `T-50` en `INV-54` t/m `INV-56` komen in geen enkel hoofdstuk voor, ook niet als
+verwijzing. Ze zijn nooit uitgegeven en er is dus ook niets verloren gegaan.
 
-**Waarom.** Dit is dezelfde redenering als B-116, toegepast op de werkelijke code. B-116
-zegt: *"De bewijslast ligt bij het wisselen, niet bij het houden. Negentien primitieven
-omzetten is een week werk waarvan geen enkele eis in hoofdstuk 6 of 17 beter wordt."* Dat
-argument is juist — het wees alleen de verkeerde kant op, omdat het uitging van een
-bibliotheek die er niet staat. "Radix blijft" zou uitgevoerd wórden wat het wilde
-voorkomen: een migratie van negentien componenten, midden in de doorloop, in dezelfde
-bestanden die net verhuisd zijn.
+**Besluit.** `O-11` vervalt; er valt niets uit te zoeken. Elke plek in de repo die naar een
+van deze nummers verwijst, is een verwijzing naar iets dat niet bestaat en wordt zo
+behandeld: **òf hij krijgt een echt nummer uit dit register, òf de verwijzing gaat eruit.**
+Niet: het nummer alsnog een betekenis geven die erbij past — dan schrijf je de
+onderbouwing achteraf naar de code toe, en dat is precies omgekeerd (DR-01).
 
-Base UI komt bovendien van hetzelfde team als Radix en levert dezelfde toegankelijkheid
-waar §11.6 om vraagt: focusopsluiting, `aria-modal`, afhandeling van Escape en het
-herstellen van de focus.
+**Waarom dit gebeurde.** Dezelfde oorzaak als de drie eerdere nummerbotsingen en als de
+verzonnen verwijzing naar §19.5: er was geen plek waar stond welk nummer als laatste was
+uitgegeven, dus werd er geraden. Sinds B-114 staat dat bovenaan dit bestand. Dit is het
+laatste spoor van de oude werkwijze, geen nieuw probleem.
 
-**Gevolg.** `claude-design/BRIEF.md` krijgt de regel dat componenten op de bestaande
-**Base UI**-primitieven gebouwd worden en niet vanaf nul — hetzelfde gevolg dat B-116
-beoogde, met de juiste bibliotheek. Drie plaatsen in het handboek schrijven nog Radix
-voor en spreken de code dus tegen: de afhankelijkhedentabel in §16.8, de zin "geen
-componentbibliotheek buiten Radix" daaronder, en §11.6. Hoofdstuk 5 noemt Radix in vier
-componentrijen. Die vier bestanden zijn hiermee **niet** gewijzigd; dat is redactiewerk aan
-het handboek en hoort niet in een D00-commit. Het staat als openstaand punt hieronder.
+**Vind ze zo:**
 
-**Herziening.** Zodra Base UI geen ondersteuning meer krijgt, of een tekort tegen WCAG 2.2
-AA vertoont dat `axe-core` in de bouwstraat aantoont.
-
-## T-46 — De importregel voor `app/providers/` en `app/(app)/_shell/`
-
-**Probleem.** B-111 voegt `src/app/providers/` toe aan §10.2 en zet de schil in
-`src/app/(app)/_shell/`, maar noemt geen importregel. Gevolg na D00 stap 4: vijf modules
-importeren `useDienst` uit `@/app/providers/`, en die overgang valt in geen enkele zone van
-`import/no-restricted-paths`. De lintregel laat hem door omdat hij er niet over gaat — niet
-omdat hij is toegestaan. Dat is precies het gat waardoor `components/` en `hooks/` een week
-lang onzichtbaar bleven.
-
-**Besluit.** De importtabel van §10.2 krijgt twee rijen:
-
-| Van | Mag importeren uit |
-|---|---|
-| `modules/` | `services/`, `domain/`, `ui/`, `lib/`, **`app/providers/`** |
-| `app/` | alles |
-
-`modules/` mag **alleen** uit `app/providers/` importeren en uit geen andere map onder
-`app/` — een scherm haalt zijn diensten daar op en verder niets. `app/(app)/_shell/` is
-van `app/` zelf; niemand daarbuiten importeert eruit. `ui/` mag nog steeds niets uit
-`app/`, want dan zou het ontwerpsysteem raamwerkbewust worden en dat is juist de reden
-achter B-111.
-
-**Waarom `app/` alles mag.** `app/` is de buitenste laag: hij stelt de andere lagen samen
-en niemand importeert eruit behalve via `providers/`. Een beperking daar zou niets
-beschermen wat niet al door de andere rijen wordt beschermd.
-
-**Gevolg.** §10.2 krijgt de twee mappen in zijn boom en de twee rijen in zijn tabel.
-`eslint.config.mjs` krijgt de zones die het afdwingen, zodat de regel bewaakt wordt en niet
-alleen afgesproken (DR-11).
+```
+git grep -nE "\b(T-4[5-9]|T-50|INV-5[4-9]|INV-6[0-9])\b"
+```
 
 ---
 
@@ -335,14 +271,6 @@ gegenereerd item, *dan* toont het detailvenster "uit je basisweek" als herkomst.
 de basisweek daarna, *dan* raakt dat de reeds gewijzigde items niet.
 
 ## B-116 — Radix blijft; er komt geen tweede componentbibliotheek
-
-> **Vervallen op 12 augustus 2026, vervangen door T-45.** Het probleem hieronder gaat uit
-> van primitieven "gebouwd op Radix", en dat is niet wat er in de repo staat: elf bestanden
-> importeren `@base-ui/react`, `@radix-ui/*` komt in nul bestanden voor en staat niet in
-> `package.json`. Daardoor wees de conclusie de verkeerde kant op — "Radix blijft" zou een
-> migratie van negentien componenten betekenen in plaats van die te voorkomen. De
-> redenering blijft staan en leidt op de werkelijke code tot **Base UI blijft**; zie T-45.
-> Blijft leesbaar volgens §19.1 regel 2.
 
 **Probleem.** `components/ui/` bevat negentien primitieven in shadcn-vorm, gebouwd op
 Radix. De vraag is of `ui/` daarop verder gaat of overstapt naar Base UI.
@@ -703,21 +631,3 @@ De donkere modus uit §18.4 is dan een tweede verbouwing in plaats van één reg
 - **O-09 — De bestaande repository naar §10.2.** De repository is 35 pull requests diep;
   de opzet-opdracht in `SETUP.md` ging uit van een leeg project. Zie werkopdracht
   `D00-bestaande-repo.md`, die die opdracht vervangt.
-- **O-10 — Vier hoofdstukken schrijven nog Radix voor.** Volgt uit T-45. Het handboek
-  spreekt de code tegen op vier plaatsen: de afhankelijkhedentabel in §16.8, de zin "geen
-  componentbibliotheek buiten Radix" daaronder, §11.6 ("panelen en dialoogvensters komen
-  uit Radix"), en vier componentrijen in hoofdstuk 5 die Radix Select, Switch, Checkbox,
-  Tabs en Dialog noemen. Dezelfde tabel in §16.8 schrijft bovendien `zustand`, `pdf-lib`
-  en `pdfjs-dist` voor, die geen van drieën in `package.json` staan, en noemt
-  `@base-ui/react`, `lucide-react`, `clsx`, `tailwind-merge`,
-  `class-variance-authority`, `sonner` en `tw-animate-css` niet, die er wel in staan.
-  Nodig: één redactieronde over die vier bestanden, met §16.8 gelijkgetrokken aan
-  `package.json`. Dat is schrijfwerk aan het handboek en hoort niet in een D00-commit.
-  **Vóór `claude-design/BRIEF.md` wordt geschreven**, want anders bouwt Claude Design op
-  de verkeerde primitieven.
-- ~~**O-11 — Zeven nummers staan in de code maar in geen enkel hoofdstuk.**~~ **Afgesloten
-  op 13 augustus 2026.** Zie B-121. Nagekeken in alle 9.115 regels van het volledige
-  handboek: achter `T-47` t/m `T-50` en `INV-54` t/m `INV-56` zat niets — ze zijn nooit
-  uitgegeven. De verwijzingen zijn uit de code gehaald en wijzen nu naar wat de regel
-  werkelijk draagt. Dit staat er doorgestreept en niet verwijderd, omdat een openstaand
-  punt dat verdwijnt zonder uitkomst er over een jaar uitziet als vergeten werk.

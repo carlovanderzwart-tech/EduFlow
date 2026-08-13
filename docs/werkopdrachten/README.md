@@ -1,6 +1,6 @@
 # Werkopdrachten — de doorloop (v0.1)
 
-Dertien opdrachten. Elke opdracht is **één sessie met Claude Code, één commit, en eindigt
+Veertien opdrachten, in twee blokken. Elke opdracht is **één sessie met Claude Code, één commit, en eindigt
 met iets dat je op het scherm ziet**. Een sessie die twee opdrachten doet, weet van geen
 van beide meer precies wat er is afgesproken — begin een nieuwe sessie, niet een nieuwe
 alinea.
@@ -9,25 +9,49 @@ Zie besluit B-104 in `docs/BESLUITEN.md` voor waarom de doorloop vóór de sprin
 
 ## De volgorde
 
+> **Gewijzigd op 13 augustus 2026 door B-119.** De doorloop is geknipt in twee blokken. Blok 1
+> bouwt alles wat geen AI nodig heeft en levert een bruikbaar documentatiegereedschap. Blok 2
+> is de AI en begint pas als de stijlvoorbeelden (`O-01`) er zijn — zonder die voorbeelden is
+> niet vast te stellen of de AI goed schrijft, dus is eerder bouwen bouwen zonder maat.
+
+### Blok 1 — zonder AI
+
 | # | Opdracht | Dagdelen | Blokkeert |
 |---|---|---:|---|
 | [D00](D00-bestaande-repo.md) | **De bestaande repo naar §10.2** | 1 + per stap ½ | D01 |
 | [D01](D01-storage.md) | `StorageService`, `BaseRecord` en het schema | 1 | alles |
 | [D02](D02-instellingen.md) | Instellingen: leerlingen, groepen, reeksen | 1 | D03, D05 |
 | [D03](D03-privacy.md) | `PrivacyService` met de volledige toetsset | 1½ | D04 |
-| [D04](D04-ai-route.md) | `/api/ai`, `AIService`, `PromptService` | 1 | D06 |
-| [D05](D05-schrijfmodus.md) | Schrijfmodus: velden, autosave, foto's | 2 | D06, D08 |
-| [D06](D06-ai-meeschrijven.md) | Laat AI meeschrijven + het controlescherm | 1½ | — |
+| [D05](D05-schrijfmodus.md) | Schrijfmodus: velden, autosave, foto's | 2 | D08 |
 | [D07](D07-overzicht.md) | Overzicht met zoeken en filters | 1 | — |
 | [D08](D08-export.md) | Export: één layout, deelbare afbeelding | 1½ | — |
 | [D09a](D09a-agenda-weergaven.md) | Agenda: dag, week, maand, jaar + vakanties | 2 | D09b |
 | [D09b](D09b-agenda-afspraken.md) | Herhalen, slepen, snelveld, meldingen, ICS | 2 | — |
-| [D10](D10-mail.md) | Mail: opdracht in, mail uit | 1½ | — |
-| [D11](D11-dashboard.md) | Dashboard (vier blokken) | ½ | — |
+| [D11](D11-dashboard.md) | Dashboard — in blok 1 **drie** blokken | ½ | — |
 
-**Totaal ±18 dagdelen, plus D00.** D00 komt eerst en vervangt de opzet-opdracht uit `SETUP.md` §2 — de repository is 35 pull requests diep en niet leeg. D01 t/m D04 zijn daarna het fundament en moeten op volgorde. D05 t/m
-D11 kunnen in principe in elke volgorde, maar de bovenstaande geeft het snelst iets om
-te laten zien.
+**Dat is ±12½ dagdeel** en het levert een app die je zelf kunt gebruiken: foto's erin, tekst
+erbij, opmaak, deelbare afbeelding eruit, agenda, zoeken. Volgens §1.1.1 zit daar twee derde
+van de tijdwinst in — de fasen overzetten, opmaken en uitleveren, samen 18 tot 28 minuten per
+documentatie, hebben niets met schrijven te maken.
+
+**D03 blijft hier staan** en niet in blok 2: `PrivacyService` is de fundering, niet een
+AI-functie. Hij is volledig te toetsen zonder netwerk en hij is wat Karin wil zien.
+
+### Blok 2 — de AI, ná `O-01`
+
+| # | Opdracht | Dagdelen | Vereist |
+|---|---|---:|---|
+| [D04](D04-ai-route.md) | `/api/ai`, `AIService`, `PromptService` | 1 | D03, een provider |
+| [D06](D06-ai-meeschrijven.md) | Laat AI meeschrijven + het controlescherm | 1½ | D04, D05 |
+| [D10](D10-mail.md) | Mail: opdracht in, mail uit | 1½ | D04 |
+| — | Dashboard aanvullen: Aandacht en de mailconcepten | ¼ | D10 |
+
+**Mail verhuist in zijn geheel.** De herschreven §6.3 is volledig AI; zonder AI blijft er geen
+module over. Een concept dat je zelf typt met een kopieerknop is een kladblok.
+
+**Totaal ±16½ dagdelen** over beide blokken. D00 komt eerst en vervangt de opzet-opdracht uit
+`SETUP.md` §2 — de repository is 35 pull requests diep en niet leeg. D01 t/m D03 zijn daarna
+het fundament en moeten op volgorde; de rest van blok 1 kan in elke volgorde.
 
 > **Bijgewerkt op 11 augustus 2026.** De agenda is uitgebreid tot een volwaardige agenda
 > (B-107) en daarmee gesplitst in D09a en D09b: +2½ dagdeel. De mailmodule is kleiner

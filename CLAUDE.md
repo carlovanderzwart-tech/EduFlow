@@ -50,6 +50,24 @@ Lees **alleen** de hoofdstukken die bij je werkopdracht staan. Lees nooit
 Loop je vast, meld dan precies drie dingen: welke eis je probeerde te halen, welke twee
 mogelijkheden je zag, en welke informatie je mist om te kiezen.
 
+## Hoe je een keuze voorlegt
+
+**Leg nooit een open keuze voor.** Bij elke vraag aan de opdrachtgever noem je de opties,
+kies je er één als jouw advies, en zet je de reden erbij in één zin. De opdrachtgever
+antwoordt dan met "ja" of met een correctie — dat kost tien seconden in plaats van een
+avond uitzoekwerk.
+
+Fout: *"Base UI of Radix?"*
+Goed: *"Advies: Radix houden. Negentien primitieven staan er al op; wisselen is een week
+werk waar geen enkele eis beter van wordt (DR-18). Akkoord?"*
+
+Dit geldt ook voor keuzes die je niet belangrijk vindt. Een vraag zonder advies verplaatst
+werk naar de enige persoon in dit project die er geen tijd voor heeft.
+
+**Nieuwe besluitnummers** haal je uit de regel bovenaan `docs/BESLUITEN.md` en je werkt die
+regel bij. Hoofdstuk 19 is gesloten (B-114). Geef nooit een nummer uit dat je zelf hebt
+geraden — dat is nu drie keer misgegaan.
+
 ## Commando's
 
 ```
