@@ -14,7 +14,8 @@ import { Textarea } from "@/ui/textarea";
 import { useDienst } from "@/app/providers/useDienst";
 import type { Series } from "@/domain/types";
 import { diensten, type Diensten } from "@/services/diensten";
-import { REEKSNAAM_MAX, volgendeKleur } from "@/services/series/SeriesService";
+import type { Colour } from "@/domain/types";
+import { PALET, REEKSNAAM_MAX, volgendeKleur } from "@/services/series/SeriesService";
 
 /**
  * Reeksen (§6.5.3).
@@ -30,23 +31,25 @@ import { REEKSNAAM_MAX, volgendeKleur } from "@/services/series/SeriesService";
 export function SeriesPage() {
   const [naam, setNaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
+  const [kleur, setKleur] = useState<Colour | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [teVerwijderen, setTeVerwijderen] = useState<{ reeks: Series; aantal: number } | null>(null);
 
   const laad = useCallback(({ series }: Diensten) => series.lijst(), []);
   const { waarde: reeksen, fout: laadfout, bezig, herlaad } = useDienst(laad);
 
+  // FR-INS-11 laat je kiezen; de eerstvolgende vrije kleur staat alvast aan, zodat
+  // je niets hóéft te kiezen om een reeks te kunnen maken (§4.4: geen lege keuze).
+  const gekozen = kleur ?? volgendeKleur(reeksen?.length ?? 0);
+
   async function maak() {
     const { series } = await diensten();
-    const uitkomst = await series.maak({
-      name: naam,
-      colour: volgendeKleur(reeksen?.length ?? 0),
-      description: beschrijving,
-    });
+    const uitkomst = await series.maak({ name: naam, colour: gekozen, description: beschrijving });
 
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
     setNaam("");
     setBeschrijving("");
+    setKleur(null);
     setFout(null);
     herlaad();
   }
@@ -99,6 +102,28 @@ export function SeriesPage() {
           value={beschrijving}
           onChange={(gebeurtenis) => setBeschrijving(gebeurtenis.target.value)}
         />
+
+        {/* De acht van §5.5. Kleur is de enige eigenschap die je in het overzicht
+            terugziet zonder te lezen, dus je kiest hem zelf (FR-INS-11). */}
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">Kleur</legend>
+          <div className="flex flex-wrap gap-2">
+            {PALET.map((optie) => (
+              <button
+                key={optie}
+                type="button"
+                aria-label={`Kleur ${optie.replace("series-", "")}`}
+                aria-pressed={optie === gekozen}
+                onClick={() => setKleur(optie)}
+                className={`size-8 rounded-full border-2 ${
+                  optie === gekozen ? "border-foreground" : "border-transparent"
+                }`}
+                style={{ backgroundColor: `var(--palette-${optie})` }}
+              />
+            ))}
+          </div>
+        </fieldset>
+
         <Button type="submit" disabled={!naam.trim()}>
           Reeks toevoegen
         </Button>
@@ -120,6 +145,12 @@ export function SeriesPage() {
         {reeksen?.map((reeks) => (
           <li key={reeks.id}>
             <Item variant="outline">
+              {/* Een kleur die je kiest maar nergens terugziet, is geen kleur. */}
+              <span
+                aria-hidden="true"
+                className="size-4 shrink-0 rounded-full"
+                style={{ backgroundColor: `var(--palette-${reeks.colour})` }}
+              />
               <ItemContent>
                 <ItemTitle>{reeks.name}</ItemTitle>
                 {reeks.description ? (

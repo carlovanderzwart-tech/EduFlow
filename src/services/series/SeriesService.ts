@@ -88,13 +88,6 @@ export function createSeriesService(deps: SeriesDeps) {
     });
   }
 
-  async function wijzig(id: Uuid, wijziging: Partial<Nieuwereeks>): Promise<Result<Series>> {
-    if (wijziging.name !== undefined && !wijziging.name.trim()) {
-      return ongeldig("Een reeks heeft een naam nodig. Vul er een in.");
-    }
-    return storage.update("series", id, wijziging);
-  }
-
   /**
    * Hoeveel documentaties hun verwijzing kwijtraken (FR-INS-12).
    *
@@ -131,7 +124,9 @@ export function createSeriesService(deps: SeriesDeps) {
     return { ok: true, value: gekoppeld.length };
   }
 
-  return { lijst, maak, wijzig, aantalDocumentaties, verwijder };
+  // Geen `wijzig`: §6.5.3 kent alleen aanmaken en verwijderen. Een methode die
+  // geen enkel scherm aanroept is een functie die er "even bij" kwam (DR-03).
+  return { lijst, maak, aantalDocumentaties, verwijder };
 }
 
 export type SeriesService = ReturnType<typeof createSeriesService>;
