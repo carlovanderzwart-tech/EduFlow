@@ -22,6 +22,7 @@ import {
 } from "./documentation/DocumentationService";
 import { createGroupService, type GroupService } from "./groups/GroupService";
 import { createPhotoService, type PhotoService } from "./photo/PhotoService";
+import { createSearchService, type SearchService } from "./search/SearchService";
 import { createSampleDataService, type SampleDataService } from "./sampledata/SampleDataService";
 import { createSeriesService, type SeriesService } from "./series/SeriesService";
 import { createSettingsService, type SettingsService } from "./settings/SettingsService";
@@ -52,6 +53,8 @@ export interface Diensten {
   series: SeriesService;
   documentation: DocumentationService;
   photos: PhotoService;
+  /** De index in het geheugen; IndexedDB kan geen tekst doorzoeken (T-09). */
+  search: SearchService;
   agenda: AgendaService;
   /** De enige aanroeper van `/api/ai` (DR-16). */
   ai: AIService;
@@ -77,6 +80,7 @@ async function bouw(): Promise<Diensten> {
     // De hertekenaar komt uit `lib/`, want hij heeft een canvas nodig en DR-12 wil
     // `PhotoService` toetsbaar houden zonder browser.
     photos: createPhotoService({ storage, tekenen: hertekenViaCanvas }),
+    search: createSearchService({ storage }),
     agenda: createAgendaService({ storage }),
     ai: createAIService({
       storage,
