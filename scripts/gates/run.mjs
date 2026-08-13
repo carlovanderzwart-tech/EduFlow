@@ -264,18 +264,40 @@ const POORTEN = [
     naam: "Rondgangtoets pseudonimisatie",
     bron: "INV-30, NFR-25",
     wanneer: "elke wijziging",
-    status: "wacht",
-    activeertBij: "stap 8 — PrivacyService",
-    waarom:
-      "De toets luidt restore(pseudonymise(t)) === t voor elke tekst in een set van minimaal " +
-      "120 gevallen (§12.5). PrivacyService bestaat nog niet: de stub die op de archiefdocumenten " +
-      "stond, is met de oude opslaglaag verdwenen.",
-    voorwaarde: () => {
-      if (!bestaat("src/services/PrivacyService.ts")) return null;
-      const bron = lees("src/services/PrivacyService.ts");
-      return /pseudonymise|pseudonimiseer/.test(bron)
-        ? "PrivacyService kent nu pseudonymise: de rondgangtoets moet nu werken."
-        : null;
+    status: "actief",
+    uitgevoerdDoor: "pnpm test",
+    run: () => {
+      // Deze poort stond op `wacht` en keek naar `src/services/PrivacyService.ts`,
+      // terwijl D03 hem in `src/services/privacy/` heeft gezet. Daardoor is hij na
+      // D03 blijven wachten op iets dat er al stond — precies het stilzwijgen dat
+      // de kop van dit bestand verbiedt.
+      const dienst = "src/services/privacy/PrivacyService.ts";
+      const toets = "src/services/privacy/PrivacyService.test.ts";
+
+      if (!bestaat(dienst)) return mislukt(`PrivacyService ontbreekt: ${dienst}.`);
+      if (!bestaat(toets)) return mislukt(`De rondgangtoets ontbreekt: ${toets}.`);
+
+      const bron = lees(dienst);
+      if (!/export function pseudonymise/.test(bron) || !/export function restore/.test(bron)) {
+        return mislukt("PrivacyService kent geen pseudonymise en restore als paar.");
+      }
+
+      // §12.5: minimaal 120 gevallen. De set wordt uit twintig namen maal zeven
+      // zinsvormen opgebouwd, dus hier wordt het product geteld en niet de regels.
+      const set = lees(toets);
+      const vormen = set.match(/^ {2}\(naam: string\) =>/gmu)?.length ?? 0;
+      const gevallen = vormen * 20;
+      if (gevallen < 120) {
+        return mislukt(
+          `De rondgangset telt ${gevallen} gevallen; §12.5 eist er minstens 120.`,
+          vormen === 0 ? ["Geen zinsvormen gevonden in ZINSVORMEN."] : [],
+        );
+      }
+
+      return ok(
+        `Rondgang restore(pseudonymise(t)) === t over ${gevallen} gevallen, plus de vijftien ` +
+          "uit bijlage A. Draait mee in pnpm test, zonder browser en zonder netwerk.",
+      );
     },
   },
 
@@ -285,15 +307,41 @@ const POORTEN = [
     naam: "Gouden testset zonder netwerk",
     bron: "§12.9",
     wanneer: "elke wijziging",
-    status: "wacht",
-    activeertBij: "stap 16 — PromptService en AIService",
-    waarom:
-      "Deze toets vergelijkt de samengestelde opdracht met de verwachte opdracht. Er is nog geen " +
-      "PromptService die een opdracht samenstelt, en de gouden gevallen zelf ontbreken (O-01).",
-    voorwaarde: () =>
-      bestaat("src/services/ai/PromptService.ts")
-        ? "PromptService bestaat: de gouden testset zonder netwerk moet nu draaien."
-        : null,
+    status: "actief",
+    uitgevoerdDoor: "pnpm test",
+    run: () => {
+      const pad = "src/services/ai/gouden.test.ts";
+      if (!bestaat(pad)) {
+        return mislukt(`De gouden testset zonder netwerk ontbreekt: ${pad}.`);
+      }
+
+      const set = lees(pad);
+      if (!set.includes("GOUDEN_GEVALLEN")) {
+        return mislukt(`${pad} bevat geen GOUDEN_GEVALLEN.`);
+      }
+
+      // §12.9 noemt vijf dingen die de samengestelde opdracht moet dragen. Een
+      // testset die er maar drie nakijkt, geeft een groen vinkje voor half werk.
+      const blokken = ["systeeminstructie", "schrijfstijl", "voorbeelden", "context", "invoer"];
+      const ontbreekt = blokken.filter((blok) => !set.includes(blok));
+      if (ontbreekt.length > 0) {
+        return mislukt(`De set toetst niet op: ${ontbreekt.join(", ")}.`);
+      }
+
+      // Elke taak die een opdracht kan opleveren, heeft een gouden geval. De
+      // toets zelf bewaakt dat ook; hier staat het zodat de poort niet groen
+      // wordt door een set die per ongeluk leeg raakt.
+      const taken = lees("src/services/ai/PromptService.ts").match(/^ {2}"([a-z]+\.[a-z]+)":/gmu);
+      const aantal = taken?.length ?? 0;
+      if (aantal === 0) {
+        return mislukt("PromptService kent geen enkele taak; dan toetst de set niets.");
+      }
+
+      return ok(
+        `Gouden testset zonder netwerk draait mee in pnpm test, over ${aantal} taak/taken. ` +
+          "De stand mét netwerk wacht op de stijlvoorbeelden uit O-01.",
+      );
+    },
   },
 
   {
@@ -303,13 +351,16 @@ const POORTEN = [
     bron: "§12.9",
     wanneer: "wekelijks en vóór elke release",
     status: "wacht",
-    activeertBij: "stap 16 — AIService met een provider",
+    activeertBij: "de stijlvoorbeelden uit O-01",
     waarom:
-      "Deze toets legt de uitvoer van de provider langs de drempels uit §12.9. Er is nog geen " +
-      "AIService, geen adapter en geen provider.",
+      "Deze toets legt de uitvoer van de provider langs de drempels uit §12.9, en vergelijkt hem " +
+      "met `acceptable` en `overshot`. AIService en de adapter bestaan sinds D04, maar die twee " +
+      "teksten bestaan niet: ze zijn de norm waaraan de AI gemeten wordt en komen uit O-01 " +
+      "(§19.5, bijlage A.4). Ze verzinnen zou de norm naar de code toe schrijven, en dan meet de " +
+      "testset zichzelf. De stand zónder netwerk draait wel, als poort 10.",
     voorwaarde: () =>
-      bestaat("src/services/ai/AIService.ts")
-        ? "AIService bestaat: de gouden testset met netwerk moet nu draaien."
+      bestaat("src/test/fixtures/stijlvoorbeelden.ts")
+        ? "De stijlvoorbeelden bestaan: de gouden testset met netwerk moet nu draaien."
         : null,
   },
 ];
