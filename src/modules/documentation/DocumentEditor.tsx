@@ -15,6 +15,7 @@ import { vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
 import { MAX_TEKST, WAARSCHUW_VANAF } from "@/services/documentation/DocumentationService";
 
+import { ExportPanel } from "./ExportPanel";
 import { useAutosave } from "./hooks/useAutosave";
 import { Koppelingen } from "./Koppelingen";
 import { PhotoStrip } from "./PhotoStrip";
@@ -53,8 +54,18 @@ interface Formulier {
 export function DocumentEditor({ documentId }: { documentId: string }) {
   const router = useRouter();
   const [fout, setFout] = useState<string | null>(null);
+  const [exporteren, setExporteren] = useState(false);
   /** De sleutel die het aanmaken opleverde; houdt een tweede opslag bij dezelfde. */
   const gemaakt = useRef<string | null>(null);
+  /**
+   * Dezelfde sleutel, maar als stand.
+   *
+   * De verwijzing hierboven overleeft het opnieuw tekenen en is daarom wat de
+   * autosave gebruikt; hij laat het scherm alleen niet opnieuw tekenen. De knop
+   * Exporteren moet wél aangaan zodra de documentatie bestaat, en daar is een
+   * stand voor nodig.
+   */
+  const [sleutel, setSleutel] = useState<string | null>(documentId === NIEUW ? null : documentId);
 
   const laad = useCallback(
     async ({ documentation, students, groups, series }: Diensten) => {
@@ -135,6 +146,7 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
     if (sleutel === NIEUW) {
       const nieuweSleutel = uitkomst.value.documentatie.id;
       gemaakt.current = nieuweSleutel;
+      setSleutel(nieuweSleutel);
       // Rechtstreeks via de geschiedenis: `router.replace` monteert dit scherm
       // opnieuw en dan verdwijnt de melding vóór je haar hebt gezien.
       window.history.replaceState(null, "", `/documentation/${nieuweSleutel}`);
@@ -207,10 +219,24 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
     <div className="mx-auto max-w-6xl p-4 md:p-6">
       <div className="flex items-center justify-between gap-4 pb-4">
         <SaveStatus state={state} />
-        <Button variant="ghost" onClick={() => router.push("/documentation")}>
-          Naar het overzicht
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Exporteren kan pas als er iets bewaard is; een documentatie zonder
+              sleutel valt niet te openen in het paneel (FR-DOC-01). */}
+          <Button variant="outline" disabled={!sleutel} onClick={() => setExporteren(true)}>
+            Exporteren
+          </Button>
+          <Button variant="ghost" onClick={() => router.push("/documentation")}>
+            Naar het overzicht
+          </Button>
+        </div>
       </div>
+
+      {/* Alleen in de boom zolang het paneel open staat. Daardoor begint elke keer
+          met een schone lei — geen melding van de vorige export die er nog staat —
+          en wordt er niet gerenderd voor een paneel dat niemand ziet. */}
+      {sleutel && exporteren ? (
+        <ExportPanel documentId={sleutel} open onOpenChange={setExporteren} />
+      ) : null}
 
       {fout ? <ErrorMessage message={fout} nextStep="Pas het aan; je tekst blijft staan." /> : null}
 

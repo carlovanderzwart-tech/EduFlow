@@ -11,9 +11,9 @@
  * `PRIVACY_GEVALLEN` te toetsen zonder iets op te starten.
  *
  * **De rondgang is de belangrijkste eigenschap**: `restore(pseudonymise(t)) === t`
- * voor elke tekst uit de toetsset. Dat is `INV-57` (§9.5.6). Werkopdracht D03 en
- * §12.5 noemden hem eerst `INV-30`, maar dat nummer draagt in §9.5.4 al een
- * agendaregel; B-118 heeft dat rechtgezet.
+ * voor elke tekst uit de toetsset. Dat is `INV-54` (B-121). Werkopdracht D03 en
+ * §12.5 noemden hem eerst `INV-30`, maar dat nummer draagt in §9.5 al de
+ * agendaregel over begin en einde; B-121 heeft dat rechtgezet.
  *
  * **Zoeken doet hij op de gevouwen vorm, vervangen op de oorspronkelijke.** Dat
  * is §12.5 stap 6 en het is de reden dat hij `foldDiacriticsPerChar` gebruikt en

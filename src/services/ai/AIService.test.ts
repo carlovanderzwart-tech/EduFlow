@@ -409,7 +409,7 @@ describe("de adapter — §12.7", () => {
   });
 });
 
-describe("de rondgang over de hele keten — INV-57", () => {
+describe("de rondgang over de hele keten — INV-54", () => {
   it("levert exact de oorspronkelijke namen terug bij een antwoord dat de codes bewaart", async () => {
     const zin = "Noa B. en Noa V. werkten aan hetzelfde bouwwerk.";
     const dienst = maakDienst(stroomVan(["x"]) as unknown as typeof globalThis.fetch);
