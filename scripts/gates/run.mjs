@@ -351,16 +351,19 @@ const POORTEN = [
     bron: "§12.9",
     wanneer: "wekelijks en vóór elke release",
     status: "wacht",
-    activeertBij: "de stijlvoorbeelden uit O-01",
+    activeertBij: "een bereikbare provider — `EDUFLOW_GOLDEN_ONLINE`",
     waarom:
-      "Deze toets legt de uitvoer van de provider langs de drempels uit §12.9, en vergelijkt hem " +
-      "met `acceptable` en `overshot`. AIService en de adapter bestaan sinds D04, maar die twee " +
-      "teksten bestaan niet: ze zijn de norm waaraan de AI gemeten wordt en komen uit O-01 " +
-      "(§19.5, bijlage A.4). Ze verzinnen zou de norm naar de code toe schrijven, en dan meet de " +
-      "testset zichzelf. De stand zónder netwerk draait wel, als poort 10.",
+      "Deze toets legt de uitvoer van de **provider** langs de drempels uit §12.9. De " +
+      "stijlvoorbeelden uit O-01 zijn er inmiddels wel — die voorwaarde is dus vervuld — maar ze " +
+      "waren nooit het enige dat ontbrak. Wat ontbreekt is de provider zelf: `eu.api.openai.com` " +
+      "weigert zolang het project geen geografische beperking aan heeft staan, en uitwijken naar " +
+      "het wereldwijde eindpunt is uitgesloten door T-06. Sinds B-119 staat bovendien alle " +
+      "AI in blok 2. §12.9 laat deze poort wekelijks en vóór een release draaien en niet bij elke " +
+      "wijziging; hij gaat aan zodra `EDUFLOW_GOLDEN_ONLINE` gezet wordt, en dat kan alleen met " +
+      "een provider die antwoordt. De stand zónder netwerk draait wel, als poort 10.",
     voorwaarde: () =>
-      bestaat("src/test/fixtures/stijlvoorbeelden.ts")
-        ? "De stijlvoorbeelden bestaan: de gouden testset met netwerk moet nu draaien."
+      process.env.EDUFLOW_GOLDEN_ONLINE
+        ? "EDUFLOW_GOLDEN_ONLINE staat aan: de gouden testset met netwerk moet nu draaien."
         : null,
   },
 ];
