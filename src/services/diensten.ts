@@ -12,6 +12,7 @@
  */
 
 import { hertekenViaCanvas } from "@/lib/beeld";
+import { browserDoek, printstijl } from "@/lib/doek";
 
 import { createAgendaService, type AgendaService } from "./agenda/AgendaService";
 import { createAIService, type AIService } from "./ai/AIService";
@@ -20,7 +21,9 @@ import {
   createDocumentationService,
   type DocumentationService,
 } from "./documentation/DocumentationService";
+import { createLayoutService, type LayoutService } from "./documentation/LayoutService";
 import { createGroupService, type GroupService } from "./groups/GroupService";
+import { createRenderService, type RenderService } from "./render/RenderService";
 import { createPhotoService, type PhotoService } from "./photo/PhotoService";
 import { createSearchService, type SearchService } from "./search/SearchService";
 import { createSampleDataService, type SampleDataService } from "./sampledata/SampleDataService";
@@ -52,6 +55,10 @@ export interface Diensten {
   groups: GroupService;
   series: SeriesService;
   documentation: DocumentationService;
+  /** Waar op de pagina iets terechtkomt; tekent zelf niets (§5.10). */
+  layout: LayoutService;
+  /** De enige weg van paginaplan naar beeld — voorbeeld én export (FR-DOC-113). */
+  render: RenderService;
   photos: PhotoService;
   /** De index in het geheugen; IndexedDB kan geen tekst doorzoeken (T-09). */
   search: SearchService;
@@ -70,12 +77,18 @@ async function bouw(): Promise<Diensten> {
   const groups = createGroupService({ storage });
   const series = createSeriesService({ storage });
 
+  // De layout meet met de letter waarmee straks getekend wordt; meten met een
+  // andere letter dan tekenen is de stille manier waarop FR-DOC-113 scheurt.
+  const render = createRenderService({ doek: browserDoek, stijl: printstijl() });
+
   return {
     storage,
     settings,
     students,
     groups,
     series,
+    layout: createLayoutService({ meet: render.meet }),
+    render,
     documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
     // De hertekenaar komt uit `lib/`, want hij heeft een canvas nodig en DR-12 wil
     // `PhotoService` toetsbaar houden zonder browser.

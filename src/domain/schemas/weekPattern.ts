@@ -7,7 +7,8 @@
  * De regel dat de geldigheidsperiodes binnen één schooljaar niet overlappen staat
  * hier **niet**. Die vraagt om andere records en hoort in `AgendaService`. Beide
  * volgen uit B-115, dat de basisweek een invoerscherm maakt en geen tweede
- * gegevensmodel; er is geen invariantnummer voor, en dat is geen omissie (B-121).
+ * gegevensmodel. Er is geen invariantnummer voor, en dat is geen omissie: de
+ * basisweek bestaat door B-115 en niet door een invariant.
  *
  * En de regel dat een aangepaste dag naar een bestaand weekonderdeel verwijst,
  * staat er ook niet: die kán niet altijd waar zijn. Wijzigt de basisweek vanaf een

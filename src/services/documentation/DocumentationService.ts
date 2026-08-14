@@ -313,6 +313,38 @@ export function createDocumentationService(deps: DocumentationDeps) {
     return { ok: true, value: { documentatie: documentatie.value, paginas } };
   }
 
+  /**
+   * Legt de toestemming beeldgebruik vast (FR-DOC-115, B-08).
+   *
+   * Eén keer per documentatie, niet één keer ooit: de vraag hoort bij deze foto's
+   * van deze kinderen. Een tweede keer vragen bij dezelfde documentatie is ruis;
+   * niet meer vragen bij de volgende is een belofte die niemand heeft gedaan.
+   */
+  async function geefBeeldtoestemming(id: Uuid): Promise<Result<Documentation>> {
+    return storage.update("documentations", id, {
+      imageConsentAt: toIsoDateTime(deps.clock.now()),
+    });
+  }
+
+  /**
+   * Zet de status op *gedeeld* na een geslaagde export (FR-DOC-118, B-05, B-13).
+   *
+   * `firstExportedAt` draagt de status (INV-15) en wordt daarom maar één keer gezet:
+   * de datum van de **eerste** export blijft staan, ook als je hem later nog eens
+   * verstuurt. Bij een mislukte export wordt deze functie niet aangeroepen, en dan
+   * verandert er niets — dat is `FR-DOC-119`.
+   */
+  async function markeerGedeeld(id: Uuid): Promise<Result<Documentation>> {
+    const huidig = await storage.read("documentations", id);
+    if (!huidig.ok) return huidig;
+    if (!huidig.value) return ongeldig("Deze documentatie bestaat niet meer.");
+
+    return storage.update("documentations", id, {
+      status: "gedeeld",
+      firstExportedAt: huidig.value.firstExportedAt ?? toIsoDateTime(deps.clock.now()),
+    });
+  }
+
   /** Nieuwste eerst, want dat is waar je verder werkt (§6.1.2). */
   async function lijst(): Promise<Result<Documentation[]>> {
     const uitkomst = await storage.list("documentations");
@@ -348,7 +380,7 @@ export function createDocumentationService(deps: DocumentationDeps) {
       .map((blok) => blok.photoId);
   }
 
-  return { maak, bewaar, open, lijst, tekstVan, fotosVan };
+  return { maak, bewaar, open, lijst, tekstVan, fotosVan, geefBeeldtoestemming, markeerGedeeld };
 }
 
 export type DocumentationService = ReturnType<typeof createDocumentationService>;

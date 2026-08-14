@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-119** · **T-45** · **INV-53** · **FR-AGE-31**
+> ## Laatst uitgegeven nummers: **B-122** · **T-46** · **INV-54** · **FR-AGE-31**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,109 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 14 augustus 2026 — vier nummers die de code al gebruikte, en één uit D08
+
+> Dit blok sluit B-117 af. De grep uit dat besluit gaf vier treffers in de code die naar een
+> nummer wezen dat in dit register niet staat: `T-46`, `B-120`, `B-121` en `INV-57`. B-117
+> schrijft voor wat er dan gebeurt — **óf een echt nummer uit dit register, óf de verwijzing
+> gaat eruit** — en dat is hier gedaan. Drie kregen een nummer, één verwijzing ging eruit.
+
+## T-46 — De importregel voor `app/providers/`
+
+**Probleem.** `eslint.config.mjs` verbiedt `modules/` om uit `app/` te importeren (DR-11,
+§10.2). Maar `useDienst` — de enige weg van scherm naar service — woont in
+`app/providers/`, en elk scherm heeft hem nodig. Zonder uitzondering faalt de bouwstraat op
+werkende code.
+
+**Besluit.** Een module mag uit `app/` **alleen** `app/providers/` importeren. De schil en
+de routes blijven van `app/` zelf.
+
+**Waarom.** `providers/` draagt geen scherm en geen route; het is de aansluiting waar §10.10
+om vraagt. De rest van `app/` is Next.js-bedrading en gaat een module niets aan. De regel
+staat als zone in `eslint.config.mjs` en faalt de bouwstraat bij overtreding, zodat dit geen
+afspraak op papier blijft.
+
+**Gevolg.** Geen. De regel stond al in de configuratie en werd alleen niet gedragen door een
+nummer uit dit register.
+
+## B-120 — De toegangscode-cookie leeft negentig dagen, niet een jaar
+
+**Probleem.** Twee hoofdstukken geven de cookie `eduflow_access` een andere looptijd.
+FR-INS-37 (§6.5.11) zegt "een looptijd van **een jaar**"; §8.2.3 zegt in de tabelrij
+`Max-Age` "**90 dagen** — lang genoeg om niet te irriteren, kort genoeg om een vergeten
+apparaat te laten verlopen". `/api/toegang` zet die cookie en kan er maar één kiezen.
+
+**Besluit.** **Negentig dagen.** FR-INS-37 wordt hierop gewijzigd; §8.2.3 blijft zoals hij is.
+
+**Waarom.** §8.2.3 is de plek waar de cookie technisch is vastgelegd — naam, `httpOnly`,
+`Secure`, `SameSite`, `Path` — en is de enige van de twee die een **reden** bij de looptijd
+geeft. FR-INS-37 noemt het jaar terloops, in een zin die over gemak gaat.
+
+De weging zelf: deze cookie is de enige sleutel tot documentaties over kinderen. Er zijn
+geen accounts (B-21), dus er is geen manier om op afstand toegang in te trekken — FR-INS-38
+laat je een apparaat intrekken, maar dat werkt alleen zolang je eraan denkt. Een laptop die
+kwijtraakt en een jaar lang binnenkomt weegt niet op tegen één keer per kwartaal een code
+overtikken.
+
+**Gevolg.** `COOKIE_MAX_AGE_S` staat op 7.776.000 seconden, als benoemde constante (DR-54).
+
+**Herziening.** Zodra toegang op afstand ingetrokken kan worden zonder dat het van het
+geheugen van de gebruiker afhangt.
+
+## B-121 — De rondgang krijgt `INV-54`; `INV-30` blijft van de agenda
+
+**Probleem.** `INV-30` draagt twee dingen. In §9.5 (`09-domeinmodel.md`) is het "een
+agenda-item heeft een begin en een einde"; in §12.5, §16.4 en NFR-25 is het
+`restore(pseudonymise(t)) === t`. Dat is een botsing in het handboek zelf, geen leesfout.
+
+Eerdere sessies gaven de rondgang `INV-57`. Dat nummer staat in de code, in poort 9 en in
+gemergede commits, maar het is nooit in dít register uitgegeven — B-117 telt de `INV-`reeks
+tot `INV-53` en verklaart alles daarboven tot spooknummer.
+
+**Besluit.** De rondgang krijgt **`INV-54`**, het eerste vrije nummer. `INV-30` blijft van
+de agendaregel in §9.5; die staat in het domeinmodel en is daar getoetst.
+
+**Waarom niet `INV-57` alsnog uitgeven.** Dan zou dit register een nummer bekrachtigen dat
+buiten het register is ontstaan, en drie nummers overslaan om een gok te sparen. Dat is de
+onderbouwing naar de code toe schrijven — precies wat B-117 verbiedt. Eén keer omnummeren,
+met de reden erbij, is goedkoper dan een reeks met een gat waar niemand de reden van kent.
+
+**Gevolg.** `INV-57` komt in `src/` niet meer voor. Poort 9 en de toetsen in
+`PrivacyService.test.ts` en `AIService.test.ts` dragen nu `INV-54`. Geen enkele regel of
+drempel is gewijzigd — alleen het nummer.
+
+**En de vierde treffer.** `weekPattern.ts` beriep zich op `B-121` voor "de basisweek heeft
+geen invariantnummer, en dat is geen omissie". Die zin staat al in **B-115**: de basisweek
+bestaat door een besluit en niet door een invariant. Daar wijst het commentaar nu naar, en
+er is geen nieuw nummer voor nodig.
+
+## B-122 — De tekst blijft in de doorloop op pagina 1 van layout A
+
+**Probleem.** §5.10.2 laat bij zes foto's de lopende tekst verhuizen naar een vervolgpagina
+in `E-vervolg`. Werkopdracht D08 zegt even uitdrukkelijk: `LayoutService` met **alleen**
+`A-fotoraster`, en de andere vier layouts bouw je niet. Bij zes foto's plus tekst spreken
+die twee elkaar tegen.
+
+**Besluit.** In de doorloop **blijft de tekst op pagina 1**, in slot A6. Foto's die niet in
+A1 t/m A5 passen schuiven door naar een volgende pagina in dezelfde layout — dat is §5.10.7
+regel 2 en het vraagt geen nieuwe layout. Past de tekst niet in A6, dan meldt het
+exportpaneel hoeveel er overblijft; er wordt niets stil afgekapt.
+
+**Waarom.** De twee alternatieven zijn slechter. `E-vervolg` half bouwen levert een layout
+op die niemand heeft getoetst en die D08 niet vraagt. De tekst laten vallen is de ene fout
+die dit product zich niet kan permitteren: dan verstuur je een documentatie waarvan je denkt
+dat je hem geschreven hebt. Doorschuiven van foto's is zichtbaar, telbaar en staat vooraf in
+het paneel (`FR-DOC-112`, B-07).
+
+**Gevolg.** Zes foto's plus tekst leveren twee pagina's en dus twee JPEG's, en het paneel
+zegt dat vóórdat je exporteert. De DoD van D08 noemt één JPEG; dat punt is met §5.10.2 niet
+te verenigen en het handboek wint (DR-01).
+
+**Herziening.** Vervalt zodra `E-vervolg` er is (sprint 2, `FR-DOC-61` t/m `-70`). Dan geldt
+§5.10.7 regel 4 weer onverkort.
 
 ---
 
