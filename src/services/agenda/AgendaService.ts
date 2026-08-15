@@ -27,7 +27,13 @@ import {
 import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
 import { vandaag } from "@/lib/weergave";
-import type { CalendarEvent, CalendarEventKind, Region, SchoolYear } from "@/domain/types";
+import type {
+  CalendarEvent,
+  CalendarEventKind,
+  Recurrence,
+  Region,
+  SchoolYear,
+} from "@/domain/types";
 
 import type { StorageService } from "../storage/StorageService";
 
@@ -41,6 +47,8 @@ interface Gemeenschappelijk {
   note?: string;
   location?: string;
   studentIds?: Uuid[];
+  /** De herhaling, of niets voor een item dat één keer valt (§6.2.5, B-123). */
+  recurrence?: Recurrence | null;
 }
 
 /**
@@ -150,6 +158,7 @@ export function createAgendaService(deps: AgendaDeps) {
       // Zelf gemaakt, dus `own`. Een teruggezet vakantiebestand overschrijft het
       // niet, want dat raakt alleen `holidayFile` (§8.7).
       source: "own" as const,
+      recurrence: invoer.recurrence ?? null,
     };
 
     // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
@@ -197,6 +206,7 @@ export function createAgendaService(deps: AgendaDeps) {
       note: invoer.note ?? "",
       location: invoer.location ?? "",
       studentIds: invoer.studentIds ?? [],
+      recurrence: invoer.recurrence ?? null,
     };
 
     return invoer.allDay

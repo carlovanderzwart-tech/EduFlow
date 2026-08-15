@@ -25,11 +25,57 @@ describe("zCalendarEvent — §6.2.2, INV-31", () => {
     expect(zCalendarEvent.safeParse({ ...agendaItem(), kind: "les" }).success).toBe(false);
   });
 
-  it("weigert een herhaalregel (B-101)", () => {
-    // `recurrence` is vervallen. Wat zich herhaalt is de basisweek, niet een item.
-    const metHerhaling = { ...agendaItem(), recurrence: "wekelijks" };
+  it("laat een herhaling met een einddatum door (§6.2.5, B-123)", () => {
+    const metHerhaling = {
+      ...agendaItem(),
+      recurrence: {
+        frequency: "wekelijks",
+        until: "2026-12-18",
+        count: null,
+        excludedDates: [],
+      },
+    };
 
-    expect(zCalendarEvent.safeParse(metHerhaling).success).toBe(false);
+    expect(zCalendarEvent.safeParse(metHerhaling).success).toBe(true);
+  });
+
+  it("laat een herhaling met een aantal keren door (§6.2.5)", () => {
+    const metAantal = {
+      ...agendaItem(),
+      recurrence: { frequency: "maandelijks", until: null, count: 6, excludedDates: [] },
+    };
+
+    expect(zCalendarEvent.safeParse(metAantal).success).toBe(true);
+  });
+
+  it("weigert een herhaling met twee einden en een zonder (B-123)", () => {
+    // Twee einden geeft geen antwoord op de vraag welke wint; geen einde levert een
+    // reeks op die nooit klaar is met uitrekenen.
+    const beide = {
+      ...agendaItem(),
+      recurrence: {
+        frequency: "wekelijks",
+        until: "2026-12-18",
+        count: 6,
+        excludedDates: [],
+      },
+    };
+    const geen = {
+      ...agendaItem(),
+      recurrence: { frequency: "wekelijks", until: null, count: null, excludedDates: [] },
+    };
+
+    expect(zCalendarEvent.safeParse(beide).success).toBe(false);
+    expect(zCalendarEvent.safeParse(geen).success).toBe(false);
+  });
+
+  it("kent alleen de drie frequenties van §6.2.5", () => {
+    const dagelijks = {
+      ...agendaItem(),
+      recurrence: { frequency: "dagelijks", until: "2026-12-18", count: null, excludedDates: [] },
+    };
+
+    expect(zCalendarEvent.safeParse(dagelijks).success).toBe(false);
   });
 
   it("weigert een titel zonder tekens en boven honderdtwintig", () => {

@@ -13,6 +13,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { weekdag } from "@/lib/dates";
 import { newId } from "@/lib/uuid";
 
 import {
@@ -28,7 +29,17 @@ import {
   type HolidayService,
   type Vakantiebestand,
 } from "./agenda/HolidayService";
+import { icsBestandsnaam, naarIcs } from "./agenda/IcsService";
+import {
+  afgekaptVoor,
+  instanties,
+  isVerschijning,
+  metGat,
+  reeksVan,
+  verschijningen,
+} from "./agenda/RecurrenceService";
 import { jaardagen, jaarmaanden, jaartellingen, JAAR_MAANDEN } from "./agenda/schooljaar";
+import { ontleed } from "./agenda/snelveld";
 import { maakDatabase } from "./storage/db";
 import { createStorageService, type StorageService } from "./storage/StorageService";
 
@@ -455,5 +466,406 @@ describe("twee keer synchroniseren vult niet twee keer", () => {
     });
 
     expect(waarde(await holidays.vakanties("2026-2027", "midden"))).toHaveLength(5);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D09b — herhalen (§6.2.5, B-123)                                    */
+/* ------------------------------------------------------------------ */
+
+describe("de drie regels van §6.2.5 — B-123", () => {
+  const wekelijks = { frequency: "wekelijks" as const, until: null, count: 4, excludedDates: [] };
+
+  it("telt wekelijks zeven dagen op", () => {
+    expect(instanties("2026-09-01", wekelijks).map((i) => i.dag)).toEqual([
+      "2026-09-01",
+      "2026-09-08",
+      "2026-09-15",
+      "2026-09-22",
+    ]);
+  });
+
+  it("telt tweewekelijks veertien dagen op", () => {
+    const regel = { ...wekelijks, frequency: "tweewekelijks" as const, count: 3 };
+
+    expect(instanties("2026-09-01", regel).map((i) => i.dag)).toEqual([
+      "2026-09-01",
+      "2026-09-15",
+      "2026-09-29",
+    ]);
+  });
+
+  it("houdt maandelijks dezelfde weekdag aan en niet dezelfde datum", () => {
+    // 1 september 2026 is de eerste dinsdag; de reeks blijft op de eerste dinsdag.
+    const regel = { ...wekelijks, frequency: "maandelijks" as const, count: 4 };
+    const dagen = instanties("2026-09-01", regel).map((i) => i.dag);
+
+    expect(dagen).toEqual(["2026-09-01", "2026-10-06", "2026-11-03", "2026-12-01"]);
+    for (const dag of dagen) expect(weekdag(dag)).toBe(2);
+  });
+
+  it("valt terug op de laatste als de hoeveelste weekdag niet bestaat", () => {
+    // 29 september 2026 is de vijfde dinsdag; oktober heeft er ook vijf, november niet.
+    const regel = { ...wekelijks, frequency: "maandelijks" as const, count: 3 };
+    const dagen = instanties("2026-09-29", regel).map((i) => i.dag);
+
+    expect(dagen).toHaveLength(3);
+    for (const dag of dagen) expect(weekdag(dag)).toBe(2);
+    // November 2026 heeft vier dinsdagen; de laatste is de 24e.
+    expect(dagen[2]).toBe("2026-11-24");
+  });
+
+  it("stopt op de einddatum", () => {
+    const regel = { frequency: "wekelijks" as const, until: "2026-09-16", count: null, excludedDates: [] };
+
+    expect(instanties("2026-09-01", regel).map((i) => i.dag)).toEqual([
+      "2026-09-01",
+      "2026-09-08",
+      "2026-09-15",
+    ]);
+  });
+
+  it("slaat een gat over maar telt het wel mee (§6.2.5)", () => {
+    const regel = { ...wekelijks, excludedDates: ["2026-09-08"] };
+    const dagen = instanties("2026-09-01", regel).map((i) => i.dag);
+
+    // Vier keer, waarvan één een gat: er blijven er drie over en de reeks
+    // schuift niet op.
+    expect(dagen).toEqual(["2026-09-01", "2026-09-15", "2026-09-22"]);
+  });
+});
+
+describe("verschijningen binnen een periode", () => {
+  async function wekelijkseAfspraak() {
+    return waarde(
+      await agenda.maak({
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-01T08:00:00.000Z",
+        end: "2026-09-01T09:00:00.000Z",
+        recurrence: { frequency: "wekelijks", until: null, count: 6, excludedDates: [] },
+      }),
+    );
+  }
+
+  it("levert alleen wat de periode raakt", async () => {
+    const item = await wekelijkseAfspraak();
+
+    expect(verschijningen(item, "2026-09-07", "2026-09-13")).toHaveLength(1);
+    expect(verschijningen(item, "2026-09-01", "2026-09-30")).toHaveLength(5);
+  });
+
+  it("houdt de eerste zijn eigen sleutel", async () => {
+    const item = await wekelijkseAfspraak();
+    const alle = verschijningen(item, "2026-09-01", "2026-10-31");
+
+    expect(alle[0]!.id).toBe(item.id);
+    expect(isVerschijning(alle[0]!.id)).toBe(false);
+    expect(isVerschijning(alle[1]!.id)).toBe(true);
+    expect(reeksVan(alle[1]!.id)).toBe(item.id);
+  });
+
+  it("schuift de tijden mee", async () => {
+    const item = await wekelijkseAfspraak();
+    const tweede = verschijningen(item, "2026-09-01", "2026-10-31")[1]!;
+
+    expect(tweede.start).toBe("2026-09-08T08:00:00.000Z");
+    expect(tweede.end).toBe("2026-09-08T09:00:00.000Z");
+    expect(tweede.recurrence).toBeNull();
+  });
+
+  it("laat een item zonder herhaling met rust", async () => {
+    const item = waarde(
+      await agenda.maak({
+        title: "Eenmalig",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-01T08:00:00.000Z",
+        end: "2026-09-01T09:00:00.000Z",
+      }),
+    );
+
+    expect(verschijningen(item, "2026-01-01", "2027-01-01")).toEqual([item]);
+  });
+});
+
+describe("alleen deze, of alle volgende — FR-AGE-15", () => {
+  const regel = { frequency: "wekelijks" as const, until: null, count: 6, excludedDates: [] };
+
+  it("maakt met een gat één dag los en laat de rest staan", () => {
+    const na = metGat(regel, "2026-09-15");
+
+    expect(na.excludedDates).toEqual(["2026-09-15"]);
+    expect(instanties("2026-09-01", na).map((i) => i.dag)).not.toContain("2026-09-15");
+    expect(instanties("2026-09-01", na)).toHaveLength(5);
+  });
+
+  it("zet hetzelfde gat niet twee keer neer", () => {
+    expect(metGat(metGat(regel, "2026-09-15"), "2026-09-15").excludedDates).toHaveLength(1);
+  });
+
+  it("kapt bij alle volgende af op de dag ervóór", () => {
+    const na = afgekaptVoor(regel, "2026-09-15");
+
+    expect(na.until).toBe("2026-09-14");
+    expect(na.count).toBeNull();
+    expect(instanties("2026-09-01", na).map((i) => i.dag)).toEqual(["2026-09-01", "2026-09-08"]);
+  });
+
+  it("laat het verleden met rust bij het afkappen", () => {
+    const metOudGat = { ...regel, excludedDates: ["2026-09-08", "2026-09-22"] };
+    const na = afgekaptVoor(metOudGat, "2026-09-15");
+
+    expect(na.excludedDates).toEqual(["2026-09-08"]);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D09b — het snelveld (§6.2.5, FR-AGE-13, FR-AGE-14)                 */
+/* ------------------------------------------------------------------ */
+
+describe("het snelveld ontleedt lokaal — FR-AGE-13", () => {
+  // 1 september 2026 is een dinsdag.
+  const VANDAAG = "2026-09-01";
+  const NOA_B = newId();
+  const NOA_V = newId();
+  const LIJST = {
+    leerlingen: [
+      { id: NOA_B, naam: "Noa B." },
+      { id: NOA_V, naam: "Noa V." },
+      { id: newId(), naam: "Kjeld" },
+    ],
+  };
+
+  it("leest het voorbeeld uit §6.2.5", () => {
+    const uit = ontleed("dinsdag 14u oudergesprek Noa V.", VANDAAG, LIJST);
+
+    expect(uit.kind).toBe("oudergesprek");
+    expect(uit.dag).toBe("2026-09-01");
+    expect(uit.van).toBe("14:00");
+    expect(uit.studentIds).toEqual([NOA_V]);
+    expect(uit.duurMinuten).toBe(30);
+  });
+
+  it("pakt de langste naam en niet de kortste", () => {
+    // "Noa B." mag niet als "Noa" eindigen met een losse B in de titel.
+    const uit = ontleed("gesprek Noa B.", VANDAAG, LIJST);
+
+    expect(uit.studentIds).toEqual([NOA_B]);
+    expect(uit.titel).not.toMatch(/B\./u);
+  });
+
+  it("kent vandaag, morgen en overmorgen", () => {
+    expect(ontleed("morgen overleg", VANDAAG, LIJST).dag).toBe("2026-09-02");
+    expect(ontleed("overmorgen overleg", VANDAAG, LIJST).dag).toBe("2026-09-03");
+    expect(ontleed("vandaag overleg", VANDAAG, LIJST).dag).toBe("2026-09-01");
+  });
+
+  it("kiest bij een weekdag de eerstvolgende, vandaag meegeteld", () => {
+    expect(ontleed("dinsdag overleg", VANDAAG, LIJST).dag).toBe("2026-09-01");
+    expect(ontleed("woensdag overleg", VANDAAG, LIJST).dag).toBe("2026-09-02");
+    expect(ontleed("maandag overleg", VANDAAG, LIJST).dag).toBe("2026-09-07");
+  });
+
+  it("leest een datum als d-m en als d-m-jjjj", () => {
+    expect(ontleed("13-10 overleg", VANDAAG, LIJST).dag).toBe("2026-10-13");
+    expect(ontleed("13-10-2027 overleg", VANDAAG, LIJST).dag).toBe("2027-10-13");
+  });
+
+  it("kent de vier tijdvormen uit §6.2.5", () => {
+    expect(ontleed("14u overleg", VANDAAG, LIJST).van).toBe("14:00");
+    expect(ontleed("14:30 overleg", VANDAAG, LIJST).van).toBe("14:30");
+    // "half 3" is half drie, dus 14:30 en niet 15:30.
+    expect(ontleed("half 3 overleg", VANDAAG, LIJST).van).toBe("02:30");
+    expect(ontleed("kwart voor 4 overleg", VANDAAG, LIJST).van).toBe("03:45");
+    expect(ontleed("kwart over 4 overleg", VANDAAG, LIJST).van).toBe("04:15");
+  });
+
+  it("kent de duurwoorden", () => {
+    expect(ontleed("14u overleg 45 min", VANDAAG, LIJST).duurMinuten).toBe(45);
+    expect(ontleed("14u overleg 2 uur", VANDAAG, LIJST).duurMinuten).toBe(120);
+    expect(ontleed("14u overleg anderhalf uur", VANDAAG, LIJST).duurMinuten).toBe(90);
+  });
+
+  it("kent de soortwoorden en hun synoniemen", () => {
+    expect(ontleed("teamdag", VANDAAG, LIJST).kind).toBe("studiedag");
+    expect(ontleed("ouderavond", VANDAAG, LIJST).kind).toBe("oudergesprek");
+    expect(ontleed("vergadering", VANDAAG, LIJST).kind).toBe("afspraak");
+    expect(ontleed("documenteren met groep 4", VANDAAG, LIJST).kind).toBe("documentatiemoment");
+  });
+
+  it("maakt van wat overblijft de titel", () => {
+    const uit = ontleed("morgen 9u zwemles met de hele groep", VANDAAG, LIJST);
+
+    expect(uit.titel).toBe("zwemles met de hele groep");
+  });
+
+  it("geeft een titel als er verder niets staat", () => {
+    expect(ontleed("teamdag", VANDAAG, LIJST).titel).toBe("Studiedag");
+  });
+
+  it("maakt van een studiedag een hele dag (§6.2.2)", () => {
+    expect(ontleed("teamdag vrijdag", VANDAAG, LIJST).van).toBeNull();
+    // Met een tijd erbij is het geen hele dag meer.
+    expect(ontleed("teamdag vrijdag 9u", VANDAAG, LIJST).van).toBe("09:00");
+  });
+
+  it("meldt wat het herkend heeft, zodat het scherm het kan markeren (FR-AGE-14)", () => {
+    const uit = ontleed("dinsdag 14u oudergesprek Noa V.", VANDAAG, LIJST);
+    const soorten = uit.herkend.map((h) => h.soort);
+
+    expect(soorten).toContain("datum");
+    expect(soorten).toContain("tijd");
+    expect(soorten).toContain("soort");
+    expect(soorten).toContain("leerling");
+  });
+
+  it("valt terug op een afspraak vandaag als er niets herkenbaars staat", () => {
+    const uit = ontleed("iets doen", VANDAAG, LIJST);
+
+    expect(uit.kind).toBe("afspraak");
+    expect(uit.dag).toBe(VANDAAG);
+    expect(uit.titel).toBe("iets doen");
+    expect(uit.herkend).toEqual([]);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D09b — ICS-export (§6.2.7, FR-AGE-20)                              */
+/* ------------------------------------------------------------------ */
+
+describe("de ICS-export — FR-AGE-20", () => {
+  const GEMAAKT = "2026-09-01T10:00:00.000Z";
+
+  const vakantie = {
+    schoolYearName: "2026-2027",
+    region: "midden" as const,
+    holidayKey: "herfst",
+    name: "Herfstvakantie",
+    from: "2026-10-17",
+    to: "2026-10-25",
+    fixed: false,
+    aangepast: false,
+    landelijk: null,
+  };
+
+  async function eenItem() {
+    return waarde(
+      await agenda.maak({
+        title: "Oudergesprek",
+        kind: "oudergesprek",
+        allDay: false,
+        start: "2026-10-13T12:00:00.000Z",
+        end: "2026-10-13T12:30:00.000Z",
+        studentIds: [newId()],
+      }),
+    );
+  }
+
+  it("levert een geldig omhulsel", async () => {
+    const ics = naarIcs({
+      items: [await eenItem()],
+      vakanties: [],
+      van: "2026-09-01",
+      tot: "2027-07-16",
+      gemaaktOp: GEMAAKT,
+    });
+
+    expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
+    expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
+    expect(ics).toContain("VERSION:2.0");
+  });
+
+  it("geeft elk item een UID die uit zijn sleutel komt", async () => {
+    const item = await eenItem();
+    const ics = naarIcs({ items: [item], vakanties: [], van: "2026-09-01", tot: "2027-07-16", gemaaktOp: GEMAAKT });
+
+    expect(ics).toContain(`UID:${item.id}@eduflow.local`);
+  });
+
+  it("levert bij twee exports dezelfde UID, zodat een tweede import geen dubbelen maakt", async () => {
+    const item = await eenItem();
+    const opzet = { items: [item], vakanties: [], van: "2026-09-01", tot: "2027-07-16" };
+
+    const eerste = naarIcs({ ...opzet, gemaaktOp: GEMAAKT });
+    const tweede = naarIcs({ ...opzet, gemaaktOp: "2026-12-01T10:00:00.000Z" });
+
+    const uid = (tekst: string) => /UID:(.+)/u.exec(tekst)![1];
+    expect(uid(tweede)).toBe(uid(eerste));
+  });
+
+  it("schrijft een hele-dag-gebeurtenis met een einde de dag erna", async () => {
+    const ics = naarIcs({
+      items: [],
+      vakanties: [vakantie],
+      van: "2026-09-01",
+      tot: "2027-07-16",
+      gemaaktOp: GEMAAKT,
+    });
+
+    expect(ics).toContain("DTSTART;VALUE=DATE:20261017");
+    // ICS sluit een hele-dag-reeks exclusief af: 26 oktober, niet 25.
+    expect(ics).toContain("DTEND;VALUE=DATE:20261026");
+  });
+
+  it("schrijft een herhaling uit in plaats van als RRULE", async () => {
+    const reeks = waarde(
+      await agenda.maak({
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-01T08:00:00.000Z",
+        end: "2026-09-01T09:00:00.000Z",
+        recurrence: { frequency: "wekelijks", until: null, count: 4, excludedDates: [] },
+      }),
+    );
+    const ics = naarIcs({ items: [reeks], vakanties: [], van: "2026-09-01", tot: "2026-10-31", gemaaktOp: GEMAAKT });
+
+    expect(ics).not.toContain("RRULE");
+    expect(ics.match(/BEGIN:VEVENT/gu)).toHaveLength(4);
+  });
+
+  it("ontsnapt een komma in de titel", async () => {
+    const item = waarde(
+      await agenda.maak({
+        title: "Gesprek, met beide ouders",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-10-13T12:00:00.000Z",
+        end: "2026-10-13T12:30:00.000Z",
+      }),
+    );
+    const ics = naarIcs({ items: [item], vakanties: [], van: "2026-09-01", tot: "2027-07-16", gemaaktOp: GEMAAKT });
+
+    // Twee backslashes in de bron, één in de uitvoer: dat is wat RFC 5545 wil.
+    expect(ics).toContain("SUMMARY:Gesprek\\, met beide ouders");
+  });
+
+  it("laat de afgeleide verjaardagen eruit (§6.2.7)", async () => {
+    const verjaardag = { ...(await eenItem()), kind: "verjaardag" as const, title: "Kjeld is jarig" };
+    const ics = naarIcs({ items: [verjaardag], vakanties: [], van: "2026-09-01", tot: "2027-07-16", gemaaktOp: GEMAAKT });
+
+    expect(ics).not.toContain("jarig");
+    expect(ics).not.toContain("BEGIN:VEVENT");
+  });
+
+  it("houdt elke regel binnen vijfenzeventig tekens", async () => {
+    const item = waarde(
+      await agenda.maak({
+        title: "Een heel lange titel die ruim over de vijfenzeventig tekens heen gaat en dus gevouwen moet worden",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-10-13T12:00:00.000Z",
+        end: "2026-10-13T12:30:00.000Z",
+      }),
+    );
+    const ics = naarIcs({ items: [item], vakanties: [], van: "2026-09-01", tot: "2027-07-16", gemaaktOp: GEMAAKT });
+
+    for (const regel of ics.split("\r\n")) expect(regel.length).toBeLessThanOrEqual(75);
+  });
+
+  it("draagt een bestandsnaam die in een downloadmap terug te vinden is", () => {
+    expect(icsBestandsnaam("2026-2027")).toBe("EduFlow 2026-2027.ics");
   });
 });
