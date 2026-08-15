@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-123** · **T-46** · **INV-54** · **FR-AGE-31**
+> ## Laatst uitgegeven nummers: **B-124** · **T-46** · **INV-54** · **FR-AGE-31**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -13,6 +13,40 @@ door op hoofdstuk 19.
 ---
 
 # 16 augustus 2026 — tijdens D09b
+
+## B-124 — Een zevende sleutel in `localStorage`: `eduflow.lastIcsExportAt`
+
+**Probleem.** `FR-AGE-27` wil dat het agendascherm toont *"hoeveel items er zijn gewijzigd
+sinds de laatste export"* en een nieuwe export aanbiedt. Daarvoor moet ergens staan wannéér
+er voor het laatst is geëxporteerd, en die plek bestaat niet.
+
+§8.2.2 is er stellig over: zes sleutels, *"en er komt er geen zevende bij zonder dat dit
+hoofdstuk wordt gewijzigd"*. `eduflow.onboardingFlags` heeft de goede vórm — een tijdstip
+per vlag — maar is in diezelfde tabel toegewezen aan drie met name genoemde eenmalige
+vragen. Er iets anders in stoppen zou de tabel laten liegen.
+
+**Besluit.** Er komt een zevende sleutel, en §8.2.2 wordt daarvoor gewijzigd:
+
+| Sleutel | Type | Standaard |
+|---|---|---|
+| `eduflow.lastIcsExportAt` | `IsoDateTime \| null` | `null` |
+
+**Waarom `localStorage` en niet de opslag.** Hij is het spiegelbeeld van
+`eduflow.lastBackupAt`, die er al staat: een apparaatvoorkeur, geen persoonsgegeven, en
+niet iets dat mee hoort te gaan in een back-up of een synchronisatie. Exporteer je op je
+laptop, dan hoort je telefoon niet te denken dat híj geëxporteerd heeft — precies de
+redenering waarmee §8.2.2 de andere zes verantwoordt.
+
+**Waarom niet in `settings`.** Dat record gaat wél mee in de back-up, en dan zou het
+terugzetten van een back-up de teller op nul zetten voor een export die op dat apparaat
+nooit heeft plaatsgevonden.
+
+**Gevolg.** §8.2.2 telt zeven sleutels. `SettingsService` leest en schrijft hem via
+dezelfde smalle omhulling als de andere zes; het agendascherm telt de items met een
+`updatedAt` ná dat tijdstip.
+
+**Herziening.** Komt er ooit synchronisatie tussen apparaten, dan hoort deze sleutel per
+apparaat te blijven en niet mee te reizen.
 
 ## B-123 — `recurrence` komt terug; `B-101` heeft nooit bestaan
 

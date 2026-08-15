@@ -9,7 +9,7 @@
  * raken of afleiden (§9.4). Er is er altijd precies één (INV-49); `startOpslag`
  * maakt hem bij de eerste start aan, zodat elke lezer erop kan rekenen.
  *
- * In `localStorage` staan de zes sleutels van §8.2.2. Zie `voorkeuren.ts`.
+ * In `localStorage` staan de zeven sleutels van §8.2.2. Zie `voorkeuren.ts`.
  */
 
 import type { Result } from "@/lib/result";
@@ -61,7 +61,7 @@ export function createSettingsService(deps: SettingsDeps) {
   return {
     lees,
     wijzig,
-    /** De zes apparaatvoorkeuren uit §8.2.2. Synchroon, want `localStorage` is dat. */
+    /** De zeven apparaatvoorkeuren uit §8.2.2. Synchroon, want `localStorage` is dat. */
     voorkeur: <Naam extends VoorkeurNaam>(naam: Naam) => voorkeuren.lees(naam),
     zetVoorkeur: <Naam extends VoorkeurNaam>(naam: Naam, waarde: Voorkeur<Naam>) =>
       voorkeuren.schrijf(naam, waarde),

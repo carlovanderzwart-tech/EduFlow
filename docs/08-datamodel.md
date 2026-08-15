@@ -253,15 +253,15 @@ De database heet `eduflow`. Er is er één per oorsprong. `navigator.storage.per
 bij de eerste start aangevraagd; wordt hij geweigerd of genegeerd, dan geldt de
 back-upherinnering uit B-02 en het opslagbeleid uit §8.9.
 
-#### 8.2.2 `localStorage`: zes sleutels, niet meer
+#### 8.2.2 `localStorage`: zeven sleutels, niet meer
 
 `localStorage` is synchroon en leesbaar vóórdat IndexedDB open is. Dat is zijn enige nut en
 meteen zijn enige toegestane gebruik: waarden die het eerste scherm nodig heeft om zonder
 flikkering te tekenen, en die geen persoonsgegevens zijn. Persoonsgegevens in `localStorage`
 zijn expliciet verboden (zie de verbodenlijst in hoofdstuk 6).
 
-Deze zes sleutels staan erin, en er komt er geen zevende bij zonder dat dit hoofdstuk wordt
-gewijzigd.
+Deze zeven sleutels staan erin, en er komt er geen achtste bij zonder dat dit hoofdstuk
+wordt gewijzigd. *(Het waren er zes; `eduflow.lastIcsExportAt` is toegevoegd door B-124.)*
 
 | Sleutel | Type | Standaardwaarde | Waarom hij hier mag staan |
 |---|---|---|---|
@@ -270,6 +270,7 @@ gewijzigd.
 | `eduflow.aiProvider` | `'openai-eu' \| 'vertex-eu' \| 'bedrock-eu'` | `'openai-eu'` | Providerkeuze (T-06). Een technische keuze van de ICT-coördinator. De schil moet hem meesturen bij de eerste aanroep zonder eerst de database te openen. |
 | `eduflow.lastView` | `{ module: string; view: string }` als JSON | `{"module":"dashboard","view":"vandaag"}` | Laatst gekozen weergave per module, inclusief de jaar-of-weekkeuze uit B-31. Zonder deze sleutel opent de agenda eerst in de verkeerde weergave en springt hij daarna, wat er kapot uitziet. |
 | `eduflow.lastBackupAt` | `IsoDateTime \| null` | `null` | Datum van de laatste geslaagde back-up, voor de herinnering na een maand (B-02). Moet leesbaar zijn ook als IndexedDB net gewist is door Safari, want juist dan is de herinnering relevant. |
+| `eduflow.lastIcsExportAt` | `IsoDateTime \| null` | `null` | Moment van de laatste ICS-export, voor de teller uit FR-AGE-27: hoeveel items zijn er sindsdien gewijzigd. Een apparaatvoorkeur, net als `lastBackupAt` — exporteer je op je laptop, dan hoort je telefoon niet te denken dat híj geëxporteerd heeft. Toegevoegd door B-124. |
 | `eduflow.onboardingFlags` | `Record<string, IsoDateTime>` als JSON | `{}` | De eenmalige vragen: de vraag om de app op het beginscherm te zetten (B-02), de bevestiging bij een lege leerlingenlijst (T-08), en het afronden van de eerste-keer-ervaring (B-49). Elke vlag is een tijdstip, geen boolean, zodat je weet wanneer iets is bevestigd. |
 
 Drie regels bij deze tabel:

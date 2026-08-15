@@ -22,7 +22,7 @@ import {
 } from "@/lib/dates";
 import type { CalendarEvent, Recurrence, RecurrenceFrequency } from "@/domain/types";
 
-import { dagenVanItem } from "./AgendaService";
+import { dagenVanItem } from "./itemdagen";
 
 /** Hoeveel dagen een frequentie opschuift; maandelijks rekent anders (§6.2.5). */
 const STAP_IN_DAGEN: Record<RecurrenceFrequency, number> = {
