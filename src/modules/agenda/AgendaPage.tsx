@@ -23,6 +23,7 @@ import type { Diensten } from "@/services/diensten";
 import { DayView } from "./DayView";
 import { ItemDialog } from "./ItemDialog";
 import { MonthView } from "./MonthView";
+import { QuickAdd } from "./QuickAdd";
 import { VakantieDialoog } from "./VakantieDialoog";
 import { VakantieLijst } from "./VakantieLijst";
 import { WeekView } from "./WeekView";
@@ -110,6 +111,9 @@ export function AgendaPage() {
         onVandaag={() => setAnker(vandaagIso())}
         onNieuw={() => setDialoog({ item: null })}
       />
+
+      {/* FR-AGE-13: het snelveld ontleedt lokaal; er gaat niets naar een provider. */}
+      <QuickAdd dag={anker} leerlingen={leerlingen} onKlaar={herlaad} />
 
       {fout ? <ErrorMessage message={fout.message} nextStep="Vernieuw de pagina." /> : null}
       <Meldingen stand={waarde} />
