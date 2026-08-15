@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "publishedAt": "2026-06-01",
+  "validUntil": "2027-08-31",
+  "source": "Voorbeelddata voor de doorloop — vervangen door O-06 met de gecontroleerde data van de Rijksoverheid",
+  "years": [
+    {
+      "schoolYear": "2026-2027",
+      "regions": {
+        "noord": [
+          { "key": "herfst", "name": "Herfstvakantie", "from": "2026-10-10", "to": "2026-10-18", "fixed": false },
+          { "key": "kerst", "name": "Kerstvakantie", "from": "2026-12-19", "to": "2027-01-03", "fixed": true },
+          { "key": "voorjaar", "name": "Voorjaarsvakantie", "from": "2027-02-20", "to": "2027-02-28", "fixed": false },
+          { "key": "mei", "name": "Meivakantie", "from": "2027-04-24", "to": "2027-05-09", "fixed": false },
+          { "key": "zomer", "name": "Zomervakantie", "from": "2027-07-10", "to": "2027-08-22", "fixed": true }
+        ],
+        "midden": [
+          { "key": "herfst", "name": "Herfstvakantie", "from": "2026-10-17", "to": "2026-10-25", "fixed": false },
+          { "key": "kerst", "name": "Kerstvakantie", "from": "2026-12-19", "to": "2027-01-03", "fixed": true },
+          { "key": "voorjaar", "name": "Voorjaarsvakantie", "from": "2027-02-20", "to": "2027-02-28", "fixed": false },
+          { "key": "mei", "name": "Meivakantie", "from": "2027-04-24", "to": "2027-05-09", "fixed": false },
+          { "key": "zomer", "name": "Zomervakantie", "from": "2027-07-17", "to": "2027-08-29", "fixed": true }
+        ],
+        "zuid": [
+          { "key": "herfst", "name": "Herfstvakantie", "from": "2026-10-17", "to": "2026-10-25", "fixed": false },
+          { "key": "kerst", "name": "Kerstvakantie", "from": "2026-12-19", "to": "2027-01-03", "fixed": true },
+          { "key": "voorjaar", "name": "Voorjaarsvakantie", "from": "2027-02-13", "to": "2027-02-21", "fixed": false },
+          { "key": "mei", "name": "Meivakantie", "from": "2027-04-24", "to": "2027-05-09", "fixed": false },
+          { "key": "zomer", "name": "Zomervakantie", "from": "2027-07-24", "to": "2027-09-05", "fixed": true }
+        ]
+      }
+    }
+  ]
+}

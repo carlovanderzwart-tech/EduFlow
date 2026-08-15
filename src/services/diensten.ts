@@ -14,7 +14,14 @@
 import { hertekenViaCanvas } from "@/lib/beeld";
 import { browserDoek, printstijl } from "@/lib/doek";
 
+import vakantiebestand from "@/data/schoolvakanties.json";
+
 import { createAgendaService, type AgendaService } from "./agenda/AgendaService";
+import {
+  createHolidayService,
+  type HolidayService,
+  type Vakantiebestand,
+} from "./agenda/HolidayService";
 import { createAIService, type AIService } from "./ai/AIService";
 import { createPromptService } from "./ai/PromptService";
 import {
@@ -63,6 +70,8 @@ export interface Diensten {
   /** De index in het geheugen; IndexedDB kan geen tekst doorzoeken (T-09). */
   search: SearchService;
   agenda: AgendaService;
+  /** De vakanties uit het meegeleverde bestand, met de eigen aanpassingen erop (§13.4). */
+  holidays: HolidayService;
   /** De enige aanroeper van `/api/ai` (DR-16). */
   ai: AIService;
   /** Doorloopgereedschap; gaat eruit vóór v1.0 (werkopdracht D02). */
@@ -95,6 +104,13 @@ async function bouw(): Promise<Diensten> {
     photos: createPhotoService({ storage, tekenen: hertekenViaCanvas }),
     search: createSearchService({ storage }),
     agenda: createAgendaService({ storage }),
+    holidays: createHolidayService({
+      storage,
+      // Het bestand wordt meegeleverd en niet opgehaald: één keer per jaar
+      // wijzigende gegevens rechtvaardigen geen koppeling (§13.4).
+      bestand: vakantiebestand as Vakantiebestand,
+      clock: SYSTEEMKLOK,
+    }),
     ai: createAIService({
       storage,
       prompts: createPromptService(),
