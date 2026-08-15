@@ -1,290 +1,394 @@
 "use client";
 
-import { CalendarDays, Plus, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
-import { EmptyState } from "@/ui/EmptyState";
 import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/ui/field";
-import { Input } from "@/ui/input";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
-import { Label } from "@/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import { Skeleton } from "@/ui/skeleton";
-import { Switch } from "@/ui/switch";
 import { useDienst } from "@/app/providers/useDienst";
+import { maandagVan, plusDagen, plusMaanden, vandaagIso, type IsoDate } from "@/lib/dates";
+import { cn } from "@/lib/utils";
+import { datumLang } from "@/lib/weergave";
+import type { CalendarEvent, Student } from "@/domain/types";
 import {
-  datumKort,
-  naarLokaleInvoer,
-  plusMinuten,
-  tijdstipKort,
-  vandaag,
-  vanLokaleInvoer,
-  volgendHalfUur,
-} from "@/lib/weergave";
-import type { CalendarEvent } from "@/domain/types";
-import {
-  EIGEN_SOORTEN,
-  HELE_DAG_STANDAARD,
-  SOORTNAMEN,
-  type EigenSoort,
+  JAAR_MINIMUM_PX,
+  standaardWeergave,
+  TELEFOON_MAXIMUM_PX,
+  type Weergave,
 } from "@/services/agenda/AgendaService";
-import { diensten, type Diensten } from "@/services/diensten";
+import type { Vakantie } from "@/services/agenda/HolidayService";
+import type { Diensten } from "@/services/diensten";
+
+import { DayView } from "./DayView";
+import { ItemDialog } from "./ItemDialog";
+import { MonthView } from "./MonthView";
+import { VakantieDialoog } from "./VakantieDialoog";
+import { VakantieLijst } from "./VakantieLijst";
+import { WeekView } from "./WeekView";
+import { YearView } from "./YearView";
+import { useAgenda } from "./hooks/useAgenda";
 
 /**
- * De agenda (§6.2).
+ * De agenda (§6.2, `FR-AGE-01`).
  *
- * Eén lijst en één formulier. De vier weergaven van FR-AGE-01 — jaar, maand, week,
- * dag — komen later, net als het snelveld (FR-AGE-13), slepen, de vakantiedata en de
- * basisweek (§6.2.11). Een lijst die werkt is meer waard dan vier weergaven die nog
- * niets tonen.
+ * Vier weergaven op één scherm, met één bron van waarheid eronder: welke periode je
+ * ziet en wat er in die periode staat, komt uit `AgendaService` en `HolidayService`.
+ * De weergaven tekenen alleen (DR-15).
  *
- * De soortenlijst komt uit `AgendaService`: `verjaardag` en `vakantie` zitten er niet
- * in, want de eerste wordt afgeleid uit de leerlingenlijst (FR-AGE-05) en de tweede
- * komt uit het vakantiebestand (§6.2.2).
+ * **Op de telefoon bestaat de jaarweergave niet** (`FR-AGE-08`). In plaats daarvan
+ * staat er "Vakanties": dezelfde vraag — wanneer ben ik vrij — in een vorm die op
+ * 390 px te lezen is. Dat is geen uitgeklede versie maar een andere vorm.
  */
+const NAMEN: Record<Weergave, string> = {
+  dag: "Dag",
+  week: "Week",
+  maand: "Maand",
+  jaar: "Jaar",
+};
+
+/** De laptopbreedte uit §5.2; wat de server aanneemt zolang er geen venster is. */
+const SERVERBREEDTE = 1280;
+
+/**
+ * De vensterbreedte als externe bron in plaats van als stand.
+ *
+ * `useSyncExternalStore` en geen effect met `setState`: de breedte is geen stand van
+ * dit scherm maar een eigenschap van de browser. Zo is er ook geen tussenrender
+ * waarin het scherm nog denkt dat het 1280 px breed is terwijl het een telefoon is.
+ *
+ * Er wordt op **drie** dingen geluisterd. Op `resize`, en op de twee breekpunten die
+ * er werkelijk toe doen: 768 px, waaronder de jaarweergave niet bestaat
+ * (`FR-AGE-08`), en 1024 px, waaronder hij ook niet vanzelf opengaat. Een
+ * mediaquery vuurt waar een `resize` het soms laat afweten, en het is bovendien de
+ * juiste vraag: niet "hoe breed precies", maar "aan welke kant van de grens".
+ */
+function useVensterbreedte(): number {
+  return useSyncExternalStore(
+    (opnieuw) => {
+      const vragen = [TELEFOON_MAXIMUM_PX, JAAR_MINIMUM_PX].map((grens) =>
+        window.matchMedia(`(min-width: ${grens}px)`),
+      );
+      window.addEventListener("resize", opnieuw);
+      for (const vraag of vragen) vraag.addEventListener("change", opnieuw);
+
+      return () => {
+        window.removeEventListener("resize", opnieuw);
+        for (const vraag of vragen) vraag.removeEventListener("change", opnieuw);
+      };
+    },
+    () => window.innerWidth,
+    () => SERVERBREEDTE,
+  );
+}
+
 export function AgendaPage() {
-  const [open, setOpen] = useState(false);
-  const [fout, setFout] = useState<string | null>(null);
+  const breedte = useVensterbreedte();
+  const [gekozen, setGekozen] = useState<Weergave | null>(null);
+  const [anker, setAnker] = useState<IsoDate>(vandaagIso());
+  const [dialoog, setDialoog] = useState<{ item: CalendarEvent | null } | null>(null);
+  const [vakantie, setVakantie] = useState<Vakantie | null>(null);
 
-  const laad = useCallback(({ agenda }: Diensten) => agenda.lijst(), []);
-  const { waarde: items, fout: laadfout, bezig, herlaad } = useDienst(laad);
+  const telefoon = breedte < TELEFOON_MAXIMUM_PX;
 
-  async function verwijder(id: string) {
-    const { agenda } = await diensten();
-    const uitkomst = await agenda.verwijder(id);
-    if (!uitkomst.ok) {
-      setFout(uitkomst.error.message);
-      return;
-    }
-    herlaad();
-  }
+  // FR-AGE-07: zonder eigen keuze bepalen het seizoen en de schermbreedte waar je
+  // begint. Afgeleid en niet opgeslagen — een handmatige keuze wint zodra hij er is
+  // en blijft dan staan voor de rest van de sessie.
+  const actief = gekozen ?? standaardWeergave(new Date(), breedte);
+
+  const { waarde, fout, bezig, herlaad } = useAgenda(actief, anker);
+  const leerlingen = useLeerlingen();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
-      {open ? (
-        <NieuwItem
-          onKlaar={() => {
-            setOpen(false);
-            herlaad();
+    <div className="mx-auto max-w-[80rem] space-y-4 p-4 md:p-6">
+      <Balk
+        weergave={actief}
+        telefoon={telefoon}
+        titel={titelVan(actief, anker, waarde?.schooljaar?.name, telefoon)}
+        onWeergave={setGekozen}
+        onSchuif={(richting) => setAnker(schuif(actief, anker, richting))}
+        onVandaag={() => setAnker(vandaagIso())}
+        onNieuw={() => setDialoog({ item: null })}
+      />
+
+      {fout ? <ErrorMessage message={fout.message} nextStep="Vernieuw de pagina." /> : null}
+      <Meldingen stand={waarde} />
+
+      {bezig && !waarde ? <Skeleton className="h-96" /> : null}
+
+      {waarde ? (
+        <Weergavevlak
+          weergave={actief}
+          anker={anker}
+          stand={waarde}
+          telefoon={telefoon}
+          onKiesDag={(dag) => {
+            setAnker(dag);
+            setGekozen("dag");
           }}
-          onAfbreken={() => setOpen(false)}
-        />
-      ) : (
-        <div className="flex justify-end">
-          <Button onClick={() => setOpen(true)}>
-            <Plus aria-hidden="true" />
-            Nieuw item
-          </Button>
-        </div>
-      )}
-
-      {fout ? <ErrorMessage message={fout} nextStep="Probeer het opnieuw." /> : null}
-      {laadfout ? (
-        <ErrorMessage message={laadfout.message} nextStep="Vernieuw de pagina." />
-      ) : null}
-
-      {bezig && !items ? <Skeleton className="h-20" /> : null}
-
-      {items && items.length === 0 && !open ? (
-        <EmptyState
-          icon={CalendarDays}
-          title="Nog niets in je agenda"
-          description="Zet je studiedagen, oudergesprekken en afspraken hier neer, zodat je ze naast je documentaties ziet."
-          action={{ label: "Nieuw item", onClick: () => setOpen(true) }}
+          onKiesItem={(item) => setDialoog({ item })}
+          onKiesVakantie={setVakantie}
         />
       ) : null}
 
-      {items && items.length > 0 ? (
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Item variant="outline">
-                <ItemContent>
-                  <ItemTitle>{item.title}</ItemTitle>
-                  <ItemDescription>{wanneer(item)}</ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`${item.title} verwijderen`}
-                    onClick={() => void verwijder(item.id)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                  </Button>
-                </ItemActions>
-              </Item>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <Panelen
+        item={dialoog}
+        vakantie={vakantie}
+        dag={anker}
+        leerlingen={leerlingen}
+        onSluit={() => {
+          setDialoog(null);
+          setVakantie(null);
+        }}
+        onKlaar={() => {
+          setDialoog(null);
+          setVakantie(null);
+          herlaad();
+        }}
+      />
     </div>
   );
 }
 
-/** Wanneer een item is, in de vorm die bij zijn variant past (INV-31). */
-function wanneer(item: CalendarEvent): string {
-  const soort = SOORTNAMEN[item.kind as EigenSoort] ?? item.kind;
-
-  if (item.allDay) {
-    return item.start === item.end
-      ? `${soort} · ${datumKort(item.start)}`
-      : `${soort} · ${datumKort(item.start)} tot ${datumKort(item.end)}`;
+/** De twee panelen die over de agenda kunnen schuiven; hoogstens één tegelijk. */
+function Panelen({
+  item,
+  vakantie,
+  dag,
+  leerlingen,
+  onSluit,
+  onKlaar,
+}: {
+  item: { item: CalendarEvent | null } | null;
+  vakantie: Vakantie | null;
+  dag: IsoDate;
+  leerlingen: readonly Student[];
+  onSluit: () => void;
+  onKlaar: () => void;
+}) {
+  if (vakantie) {
+    return (
+      <VakantieDialoog
+        vakantie={vakantie}
+        onOpenChange={(open) => !open && onSluit()}
+        onKlaar={onKlaar}
+      />
+    );
   }
+  if (!item) return null;
 
-  return `${soort} · ${tijdstipKort(item.start)} tot ${tijdstipKort(item.end)}`;
+  return (
+    <ItemDialog
+      open
+      item={item.item}
+      dag={dag}
+      leerlingen={leerlingen}
+      onOpenChange={(open) => !open && onSluit()}
+      onKlaar={onKlaar}
+    />
+  );
 }
 
-function NieuwItem({ onKlaar, onAfbreken }: { onKlaar: () => void; onAfbreken: () => void }) {
-  const [kind, setKind] = useState<EigenSoort>("afspraak");
-  const [title, setTitle] = useState("");
-  const [heleDag, setHeleDag] = useState(HELE_DAG_STANDAARD.afspraak);
-  const [dagVan, setDagVan] = useState(vandaag());
-  const [dagTot, setDagTot] = useState(vandaag());
-  const [van, setVan] = useState(volgendHalfUur());
-  const [tot, setTot] = useState(plusMinuten(volgendHalfUur(), 30));
-  const [fout, setFout] = useState<string | null>(null);
-  const [bezig, setBezig] = useState(false);
+/** De leerlingenlijst voor het oudergesprek; hij verandert zelden en laadt apart. */
+function useLeerlingen() {
+  const laad = useCallback(({ students }: Diensten) => students.lijst(), []);
+  return useDienst(laad).waarde ?? [];
+}
 
-  /** De soort bepaalt of het standaard een hele dag is (§6.2.2, kolom "Hele dag"). */
-  function kiesSoort(nieuw: EigenSoort) {
-    setKind(nieuw);
-    setHeleDag(HELE_DAG_STANDAARD[nieuw]);
+interface BalkProps {
+  weergave: Weergave;
+  telefoon: boolean;
+  titel: string;
+  onWeergave: (weergave: Weergave) => void;
+  onSchuif: (richting: -1 | 1) => void;
+  onVandaag: () => void;
+  onNieuw: () => void;
+}
+
+/**
+ * De vier knoppen (`FR-AGE-01`, `FR-AGE-08`).
+ *
+ * Op de telefoon heet de vierde **Vakanties** in plaats van Jaar, en toont hij een
+ * lijst in plaats van een raster. Dezelfde plek en dezelfde vraag — wanneer ben ik
+ * vrij — in de vorm die op 390 px te lezen is.
+ */
+const KEUZES: Weergave[] = ["dag", "week", "maand", "jaar"];
+
+function Balk({ weergave, telefoon, titel, onWeergave, onSchuif, onVandaag, onNieuw }: BalkProps) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        {weergave === "jaar" ? null : (
+          <>
+            <Button variant="outline" size="icon-sm" aria-label="Vorige" onClick={() => onSchuif(-1)}>
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Button variant="outline" size="icon-sm" aria-label="Volgende" onClick={() => onSchuif(1)}>
+              <ChevronRight aria-hidden="true" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={onVandaag}>
+              Vandaag
+            </Button>
+          </>
+        )}
+        <h1 className="text-base font-medium">{titel}</h1>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="flex rounded-md border" role="group" aria-label="Weergave">
+          {KEUZES.map((keuze) => (
+            <button
+              key={keuze}
+              type="button"
+              aria-pressed={keuze === weergave}
+              onClick={() => onWeergave(keuze)}
+              className={cn(
+                "px-3 py-1.5 text-sm first:rounded-s-md last:rounded-e-md",
+                keuze === weergave ? "bg-accent text-accent-foreground" : "hover:bg-muted",
+              )}
+            >
+              {keuze === "jaar" && telefoon ? "Vakanties" : NAMEN[keuze]}
+            </button>
+          ))}
+        </div>
+
+        <Button onClick={onNieuw}>
+          <Plus aria-hidden="true" />
+          Nieuw
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface VlakProps {
+  weergave: Weergave;
+  anker: IsoDate;
+  stand: NonNullable<ReturnType<typeof useAgenda>["waarde"]>;
+  telefoon: boolean;
+  onKiesDag: (dag: IsoDate) => void;
+  onKiesItem: (item: CalendarEvent) => void;
+  onKiesVakantie: (vakantie: Vakantie) => void;
+}
+
+function Weergavevlak({
+  weergave,
+  anker,
+  stand,
+  telefoon,
+  onKiesDag,
+  onKiesItem,
+  onKiesVakantie,
+}: VlakProps) {
+  const vandaag = vandaagIso();
+
+  if (weergave === "dag") {
+    return (
+      <DayView
+        dag={anker}
+        items={stand.perDag.get(anker) ?? []}
+        vakanties={stand.vakanties}
+        onKiesItem={onKiesItem}
+      />
+    );
   }
 
-  async function bewaar() {
-    setBezig(true);
-    setFout(null);
-
-    const { agenda } = await diensten();
-    const uitkomst = await agenda.maak(
-      heleDag
-        ? { title, kind, allDay: true, start: dagVan, end: dagTot }
-        : { title, kind, allDay: false, start: van, end: tot },
+  if (weergave === "week") {
+    return (
+      <WeekView
+        anker={anker}
+        perDag={stand.perDag}
+        vakanties={stand.vakanties}
+        vandaag={vandaag}
+        onKiesDag={onKiesDag}
+        onKiesItem={onKiesItem}
+      />
     );
-    setBezig(false);
+  }
 
-    if (!uitkomst.ok) {
-      setFout(uitkomst.error.message);
-      return;
-    }
-    onKlaar();
+  if (weergave === "maand") {
+    return (
+      <MonthView
+        anker={anker}
+        perDag={stand.perDag}
+        vakanties={stand.vakanties}
+        vandaag={vandaag}
+        onKiesDag={onKiesDag}
+      />
+    );
+  }
+
+  // FR-AGE-08: op de telefoon bestaat de jaarweergave niet, de vakantielijst wel.
+  if (telefoon || !stand.schooljaar) {
+    return (
+      <VakantieLijst
+        vakanties={stand.vakanties}
+        zonderSchooljaar={!stand.schooljaar}
+        onKies={onKiesVakantie}
+      />
+    );
   }
 
   return (
-    <form
-      className="space-y-4 rounded-lg border p-4"
-      onSubmit={(gebeurtenis) => {
-        gebeurtenis.preventDefault();
-        void bewaar();
-      }}
-    >
-      <Field>
-        <FieldLabel htmlFor="soort">Soort</FieldLabel>
-        <NativeSelect
-          id="soort"
-          value={kind}
-          onChange={(gebeurtenis) => kiesSoort(gebeurtenis.target.value as EigenSoort)}
-        >
-          {EIGEN_SOORTEN.map((soort) => (
-            <NativeSelectOption key={soort} value={soort}>
-              {SOORTNAMEN[soort]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        {kind === "oudergesprek" ? (
-          <FieldDescription>
-            Een oudergesprek hoort bij precies één leerling. Die koppeling komt in een volgende
-            stap; tot dan is dit soort nog niet op te slaan.
-          </FieldDescription>
-        ) : null}
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="item-titel">Titel</FieldLabel>
-        <Input
-          id="item-titel"
-          value={title}
-          maxLength={120}
-          autoComplete="off"
-          onChange={(gebeurtenis) => setTitle(gebeurtenis.target.value)}
-        />
-      </Field>
-
-      <Field orientation="horizontal">
-        <Switch id="hele-dag" checked={heleDag} onCheckedChange={setHeleDag} />
-        <Label htmlFor="hele-dag">Hele dag</Label>
-      </Field>
-
-      {heleDag ? (
-        <div className="flex flex-wrap gap-4">
-          <Field className="w-44">
-            <FieldLabel htmlFor="dag-van">Van</FieldLabel>
-            <Input
-              id="dag-van"
-              type="date"
-              value={dagVan}
-              onChange={(gebeurtenis) => {
-                setDagVan(gebeurtenis.target.value);
-                // FR-AGE-03: het einde schuift mee in plaats van ongeldig te worden.
-                if (gebeurtenis.target.value > dagTot) setDagTot(gebeurtenis.target.value);
-              }}
-            />
-          </Field>
-          <Field className="w-44">
-            <FieldLabel htmlFor="dag-tot">Tot en met</FieldLabel>
-            <Input
-              id="dag-tot"
-              type="date"
-              value={dagTot}
-              onChange={(gebeurtenis) => setDagTot(gebeurtenis.target.value)}
-            />
-          </Field>
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-4">
-          <Field className="w-56">
-            <FieldLabel htmlFor="tijd-van">Van</FieldLabel>
-            <Input
-              id="tijd-van"
-              type="datetime-local"
-              value={naarLokaleInvoer(van)}
-              onChange={(gebeurtenis) => {
-                const nieuw = vanLokaleInvoer(gebeurtenis.target.value);
-                if (!nieuw) return;
-                setVan(nieuw);
-                // FR-AGE-03: de eindtijd schuift mee met de oorspronkelijke duur.
-                if (nieuw > tot) setTot(plusMinuten(nieuw, 30));
-              }}
-            />
-          </Field>
-          <Field className="w-56">
-            <FieldLabel htmlFor="tijd-tot">Tot</FieldLabel>
-            <Input
-              id="tijd-tot"
-              type="datetime-local"
-              value={naarLokaleInvoer(tot)}
-              onChange={(gebeurtenis) => {
-                const nieuw = vanLokaleInvoer(gebeurtenis.target.value);
-                if (nieuw) setTot(nieuw);
-              }}
-            />
-          </Field>
-        </div>
-      )}
-
-      {fout ? <ErrorMessage message={fout} nextStep="Pas het aan en probeer het opnieuw." /> : null}
-
-      <div className="flex gap-3">
-        <Button type="submit" disabled={bezig || !title.trim()}>
-          Opslaan
-        </Button>
-        <Button type="button" variant="ghost" onClick={onAfbreken}>
-          Annuleren
-        </Button>
-      </div>
-    </form>
+    <YearView
+      firstSchoolDay={stand.schooljaar.firstSchoolDay}
+      dagen={stand.jaardagen}
+      vakanties={stand.vakanties}
+      tellingen={stand.tellingen}
+      onKiesDag={onKiesDag}
+      onKiesVakantie={onKiesVakantie}
+    />
   );
+}
+
+function Melding({ tekst }: { tekst: string }) {
+  return <p className="bg-muted rounded-md px-3 py-2 text-sm">{tekst}</p>;
+}
+
+/**
+ * De twee meldingen die het vakantiebestand kan geven (`FR-AGE-11`, `FR-AGE-12`).
+ *
+ * Ze staan boven de weergave en niet in een venster: het is informatie, geen vraag.
+ * De agenda blijft in beide gevallen gewoon werken.
+ */
+function Meldingen({ stand }: { stand: ReturnType<typeof useAgenda>["waarde"] }) {
+  if (!stand) return null;
+
+  return (
+    <>
+      {stand.vervalmelding ? <Melding tekst={stand.vervalmelding} /> : null}
+      {stand.verschoven.map((vakantie) => (
+        <Melding
+          key={vakantie.holidayKey}
+          tekst={`De landelijke data voor ${vakantie.name} zijn gewijzigd. Jouw aanpassing blijft staan.`}
+        />
+      ))}
+    </>
+  );
+}
+
+/** Waar je bent, in woorden die bij de weergave passen. */
+function titelVan(
+  weergave: Weergave,
+  anker: IsoDate,
+  schooljaar: string | undefined,
+  telefoon: boolean,
+): string {
+  if (weergave === "dag") return datumLang(anker);
+  if (weergave === "week") {
+    const maandag = maandagVan(anker);
+    return `${datumLang(maandag)} – ${datumLang(plusDagen(maandag, 6))}`;
+  }
+  if (weergave === "maand") return datumLang(anker).replace(/^\d+\s/u, "");
+
+  const kop = telefoon ? "Vakanties" : "Schooljaar";
+  return schooljaar ? `${kop} ${schooljaar}` : kop;
+}
+
+/** Eén periode vooruit of achteruit, in de eenheid van de weergave. */
+function schuif(weergave: Weergave, anker: IsoDate, richting: -1 | 1): IsoDate {
+  if (weergave === "dag") return plusDagen(anker, richting);
+  if (weergave === "week") return plusDagen(anker, richting * 7);
+  if (weergave === "maand") return plusMaanden(anker, richting);
+  return anker;
 }

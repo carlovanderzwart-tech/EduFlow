@@ -94,3 +94,29 @@ export function plusMinuten(tijdstip: string, minuten: number): string {
   moment.setMinutes(moment.getMinutes() + minuten);
   return moment.toISOString();
 }
+
+/**
+ * Hetzelfde tijdstip van de dag, maar dan op een andere kalenderdag.
+ *
+ * Nodig omdat "het eerstvolgende halve uur" een tijd van vandaag is, terwijl een
+ * nieuw agenda-item hoort te beginnen op de dag die je op dat moment bekijkt. Zonder
+ * deze omzetting maak je vanuit de week van 20 september een afspraak die vandaag
+ * blijkt te staan — en dat merk je pas als je hem zoekt.
+ *
+ * Het uur en de minuut worden **lokaal** overgezet: half negen blijft half negen,
+ * ook als de twee dagen aan verschillende kanten van de zomertijdgrens liggen.
+ */
+export function opDag(dag: string, tijdstip: string): string {
+  const deel = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dag);
+  const moment = new Date(tijdstip);
+  if (!deel || Number.isNaN(moment.getTime())) return tijdstip;
+
+  const nieuw = new Date(
+    Number(deel[1]),
+    Number(deel[2]) - 1,
+    Number(deel[3]),
+    moment.getHours(),
+    moment.getMinutes(),
+  );
+  return nieuw.toISOString();
+}

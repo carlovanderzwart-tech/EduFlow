@@ -16,9 +16,17 @@
  * item laat bestaan en terugvinden.
  */
 
-import { isIsoDate, isIsoDateTime, type IsoDate, type IsoDateTime } from "@/lib/dates";
+import {
+  dagenVan,
+  isIsoDate,
+  isIsoDateTime,
+  overlapt,
+  type IsoDate,
+  type IsoDateTime,
+} from "@/lib/dates";
 import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
+import { vandaag } from "@/lib/weergave";
 import type { CalendarEvent, CalendarEventKind, Region, SchoolYear } from "@/domain/types";
 
 import type { StorageService } from "../storage/StorageService";
@@ -178,6 +186,42 @@ export function createAgendaService(deps: AgendaDeps) {
     };
   }
 
+  /** Wijzigt een bestaand item; dezelfde regels gelden als bij het maken. */
+  async function wijzig(id: Uuid, invoer: Agendainvoer): Promise<Result<CalendarEvent>> {
+    const reden = bezwaar(invoer);
+    if (reden) return ongeldig(reden);
+
+    const velden = {
+      title: invoer.title.trim(),
+      kind: invoer.kind,
+      note: invoer.note ?? "",
+      location: invoer.location ?? "",
+      studentIds: invoer.studentIds ?? [],
+    };
+
+    return invoer.allDay
+      ? deps.storage.update("calendarEvents", id, {
+          ...velden,
+          allDay: true,
+          start: invoer.start,
+          end: invoer.end,
+        })
+      : deps.storage.update("calendarEvents", id, {
+          ...velden,
+          allDay: false,
+          start: invoer.start,
+          end: invoer.end,
+        });
+  }
+
+  /** Alles wat een periode raakt, ook een item dat er alleen overheen loopt. */
+  async function periode(van: IsoDate, tot: IsoDate): Promise<Result<CalendarEvent[]>> {
+    const alle = await lijst();
+    if (!alle.ok) return alle;
+
+    return { ok: true, value: alle.value.filter((item) => raaktPeriode(item, van, tot)) };
+  }
+
   /** Verwijderen is markeren; het item blijft dertig dagen herstelbaar (FR-AGE-16). */
   function verwijder(id: Uuid): Promise<Result<CalendarEvent>> {
     return deps.storage.softDelete("calendarEvents", id);
@@ -185,11 +229,95 @@ export function createAgendaService(deps: AgendaDeps) {
 
   return {
     maak,
+    wijzig,
     lijst,
+    periode,
     verwijder,
     huidigSchooljaar: () => huidigSchooljaar(deps.storage),
     zetSchooljaar: (invoer: Schooljaarinvoer) => zetSchooljaar(deps.storage, invoer),
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Wat er op een dag staat                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * De kalenderdagen die een item beslaat.
+ *
+ * Een hele-dag-item draagt ze zelf; een item met tijden wordt naar de lokale dag
+ * gebracht. Dat laatste hoort in de weergavelaag (§8.1.4), en `vandaag` uit
+ * `lib/weergave.ts` is die ene plek waar de omrekening staat — hier wordt hij
+ * gebruikt, niet nog eens geschreven.
+ */
+export function dagenVanItem(item: CalendarEvent): IsoDate[] {
+  if (item.allDay) return dagenVan(item.start, item.end);
+
+  const begin = vandaag(new Date(item.start));
+  const einde = vandaag(new Date(item.end));
+  return dagenVan(begin, einde < begin ? begin : einde);
+}
+
+/** Raakt dit item de periode van `van` tot en met `tot`? */
+export function raaktPeriode(item: CalendarEvent, van: IsoDate, tot: IsoDate): boolean {
+  const dagen = dagenVanItem(item);
+  const eerste = dagen[0];
+  const laatste = dagen[dagen.length - 1];
+  return Boolean(eerste && laatste && overlapt(eerste, laatste, van, tot));
+}
+
+/**
+ * De items per kalenderdag, voor week, maand en jaar.
+ *
+ * Een item dat over meer dagen loopt staat op elke dag die het raakt: een vakantie
+ * hoort in de maandweergave op elk van haar negen cellen te kleuren, niet alleen op
+ * de eerste.
+ */
+export function perDag(
+  items: readonly CalendarEvent[],
+  van: IsoDate,
+  tot: IsoDate,
+): Map<IsoDate, CalendarEvent[]> {
+  const uit = new Map<IsoDate, CalendarEvent[]>(dagenVan(van, tot).map((dag) => [dag, []]));
+
+  for (const item of items) {
+    for (const dag of dagenVanItem(item)) {
+      uit.get(dag)?.push(item);
+    }
+  }
+
+  for (const rij of uit.values()) rij.sort((a, b) => a.start.localeCompare(b.start));
+  return uit;
+}
+
+/* ------------------------------------------------------------------ */
+/* Welke weergave er open gaat                                        */
+/* ------------------------------------------------------------------ */
+
+export type Weergave = "dag" | "week" | "maand" | "jaar";
+
+/** §6.2.3, FR-AGE-08: onder deze breedte bestaat de jaarweergave niet. */
+export const JAAR_MINIMUM_PX = 1024;
+
+/** §5.2: onder dit breekpunt is de telefoon aan zet. */
+export const TELEFOON_MAXIMUM_PX = 768;
+
+/**
+ * De weergave waarmee de agenda opengaat (`FR-AGE-07`, B-31).
+ *
+ * Tussen 1 juli en 15 september is dat het jaar, want dan zet je je schooljaar
+ * klaar en is "wanneer valt de studiedag" de vraag die je stelt. Daarbuiten de
+ * week. Op de telefoon altijd de dag: een week van zeven kolommen op 390 px is
+ * geen weergave maar een puzzel.
+ */
+export function standaardWeergave(nu: Date, breedtePx: number): Weergave {
+  if (breedtePx < TELEFOON_MAXIMUM_PX) return "dag";
+
+  const maand = nu.getMonth() + 1;
+  const dag = nu.getDate();
+  const inDeZomer = maand === 7 || maand === 8 || (maand === 9 && dag <= 15);
+
+  return inDeZomer && breedtePx >= JAAR_MINIMUM_PX ? "jaar" : "week";
 }
 
 /**

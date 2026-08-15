@@ -91,3 +91,108 @@ export function parseIsoDateTime(waarde: string): Date | null {
   const moment = new Date(waarde);
   return Number.isNaN(moment.getTime()) ? null : moment;
 }
+
+/* ------------------------------------------------------------------ */
+/* Rekenen met kalenderdagen                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Alles hieronder rekent in **UTC**, ook al gaat het over kalenderdagen.
+ *
+ * Niet omdat de gebruiker in UTC leeft, maar omdat een kalenderdag geen tijdzone
+ * heeft. Zou je hier in lokale tijd rekenen, dan verspringt "een dag erbij" twee
+ * keer per jaar met een uur en valt de laatste zondag van maart of oktober naast
+ * het raster. `Date.UTC` kent die grens niet, en dat is precies waarom hij hier
+ * staat (§8.1.4).
+ */
+
+const MS_PER_DAG = 86_400_000;
+
+/** De kalenderdag als `Date` op middernacht UTC. */
+function alsDatum(dag: IsoDate): Date {
+  return new Date(`${dag}T00:00:00.000Z`);
+}
+
+/** De `Date` terug als kalenderdag. */
+function alsDag(moment: Date): IsoDate {
+  return moment.toISOString().slice(0, 10);
+}
+
+/** Vandaag als kalenderdag; de klok mag meegegeven worden zodat een toets hem vastzet. */
+export function vandaagIso(nu: Date = new Date()): IsoDate {
+  return alsDag(new Date(Date.UTC(nu.getFullYear(), nu.getMonth(), nu.getDate())));
+}
+
+/** De dag `aantal` dagen later. Een negatief getal gaat terug. */
+export function plusDagen(dag: IsoDate, aantal: number): IsoDate {
+  return alsDag(new Date(alsDatum(dag).getTime() + aantal * MS_PER_DAG));
+}
+
+/** Het aantal hele dagen van `van` tot `tot`; negatief als `tot` eerder ligt. */
+export function dagenTussen(van: IsoDate, tot: IsoDate): number {
+  return Math.round((alsDatum(tot).getTime() - alsDatum(van).getTime()) / MS_PER_DAG);
+}
+
+/** De weekdag, 1 voor maandag tot en met 7 voor zondag (ISO 8601). */
+export function weekdag(dag: IsoDate): number {
+  return alsDatum(dag).getUTCDay() || 7;
+}
+
+/** Valt deze dag in het weekend? */
+export function isWeekend(dag: IsoDate): boolean {
+  return weekdag(dag) >= 6;
+}
+
+/** De maandag van de week waarin deze dag valt. */
+export function maandagVan(dag: IsoDate): IsoDate {
+  return plusDagen(dag, 1 - weekdag(dag));
+}
+
+/** De eerste dag van de maand waarin deze dag valt. */
+export function eersteVanMaand(dag: IsoDate): IsoDate {
+  return `${dag.slice(0, 7)}-01`;
+}
+
+/** Het aantal dagen in de maand waarin deze dag valt. */
+export function dagenInMaand(dag: IsoDate): number {
+  const moment = alsDatum(dag);
+  return new Date(Date.UTC(moment.getUTCFullYear(), moment.getUTCMonth() + 1, 0)).getUTCDate();
+}
+
+/** De laatste dag van de maand waarin deze dag valt. */
+export function laatsteVanMaand(dag: IsoDate): IsoDate {
+  return `${dag.slice(0, 7)}-${String(dagenInMaand(dag)).padStart(2, "0")}`;
+}
+
+/** De maand `aantal` maanden verder, teruggerekend naar de eerste van die maand. */
+export function plusMaanden(dag: IsoDate, aantal: number): IsoDate {
+  const moment = alsDatum(eersteVanMaand(dag));
+  return alsDag(new Date(Date.UTC(moment.getUTCFullYear(), moment.getUTCMonth() + aantal, 1)));
+}
+
+/** Elke dag van `van` tot en met `tot`. Leeg als `tot` vóór `van` ligt. */
+export function dagenVan(van: IsoDate, tot: IsoDate): IsoDate[] {
+  const aantal = dagenTussen(van, tot);
+  if (aantal < 0) return [];
+  return Array.from({ length: aantal + 1 }, (_, plaats) => plusDagen(van, plaats));
+}
+
+/**
+ * Het maandraster: **altijd** zes rijen van zeven dagen (§6.2.3).
+ *
+ * Zes en niet "zoveel als nodig", zodat de hoogte niet verspringt bij het bladeren
+ * — dat is letterlijk wat §6.2.3 vraagt. Februari in een schrikkeljaar dat op een
+ * maandag begint vult er precies vier; alle andere maanden vullen er vijf of zes.
+ * Eén vaste hoogte is rustiger dan een raster dat ademt.
+ */
+export const MAANDRASTER_RIJEN = 6;
+
+export function maandraster(dag: IsoDate): IsoDate[] {
+  const begin = maandagVan(eersteVanMaand(dag));
+  return Array.from({ length: MAANDRASTER_RIJEN * 7 }, (_, plaats) => plusDagen(begin, plaats));
+}
+
+/** Overlappen twee gesloten periodes elkaar? Beide einden tellen mee. */
+export function overlapt(vanA: IsoDate, totA: IsoDate, vanB: IsoDate, totB: IsoDate): boolean {
+  return vanA <= totB && vanB <= totA;
+}
