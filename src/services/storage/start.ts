@@ -14,6 +14,7 @@
  */
 
 import { newId, type Uuid } from "@/lib/uuid";
+import { zSettings } from "@/domain/schemas";
 
 import { maakDatabase, type EduFlowDatabase } from "./db";
 import { createStorageService, type Clock, type StorageService } from "./StorageService";
@@ -26,8 +27,13 @@ function verseInstellingen(deviceId: Uuid) {
     deviceId,
     defaultGroupId: null,
     defaultStudentIds: [],
-    // §9.8: zes weken, de periode tussen twee vakanties.
-    attentionThresholdDays: 42,
+    // §6.4.4: eenentwintig schooldagen. §9.8 noemt 42 kalenderdagen in een terzijde;
+    // het hoofdstuk over het blok rekent in schooldagen en is specifieker. De naam
+    // van de constante staat in `documentation/aandacht.ts`; het getal staat hier,
+    // want de opslaglaag hoort niets van het dashboard te weten.
+    attentionThresholdDays: 21,
+    // B-125: standaard aan, want de geheugensteun is nuttig tot je hem wegzet.
+    showAttention: true,
     pupilNoun: "leerling" as const,
     disabledDetectors: [],
     // FR-INS-21: de schakelaar staat standaard aan.
@@ -38,8 +44,18 @@ function verseInstellingen(deviceId: Uuid) {
 /**
  * Opent de opslag en levert een service die klaar is voor gebruik.
  *
- * Zorgt onderweg dat er precies één `settings`-record is (INV-49): ontbreekt hij,
- * dan wordt hij met standaardwaarden aangemaakt.
+ * Zorgt onderweg dat er precies één **leesbaar** `settings`-record is (INV-49).
+ *
+ * Dat woord "leesbaar" is er met bloed bij geschreven. Deze functie las de rij
+ * rechtstreeks uit Dexie en keek alleen of hij *bestond*; `SettingsService.lees()`
+ * gaat via `list()` en die keurt een rij af die niet meer bij het schema past. Komt
+ * er dan een veld bij — zoals `showAttention` bij B-125 — dan ziet het opstarten een
+ * record en de service niet één, en werpt de service. Het scherm bleef eeuwig op een
+ * skelet staan zonder één woord uitleg.
+ *
+ * Versie 1.0 kent geen migratieketen (§8.6, DR-02): een nieuw veld betekent een
+ * schone start. Maar "schoon" hoort te gebeuren zónder dat de gebruiker zelf zijn
+ * opslag moet wissen, en zonder een scherm dat blijft laden.
  */
 export async function startOpslag(
   db: EduFlowDatabase = maakDatabase(),
@@ -49,12 +65,17 @@ export async function startOpslag(
 
   const bestaande = await db.settings.toArray();
   const eerste = bestaande.find((record) => record.deletedAt === null);
+  const leesbaar = eerste ? zSettings.safeParse(eerste).success : false;
 
-  if (eerste) {
+  if (eerste && leesbaar) {
     return createStorageService({ db, clock, origin: eerste.deviceId });
   }
 
-  const deviceId = newId();
+  // Een rij die niet meer te lezen is, gaat eruit. Het apparaat-id blijft: dat is
+  // geen instelling maar de identiteit van dit apparaat (§8.1.4).
+  const deviceId = eerste?.deviceId ?? newId();
+  if (eerste) await db.settings.delete(eerste.id);
+
   const opslag = createStorageService({ db, clock, origin: deviceId });
   const uitkomst = await opslag.create("settings", verseInstellingen(deviceId));
   if (!uitkomst.ok) throw new Error(`Instellingen aanmaken faalde: ${uitkomst.error.message}`);

@@ -380,6 +380,7 @@ export function instellingen(): Settings {
     defaultGroupId: null,
     defaultStudentIds: [],
     attentionThresholdDays: 42,
+    showAttention: true,
     pupilNoun: "leerling",
     disabledDetectors: [],
     showOutgoingRequest: true,

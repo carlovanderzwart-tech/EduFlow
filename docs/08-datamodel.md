@@ -649,7 +649,7 @@ Dit is het logboek dat de kwaliteitsmeting voedt en dat bij een privacygesprek o
 
 #### 8.3.14 `settings`
 
-Eén record met alle instellingen die persoonsgegevens raken of afleiden: standaardgroep, standaardleerlingen, drempel voor het blok Aandacht, taalkeuze leerling of kind, detectoren aan of uit, en de bevestiging bij een lege leerlingenlijst. Zie §8.2 voor wat er wél in `localStorage` staat.
+Eén record met alle instellingen die persoonsgegevens raken of afleiden: standaardgroep, standaardleerlingen, drempel voor het blok Aandacht, of dat blok überhaupt wordt berekend (`showAttention`, B-125), taalkeuze leerling of kind, detectoren aan of uit, en de bevestiging bij een lege leerlingenlijst. Zie §8.2 voor wat er wél in `localStorage` staat.
 
 ### 8.4 Relaties
 

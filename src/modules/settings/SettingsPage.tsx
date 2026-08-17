@@ -45,6 +45,7 @@ export function SettingsPage() {
         instellingen: {
           pupilNoun: record.value.pupilNoun,
           attentionThresholdDays: record.value.attentionThresholdDays,
+          showAttention: record.value.showAttention,
           showOutgoingRequest: record.value.showOutgoingRequest,
           region: settings.voorkeur("region"),
         },

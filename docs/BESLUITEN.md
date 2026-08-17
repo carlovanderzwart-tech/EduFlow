@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-124** · **T-46** · **INV-54** · **FR-AGE-31**
+> ## Laatst uitgegeven nummers: **B-126** · **T-46** · **INV-54** · **FR-AGE-31**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,76 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 17 augustus 2026 — tijdens D11
+
+## B-126 — De ondergrens van INV-16 weigert vandaag nooit
+
+**Probleem.** Gevonden door de doorloop te lopen die D11 voorschrijft, op 17 augustus met
+een schooljaar dat op 24 augustus begint:
+
+> "Deze datum ligt vóór het oudste schooljaar in je opslag. Kies een latere datum."
+
+Een documentatie van **vandaag** werd geweigerd. Daarmee stond de doorloop stil: vanaf een
+verse installatie in augustus is er geen documentatie te maken, en dat is precies de week
+waarin `F-16` zegt dat je je schooljaar klaarzet.
+
+**De oorzaak is een letterlijke lezing.** INV-16 zegt: *"niet vóór het begin van het oudste
+schooljaar in de opslag"*, en dat is wat de code doet. Maar de reden die INV-16 zelf
+meegeeft, gaat over de andere kant: *"Je documenteert wat gebeurd is. Een datum in de
+toekomst breekt sortering, filters en de reeksvolgorde."* De ondergrens is er om te
+voorkomen dat je iets wegschrijft in een jaar dat je niet in je opslag hebt — niet om
+vandaag te verbieden.
+
+Daar komt bij dat §6.1.1 de ondergrens in zijn veldtabel heel anders neerzet: *"niet vóór
+2015-08-01"*. Twee bronnen, twee ondergrenzen, en de code voerde ze beide uit.
+
+**Besluit.** De ondergrens is het **vroegste van tweeën**: het begin van het oudste
+schooljaar, óf vandaag. Een datum van vandaag of later dan vandaag-min-een-week wordt nooit
+op deze grond geweigerd. De absolute ondergrens van 2015-08-01 blijft in het schema staan.
+
+**Waarom niet het schooljaar eerder laten beginnen.** Dat zou de gebruiker vragen om een
+onwaarheid in te vullen om de app te laten werken. 24 augustus is een normale eerste
+schooldag en 17 augustus een normale dag om te werken.
+
+**Waarom niet de grens weghalen.** Hij doet wél werk: een documentatie van 2019 in een
+opslag die in 2026 begint hoort niet stil te slagen, want dan staat hij in geen enkel filter
+en in geen enkele reeks.
+
+**Gevolg.** `DocumentationService.datumbezwaar` vergelijkt met `min(eersteSchooldag,
+vandaag)`. De bovengrens uit B-70 — zeven dagen vooruit — blijft ongewijzigd.
+
+## B-125 — `settings.showAttention`: het blok Aandacht is uit te zetten
+
+**Probleem.** `FR-DAS-07` zegt: *"Gegeven Instellingen → Dashboard, wanneer je het blok
+uitzet, dan verdwijnt het en wordt de berekening niet meer uitgevoerd."* Er is geen veld
+waarin dat kan staan. §8.3.14 noemt de dréempel (`attentionThresholdDays`) maar geen
+aan-of-uit.
+
+De drempel misbruiken door hem op nul te zetten is geen optie: §6.4.4 legt hem vast tussen
+10 en 60, en een waarde buiten dat bereik als geheime uit-stand is precies het soort
+verborgen betekenis waar niemand later nog op komt.
+
+**Besluit.** `settings.showAttention: boolean`, standaard `true`. §8.3.14 wordt daarvoor
+aangevuld.
+
+**Waarom in `settings` en niet in `localStorage`.** Het is geen apparaatvoorkeur maar een
+keuze over een **berekening op persoonsgegevens**: welke kinderen lang niet in een
+documentatie voorkwamen. Zo'n keuze hoort bij de andere instelling over diezelfde
+berekening, en hij hoort mee te gaan in een back-up — zet je hem uit omdat het blok je in de
+weg zit, dan wil je niet dat hij op een nieuwe laptop weer aanstaat.
+
+**Waarom dit meer is dan een schakelaar.** `FR-DAS-06` staat erboven: *"Aandacht is een
+geheugensteun, geen signaal over een kind."* De berekening niet uitvoeren is de sterkste
+vorm van die belofte — geen score, geen geschiedenis, en desgewenst geen berekening. B-25 en
+hoofdstuk 15 wijzen dezelfde kant op.
+
+**Gevolg.** Het veld staat in `domain/types/settings.ts` en in het schema. Staat hij op
+`false`, dan wordt het blok niet getekend **en** wordt er niets uitgerekend; dat laatste is
+wat `FR-DAS-07` letterlijk vraagt en het is met een `if` rond de berekening afgedwongen, niet
+met een `display: none`.
 
 ---
 

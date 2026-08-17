@@ -67,6 +67,17 @@ export interface Vakantie {
   landelijk: { from: IsoDate; to: IsoDate } | null;
 }
 
+/**
+ * De vakantie waarin een dag valt, of `null`.
+ *
+ * Staat hier en niet bij een weergave: het is een vraag over vakanties, en zowel de
+ * agenda als het dashboard stelt hem. Twee weergaven die het elk zelf uitrekenen is
+ * twee plekken waar dezelfde regel staat (§10.2, DR-11).
+ */
+export function vakantieOp(dag: IsoDate, vakanties: readonly Vakantie[]): Vakantie | null {
+  return vakanties.find((vakantie) => vakantie.from <= dag && dag <= vakantie.to) ?? null;
+}
+
 /** Alle rijen van het bestand, plat, met schooljaar en regio erop. */
 function rijenVan(bestand: Vakantiebestand) {
   return bestand.years.flatMap((jaar) =>

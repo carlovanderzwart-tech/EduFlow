@@ -45,6 +45,15 @@ export interface Settings extends BaseRecord {
   defaultStudentIds: Uuid[];
   /** Boven hoeveel dagen een leerling in het blok Aandacht komt (§9.8: 42). */
   attentionThresholdDays: number;
+  /**
+   * Of het blok Aandacht wordt berekend en getoond (`FR-DAS-07`, B-125).
+   *
+   * Staat hij uit, dan wordt er **niets uitgerekend** — niet alleen niets getekend. Dat is
+   * wat de eis letterlijk vraagt, en het is de sterkste vorm van de belofte uit
+   * `FR-DAS-06`: dit is een geheugensteun over jouw documentatie, geen signaal over een
+   * kind.
+   */
+  showAttention: boolean;
   pupilNoun: PupilNoun;
   disabledDetectors: DisableableDetector[];
   /** "Toon altijd wat er verstuurd wordt". Standaard aan (FR-INS-21). */

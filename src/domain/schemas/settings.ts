@@ -33,8 +33,12 @@ export const zSettings = recordSchema({
   defaultStudentIds: z
     .array(zUuid)
     .refine((sleutels) => new Set(sleutels).size === sleutels.length, "Dubbele leerling"),
-  // §9.8 rekent met 42 dagen; een drempel buiten een schooljaar is zinloos.
-  attentionThresholdDays: z.number().int().min(1).max(365),
+  // §6.4.4 legt de drempel vast tussen 10 en 60 schooldagen. §9.8 noemt 42 in een
+  // terzijde en §6.4.4 noemt 21 als standaard; het hoofdstuk dat over dit blok gaat
+  // is specifieker, dus die wint.
+  attentionThresholdDays: z.number().int().min(10).max(60),
+  // B-125: staat hij uit, dan wordt het blok niet berekend en niet getoond.
+  showAttention: z.boolean(),
   pupilNoun: zPupilNoun,
   disabledDetectors: z.array(zDisableableDetector),
   showOutgoingRequest: z.boolean(),

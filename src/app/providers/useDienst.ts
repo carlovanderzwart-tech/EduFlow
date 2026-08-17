@@ -27,15 +27,32 @@ export function useDienst<T>(laad: (diensten: Diensten) => Promise<Result<T>>) {
 
     void (async () => {
       setBezig(true);
-      const uitkomst = await laad(await diensten());
-      if (!actief) return;
 
-      if (uitkomst.ok) {
-        setWaarde(uitkomst.value);
-        setFout(null);
-      } else {
-        setFout(uitkomst.error);
+      // De `try` is er met bloed bij geschreven. Werpt `laad` — een service die een
+      // geschonden invariant meldt, een record dat niet meer bij zijn schema past —
+      // dan blijft zonder deze afhandeling `bezig` op `true` staan en kijkt de
+      // gebruiker eeuwig naar een skelet. Een fout die je ziet is altijd beter dan
+      // een scherm dat blijft laden (§9.5.3).
+      try {
+        const uitkomst = await laad(await diensten());
+        if (!actief) return;
+
+        if (uitkomst.ok) {
+          setWaarde(uitkomst.value);
+          setFout(null);
+        } else {
+          setFout(uitkomst.error);
+        }
+      } catch (oorzaak) {
+        if (!actief) return;
+        setFout({
+          code: "INVALID_INPUT",
+          message: oorzaak instanceof Error ? oorzaak.message : "Er ging iets onverwachts mis.",
+          // Vernieuwen helpt hier meestal: de opslag heelt zichzelf bij het opstarten.
+          recoverable: true,
+        });
       }
+
       setBezig(false);
     })();
 

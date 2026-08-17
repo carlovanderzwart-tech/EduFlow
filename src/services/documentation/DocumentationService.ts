@@ -172,7 +172,13 @@ export function createDocumentationService(deps: DocumentationDeps) {
         (vroegste, jaar) => (jaar.firstSchoolDay < vroegste ? jaar.firstSchoolDay : vroegste),
         jaren.value[0]!.firstSchoolDay,
       );
-      if (date < oudste) {
+
+      // B-126: de ondergrens is het vroegste van tweeën. Begint je schooljaar over een
+      // week, dan mag je vandaag nog steeds documenteren — dat is precies de week
+      // waarin je je jaar klaarzet (F-16). INV-16 is er tegen een datum die vóór je
+      // opslag ligt, niet tegen vandaag.
+      const grens = oudste < vandaag ? oudste : vandaag;
+      if (date < grens) {
         return "Deze datum ligt vóór het oudste schooljaar in je opslag. Kies een latere datum.";
       }
     }
