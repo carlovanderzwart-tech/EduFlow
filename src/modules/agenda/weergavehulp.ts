@@ -7,6 +7,7 @@
  */
 
 import { type IsoDate } from "@/lib/dates";
+import { vandaag } from "@/lib/weergave";
 import type { CalendarEventKind } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 
@@ -45,4 +46,9 @@ export function soortklasse(kind: CalendarEventKind): string {
 /** De vakantie waarin deze dag valt, of `null`. */
 export function isVakantiedag(dag: IsoDate, vakanties: readonly Vakantie[]): Vakantie | null {
   return vakanties.find((vakantie) => vakantie.from <= dag && dag <= vakantie.to) ?? null;
+}
+
+/** De dag waarop dit item begint; bij een reeks bepaalt die waar hij wordt geknipt. */
+export function dagVanItem(item: { allDay: boolean; start: string }): IsoDate {
+  return item.allDay ? item.start : vandaag(new Date(item.start));
 }

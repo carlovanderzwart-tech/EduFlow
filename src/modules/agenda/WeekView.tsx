@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { tijdstipKort } from "@/lib/weergave";
 import type { CalendarEvent } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
+import { TOETSENHINT } from "@/services/agenda/verplaatsen";
 
 import { DAGNAMEN, isVakantiedag, soortklasse } from "./weergavehulp";
 
@@ -26,6 +27,10 @@ interface WeekViewProps {
   vandaag: IsoDate;
   onKiesDag: (dag: IsoDate) => void;
   onKiesItem: (item: CalendarEvent) => void;
+  /** De pijltoetsen verschuiven het item (B-38, `NFR-35`). */
+  onToets: (item: CalendarEvent, gebeurtenis: React.KeyboardEvent) => void;
+  /** Slepen naar een andere dag; het tijdstip blijft staan. */
+  onLaatVallen: (item: CalendarEvent, dag: IsoDate) => void;
 }
 
 export function WeekView({
@@ -35,6 +40,8 @@ export function WeekView({
   vandaag,
   onKiesDag,
   onKiesItem,
+  onToets,
+  onLaatVallen,
 }: WeekViewProps) {
   const maandag = maandagVan(anker);
   const dagen = dagenVan(maandag, plusDagen(maandag, 6));
@@ -53,6 +60,8 @@ export function WeekView({
             isVandaag={dag === vandaag}
             onKiesDag={onKiesDag}
             onKiesItem={onKiesItem}
+            onToets={onToets}
+            onLaatVallen={onLaatVallen}
           />
         ))}
       </div>
@@ -91,14 +100,34 @@ interface DagkolomProps {
   isVandaag: boolean;
   onKiesDag: (dag: IsoDate) => void;
   onKiesItem: (item: CalendarEvent) => void;
+  onToets: (item: CalendarEvent, gebeurtenis: React.KeyboardEvent) => void;
+  onLaatVallen: (item: CalendarEvent, dag: IsoDate) => void;
 }
 
-function Dagkolom({ dag, naam, items, isVandaag, onKiesDag, onKiesItem }: DagkolomProps) {
+function Dagkolom({
+  dag,
+  naam,
+  items,
+  isVandaag,
+  onKiesDag,
+  onKiesItem,
+  onToets,
+  onLaatVallen,
+}: DagkolomProps) {
   const heleDag = items.filter((item) => item.allDay);
   const metTijd = items.filter((item) => !item.allDay);
 
   return (
-    <div className="min-w-0">
+    <div
+      className="min-w-0"
+      onDragOver={(gebeurtenis) => gebeurtenis.preventDefault()}
+      onDrop={(gebeurtenis) => {
+        gebeurtenis.preventDefault();
+        const id = gebeurtenis.dataTransfer.getData("text/eduflow-item");
+        const item = SLEPEND.get(id);
+        if (item) onLaatVallen(item, dag);
+      }}
+    >
       <button
         type="button"
         onClick={() => onKiesDag(dag)}
@@ -113,29 +142,50 @@ function Dagkolom({ dag, naam, items, isVandaag, onKiesDag, onKiesItem }: Dagkol
 
       <div className="min-h-40 space-y-1 p-1">
         {heleDag.map((item) => (
-          <Blokje key={item.id} item={item} onKies={onKiesItem} />
+          <Blokje key={item.id} item={item} onKies={onKiesItem} onToets={onToets} />
         ))}
         {metTijd.map((item) => (
-          <Blokje key={item.id} item={item} onKies={onKiesItem} metTijd />
+          <Blokje key={item.id} item={item} onKies={onKiesItem} onToets={onToets} metTijd />
         ))}
       </div>
     </div>
   );
 }
 
+/**
+ * De items die op dit moment gesleept worden, op sleutel.
+ *
+ * `dataTransfer` draagt alleen tekenreeksen, en het item zelf terugzoeken bij het
+ * neerzetten vraagt om de lijst — die de kolom niet heeft. Eén kleine kaart naast de
+ * component is goedkoper dan het item door drie lagen doorgeven.
+ */
+const SLEPEND = new Map<string, CalendarEvent>();
+
 function Blokje({
   item,
   onKies,
+  onToets,
   metTijd = false,
 }: {
   item: CalendarEvent;
   onKies: (item: CalendarEvent) => void;
+  onToets: (item: CalendarEvent, gebeurtenis: React.KeyboardEvent) => void;
   metTijd?: boolean;
 }) {
   return (
     <button
       type="button"
+      draggable
+      title={TOETSENHINT}
       onClick={() => onKies(item)}
+      // B-38, NFR-35: dezelfde beweging met het toetsenbord. Niet optioneel.
+      onKeyDown={(gebeurtenis) => onToets(item, gebeurtenis)}
+      onDragStart={(gebeurtenis) => {
+        SLEPEND.set(item.id, item);
+        gebeurtenis.dataTransfer.setData("text/eduflow-item", item.id);
+        gebeurtenis.dataTransfer.effectAllowed = "move";
+      }}
+      onDragEnd={() => SLEPEND.delete(item.id)}
       className={cn("block w-full truncate rounded-xs px-1 py-0.5 text-left text-xs", soortklasse(item.kind))}
     >
       {metTijd ? `${tijdstipKort(item.start).split(" ").pop()} ` : ""}

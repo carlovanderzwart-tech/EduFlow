@@ -13,6 +13,7 @@
 
 import { hertekenViaCanvas } from "@/lib/beeld";
 import { browserDoek, printstijl } from "@/lib/doek";
+import { browserMelder } from "@/lib/melder";
 
 import vakantiebestand from "@/data/schoolvakanties.json";
 
@@ -22,6 +23,10 @@ import {
   type HolidayService,
   type Vakantiebestand,
 } from "./agenda/HolidayService";
+import {
+  createNotificationService,
+  type NotificationService,
+} from "./agenda/NotificationService";
 import { createAIService, type AIService } from "./ai/AIService";
 import { createPromptService } from "./ai/PromptService";
 import {
@@ -72,6 +77,8 @@ export interface Diensten {
   agenda: AgendaService;
   /** De vakanties uit het meegeleverde bestand, met de eigen aanpassingen erop (§13.4). */
   holidays: HolidayService;
+  /** Meldingen, alleen terwijl de app open staat (B-108, FR-AGE-25). */
+  notifications: NotificationService;
   /** De enige aanroeper van `/api/ai` (DR-16). */
   ai: AIService;
   /** Doorloopgereedschap; gaat eruit vóór v1.0 (werkopdracht D02). */
@@ -111,6 +118,9 @@ async function bouw(): Promise<Diensten> {
       bestand: vakantiebestand as Vakantiebestand,
       clock: SYSTEEMKLOK,
     }),
+    // De melder komt uit `lib/`, want hij raakt de Notification API en DR-12 wil
+    // deze regel toetsbaar houden zonder browser.
+    notifications: createNotificationService({ melder: browserMelder(), clock: SYSTEEMKLOK }),
     ai: createAIService({
       storage,
       prompts: createPromptService(),

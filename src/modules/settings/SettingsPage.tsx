@@ -11,6 +11,7 @@ import { Skeleton } from "@/ui/skeleton";
 import { useDienst } from "@/app/providers/useDienst";
 import { diensten, type Diensten } from "@/services/diensten";
 
+import { Meldingen } from "./Meldingen";
 import { SchoolYearForm } from "./SchoolYearForm";
 import { SettingsForm } from "./SettingsForm";
 
@@ -31,7 +32,7 @@ export function SettingsPage() {
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  const laad = useCallback(async ({ settings, agenda }: Diensten) => {
+  const laad = useCallback(async ({ settings, agenda, notifications }: Diensten) => {
     const record = await settings.lees();
     if (!record.ok) return record;
 
@@ -52,6 +53,8 @@ export function SettingsPage() {
           firstSchoolDay: jaar.value?.firstSchoolDay ?? "",
           lastSchoolDay: jaar.value?.lastSchoolDay ?? "",
         },
+        // FR-AGE-28: alleen uitlezen. Vragen gebeurt pas na een klik.
+        meldingen: notifications.toestemming(),
       },
     };
   }, []);
@@ -126,6 +129,9 @@ export function SettingsPage() {
           onOpgeslagen={herlaad}
         />
       ) : null}
+
+      {/* §6.2.9: de uitleg hoort bij de functie, niet als voetnoot eronder. */}
+      {waarde ? <Meldingen toestemming={waarde.meldingen} /> : null}
 
       <div className="space-y-3 border-t border-border pt-6">
         <p className="text-sm text-muted-foreground">

@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { weekdag } from "@/lib/dates";
 import { newId } from "@/lib/uuid";
+import type { CalendarEvent } from "@/domain/types";
 
 import {
   createAgendaService,
@@ -31,6 +32,13 @@ import {
 } from "./agenda/HolidayService";
 import { icsBestandsnaam, naarIcs } from "./agenda/IcsService";
 import {
+  createNotificationService,
+  EERLIJKE_UITLEG,
+  meldtekst,
+  nuTeMelden,
+  type Toestemming,
+} from "./agenda/NotificationService";
+import {
   afgekaptVoor,
   instanties,
   isVerschijning,
@@ -40,6 +48,14 @@ import {
 } from "./agenda/RecurrenceService";
 import { jaardagen, jaarmaanden, jaartellingen, JAAR_MAANDEN } from "./agenda/schooljaar";
 import { ontleed } from "./agenda/snelveld";
+import {
+  minutenVoor,
+  naarDag,
+  STAP_MINUTEN,
+  stapVan,
+  TOETSENHINT,
+  verschoven,
+} from "./agenda/verplaatsen";
 import { maakDatabase } from "./storage/db";
 import { createStorageService, type StorageService } from "./storage/StorageService";
 
@@ -867,5 +883,236 @@ describe("de ICS-export — FR-AGE-20", () => {
 
   it("draagt een bestandsnaam die in een downloadmap terug te vinden is", () => {
     expect(icsBestandsnaam("2026-2027")).toBe("EduFlow 2026-2027.ics");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D09b — verplaatsen (§6.2.5, B-38, NFR-35)                          */
+/* ------------------------------------------------------------------ */
+
+describe("verplaatsen met het toetsenbord — B-38, NFR-35", () => {
+  async function afspraak() {
+    return waarde(
+      await agenda.maak({
+        title: "Overleg",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-01T08:00:00.000Z",
+        end: "2026-09-01T09:00:00.000Z",
+      }),
+    );
+  }
+
+  async function studiedag() {
+    return waarde(
+      await agenda.maak({
+        title: "Studiedag",
+        kind: "studiedag",
+        allDay: true,
+        start: "2026-09-01",
+        end: "2026-09-01",
+      }),
+    );
+  }
+
+  it("kent de drie stappen uit §6.2.5", () => {
+    expect(STAP_MINUTEN.kwartier).toBe(15);
+    expect(STAP_MINUTEN.dag).toBe(1_440);
+    expect(STAP_MINUTEN.week).toBe(10_080);
+  });
+
+  it("leest de toetsen zoals §6.2.5 ze beschrijft", () => {
+    expect(stapVan({ ctrlKey: false, metaKey: false, shiftKey: false })).toBe("kwartier");
+    expect(stapVan({ ctrlKey: false, metaKey: false, shiftKey: true })).toBe("dag");
+    expect(stapVan({ ctrlKey: true, metaKey: false, shiftKey: false })).toBe("week");
+    // Op een Mac doet Cmd hetzelfde als Ctrl.
+    expect(stapVan({ ctrlKey: false, metaKey: true, shiftKey: false })).toBe("week");
+    // Beide ingedrukt betekent de grootste stap.
+    expect(stapVan({ ctrlKey: true, metaKey: false, shiftKey: true })).toBe("week");
+  });
+
+  it("schuift een afspraak een kwartier op", async () => {
+    const na = verschoven(await afspraak(), STAP_MINUTEN.kwartier);
+
+    expect(na.start).toBe("2026-09-01T08:15:00.000Z");
+    expect(na.end).toBe("2026-09-01T09:15:00.000Z");
+  });
+
+  it("schuift terug bij een negatieve stap", async () => {
+    const na = verschoven(await afspraak(), -STAP_MINUTEN.week);
+
+    expect(na.start).toBe("2026-08-25T08:00:00.000Z");
+  });
+
+  it("schuift een hele-dag-item in hele dagen, ook met de gewone pijl", async () => {
+    const dag = await studiedag();
+
+    // Een kwartier heeft voor een studiedag geen betekenis; de pijl wordt een dag.
+    expect(minutenVoor(dag, "kwartier")).toBe(STAP_MINUTEN.dag);
+    expect(minutenVoor(dag, "week")).toBe(STAP_MINUTEN.week);
+
+    const na = verschoven(dag, minutenVoor(dag, "kwartier"));
+    expect(na.start).toBe("2026-09-02");
+    expect(na.end).toBe("2026-09-02");
+  });
+
+  it("laat een afspraak wél een kwartier schuiven", async () => {
+    expect(minutenVoor(await afspraak(), "kwartier")).toBe(15);
+  });
+
+  it("houdt de duur vast bij het verplaatsen naar een andere dag", async () => {
+    const na = naarDag(await afspraak(), "2026-09-03");
+
+    expect(na.start).toBe("2026-09-03T08:00:00.000Z");
+    expect(na.end).toBe("2026-09-03T09:00:00.000Z");
+  });
+
+  it("neemt de herhaling mee, zodat de reikwijdtevraag hem kan afhandelen", async () => {
+    const reeks = waarde(
+      await agenda.maak({
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-01T08:00:00.000Z",
+        end: "2026-09-01T09:00:00.000Z",
+        recurrence: { frequency: "wekelijks", until: null, count: 4, excludedDates: [] },
+      }),
+    );
+
+    expect(verschoven(reeks, STAP_MINUTEN.kwartier).recurrence).toEqual(reeks.recurrence);
+  });
+
+  it("noemt de toetsen in de hint (§6.2.5)", () => {
+    expect(TOETSENHINT).toMatch(/kwartier/u);
+    expect(TOETSENHINT).toMatch(/Shift/u);
+    expect(TOETSENHINT).toMatch(/Ctrl/u);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D09b — meldingen (§6.2.9, FR-AGE-25, FR-AGE-28, B-108)             */
+/* ------------------------------------------------------------------ */
+
+describe("meldingen — FR-AGE-25, FR-AGE-28, B-108", () => {
+  const NUUR = new Date("2026-09-01T08:00:00.000Z");
+
+  /** Een melder die opschrijft in plaats van te melden (DR-12). */
+  function nepMelder(stand: Toestemming = "granted") {
+    const getoond: { titel: string; tekst: string }[] = [];
+    let toestemming = stand;
+    let gevraagd = 0;
+
+    return {
+      getoond,
+      get gevraagd() {
+        return gevraagd;
+      },
+      melder: {
+        toestemming: () => toestemming,
+        vraag: async () => {
+          gevraagd += 1;
+          toestemming = "granted" as Toestemming;
+          return toestemming;
+        },
+        toon: (titel: string, tekst: string) => void getoond.push({ titel, tekst }),
+      },
+    };
+  }
+
+  function item(start: string, allDay = false): CalendarEvent {
+    return {
+      id: newId(),
+      title: "Oudergesprek",
+      kind: "oudergesprek",
+      allDay,
+      start,
+      end: start,
+      note: "",
+      location: "",
+      groupIds: [],
+      studentIds: [],
+      documentationId: null,
+      mailDraftId: null,
+      source: "own",
+      recurrence: null,
+      createdAt: NU,
+      updatedAt: NU,
+      deletedAt: null,
+      rev: 1,
+      origin: APPARAAT,
+      schemaVersion: 1,
+    } as CalendarEvent;
+  }
+
+  it("meldt een item dat binnen tien minuten begint", () => {
+    const items = [item("2026-09-01T08:05:00.000Z")];
+
+    expect(nuTeMelden(items, NUUR, new Set())).toHaveLength(1);
+  });
+
+  it("laat een item dat verder weg ligt met rust", () => {
+    const items = [item("2026-09-01T09:00:00.000Z")];
+
+    expect(nuTeMelden(items, NUUR, new Set())).toEqual([]);
+  });
+
+  it("laat een item dat al begonnen is met rust", () => {
+    const items = [item("2026-09-01T07:55:00.000Z")];
+
+    expect(nuTeMelden(items, NUUR, new Set())).toEqual([]);
+  });
+
+  it("meldt een hele-dag-item niet; middernacht helpt niemand", () => {
+    const items = [item("2026-09-01", true)];
+
+    expect(nuTeMelden(items, NUUR, new Set())).toEqual([]);
+  });
+
+  it("meldt hetzelfde item niet twee keer", () => {
+    const eenItem = item("2026-09-01T08:05:00.000Z");
+    const nep = nepMelder();
+    const dienst = createNotificationService({ melder: nep.melder, clock: { now: () => NUUR } });
+
+    expect(dienst.tik([eenItem])).toHaveLength(1);
+    expect(dienst.tik([eenItem])).toHaveLength(0);
+    expect(nep.getoond).toHaveLength(1);
+  });
+
+  it("meldt niets zonder toestemming (FR-AGE-28)", () => {
+    const nep = nepMelder("default");
+    const dienst = createNotificationService({ melder: nep.melder, clock: { now: () => NUUR } });
+
+    expect(dienst.tik([item("2026-09-01T08:05:00.000Z")])).toEqual([]);
+    expect(nep.getoond).toEqual([]);
+    // En er is niet uit zichzelf gevraagd.
+    expect(nep.gevraagd).toBe(0);
+  });
+
+  it("meldt niets na een weigering", () => {
+    const nep = nepMelder("denied");
+    const dienst = createNotificationService({ melder: nep.melder, clock: { now: () => NUUR } });
+
+    expect(dienst.tik([item("2026-09-01T08:05:00.000Z")])).toEqual([]);
+  });
+
+  it("vraagt pas als hij erom gevraagd wordt (FR-AGE-28)", async () => {
+    const nep = nepMelder("default");
+    const dienst = createNotificationService({ melder: nep.melder, clock: { now: () => NUUR } });
+
+    expect(nep.gevraagd).toBe(0);
+    expect(await dienst.vraagToestemming()).toBe("granted");
+    expect(nep.gevraagd).toBe(1);
+  });
+
+  it("zegt hoe lang het nog duurt", () => {
+    expect(meldtekst(item("2026-09-01T08:05:00.000Z"), NUUR)).toBe("begint over 5 minuten");
+    expect(meldtekst(item("2026-09-01T08:01:00.000Z"), NUUR)).toBe("begint over 1 minuut");
+    expect(meldtekst(item("2026-09-01T08:00:00.000Z"), NUUR)).toBe("begint nu");
+  });
+
+  it("draagt de uitleg die §6.2.9 woordelijk voorschrijft", () => {
+    expect(EERLIJKE_UITLEG).toBe(
+      "EduFlow stuurt geen meldingen als de app dicht is. Wil je een herinnering op je telefoon, exporteer de agenda dan naar je eigen agenda-app — die doet het wel.",
+    );
   });
 });
