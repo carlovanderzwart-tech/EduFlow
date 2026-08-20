@@ -1,5 +1,5 @@
 /**
- * De zes sleutels in `localStorage` (§8.2.2).
+ * De zeven sleutels in `localStorage` (§8.2.2).
  *
  * `localStorage` is synchroon en leesbaar vóórdat IndexedDB open is. Dat is zijn
  * enige nut en meteen zijn enige toegestane gebruik: waarden die het eerste scherm
@@ -7,10 +7,11 @@
  * (DR-33).
  *
  * De tabel hieronder is de tabel uit §8.2.2, en dat is de handhaving: er komt geen
- * zevende sleutel bij zonder dat dat hoofdstuk wijzigt, want er is geen naam om
- * hem mee aan te duiden.
+ * achtste sleutel bij zonder dat dat hoofdstuk wijzigt, want er is geen naam om
+ * hem mee aan te duiden. De zevende — `lastIcsExportAt` — is er via B-124 bij
+ * gekomen, en §8.2.2 is daarvoor gewijzigd in plaats van omzeild.
  *
- * Deze zes staan **alleen** hier. Ze staan niet ook in `settings` (U-02). Ze gaan
+ * Deze zeven staan **alleen** hier. Ze staan niet ook in `settings` (U-02). Ze gaan
  * niet mee in de back-up en niet mee in de synchronisatie: het zijn
  * apparaatvoorkeuren.
  *
@@ -75,6 +76,18 @@ export const VOORKEUREN = {
   },
   lastBackupAt: {
     sleutel: "eduflow.lastBackupAt",
+    schema: zIsoDateTime.nullable(),
+    standaard: null,
+    json: false,
+  },
+  /**
+   * Het moment van de laatste ICS-export (B-124, `FR-AGE-27`).
+   *
+   * Een apparaatvoorkeur, net als `lastBackupAt`: exporteer je op je laptop, dan
+   * hoort je telefoon niet te denken dat híj geëxporteerd heeft.
+   */
+  lastIcsExportAt: {
+    sleutel: "eduflow.lastIcsExportAt",
     schema: zIsoDateTime.nullable(),
     standaard: null,
     json: false,

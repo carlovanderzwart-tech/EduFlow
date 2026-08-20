@@ -27,8 +27,16 @@ import {
 import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
 import { vandaag } from "@/lib/weergave";
-import type { CalendarEvent, CalendarEventKind, Region, SchoolYear } from "@/domain/types";
+import type {
+  CalendarEvent,
+  CalendarEventKind,
+  Recurrence,
+  Region,
+  SchoolYear,
+} from "@/domain/types";
 
+import { raaktPeriode } from "./itemdagen";
+import { afgekaptVoor, metGat, verschijningen, type Reikwijdte } from "./RecurrenceService";
 import type { StorageService } from "../storage/StorageService";
 
 export interface AgendaDeps {
@@ -41,6 +49,8 @@ interface Gemeenschappelijk {
   note?: string;
   location?: string;
   studentIds?: Uuid[];
+  /** De herhaling, of niets voor een item dat één keer valt (§6.2.5, B-123). */
+  recurrence?: Recurrence | null;
 }
 
 /**
@@ -150,6 +160,7 @@ export function createAgendaService(deps: AgendaDeps) {
       // Zelf gemaakt, dus `own`. Een teruggezet vakantiebestand overschrijft het
       // niet, want dat raakt alleen `holidayFile` (§8.7).
       source: "own" as const,
+      recurrence: invoer.recurrence ?? null,
     };
 
     // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
@@ -197,6 +208,7 @@ export function createAgendaService(deps: AgendaDeps) {
       note: invoer.note ?? "",
       location: invoer.location ?? "",
       studentIds: invoer.studentIds ?? [],
+      recurrence: invoer.recurrence ?? null,
     };
 
     return invoer.allDay
@@ -214,12 +226,26 @@ export function createAgendaService(deps: AgendaDeps) {
         });
   }
 
-  /** Alles wat een periode raakt, ook een item dat er alleen overheen loopt. */
+  /**
+   * Alles wat een periode raakt, ook een item dat er alleen overheen loopt.
+   *
+   * Herhalende items worden hier **uitgeklapt** (§6.2.5, B-123): de opslag draagt één
+   * record per reeks, en pas op het moment dat je een week of een maand bekijkt is
+   * bekend welke verschijningen daarin vallen. Een gymles van elke dinsdag staat dus
+   * in oktober in beeld terwijl het record uit september komt.
+   */
   async function periode(van: IsoDate, tot: IsoDate): Promise<Result<CalendarEvent[]>> {
     const alle = await lijst();
     if (!alle.ok) return alle;
 
-    return { ok: true, value: alle.value.filter((item) => raaktPeriode(item, van, tot)) };
+    const uitgeklapt = alle.value.flatMap((item) => verschijningen(item, van, tot));
+
+    return {
+      ok: true,
+      value: uitgeklapt
+        .filter((item) => raaktPeriode(item, van, tot))
+        .sort((a, b) => a.start.localeCompare(b.start)),
+    };
   }
 
   /** Verwijderen is markeren; het item blijft dertig dagen herstelbaar (FR-AGE-16). */
@@ -235,7 +261,47 @@ export function createAgendaService(deps: AgendaDeps) {
     verwijder,
     huidigSchooljaar: () => huidigSchooljaar(deps.storage),
     zetSchooljaar: (invoer: Schooljaarinvoer) => zetSchooljaar(deps.storage, invoer),
+    wijzigReeks: (id: Uuid, dag: IsoDate, reikwijdte: Reikwijdte, invoer: Agendainvoer) =>
+      wijzigReeks(deps.storage, maak, id, dag, reikwijdte, invoer),
   };
+}
+
+/**
+ * Een verschijning uit een reeks wijzigen (`FR-AGE-15`).
+ *
+ * **"Alleen deze"** maakt de dag los: de reeks krijgt daar een gat en er komt een
+ * gewoon item op die dag. **"Alle volgende"** knipt: de oude reeks stopt de dag
+ * ervóór en er begint een nieuwe met de wijziging erin.
+ *
+ * Beide laten het verleden met rust, en dat is de bedoeling — wat geweest is, is
+ * geweest, en een gymles van september hoort niet te verschuiven omdat je in maart
+ * het tijdstip aanpast.
+ */
+async function wijzigReeks(
+  storage: StorageService,
+  maak: (invoer: Agendainvoer) => Promise<Result<CalendarEvent>>,
+  id: Uuid,
+  dag: IsoDate,
+  reikwijdte: Reikwijdte,
+  invoer: Agendainvoer,
+): Promise<Result<CalendarEvent>> {
+  const wortel = await storage.read("calendarEvents", id);
+  if (!wortel.ok) return wortel;
+  if (!wortel.value?.recurrence) return ongeldig("Deze reeks bestaat niet meer.");
+
+  const regel = wortel.value.recurrence;
+  const bijgewerkt =
+    reikwijdte === "deze" ? metGat(regel, dag) : afgekaptVoor(regel, dag);
+
+  const oud = await storage.update("calendarEvents", id, { recurrence: bijgewerkt });
+  if (!oud.ok) return oud;
+
+  // Bij "alleen deze" wordt het een los item; bij "alle volgende" een nieuwe reeks
+  // die verder loopt met dezelfde regel.
+  return maak({
+    ...invoer,
+    recurrence: reikwijdte === "deze" ? null : { ...regel, excludedDates: [] },
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -243,52 +309,13 @@ export function createAgendaService(deps: AgendaDeps) {
 /* ------------------------------------------------------------------ */
 
 /**
- * De kalenderdagen die een item beslaat.
+ * Doorgegeven vanuit `itemdagen.ts`.
  *
- * Een hele-dag-item draagt ze zelf; een item met tijden wordt naar de lokale dag
- * gebracht. Dat laatste hoort in de weergavelaag (§8.1.4), en `vandaag` uit
- * `lib/weergave.ts` is die ene plek waar de omrekening staat — hier wordt hij
- * gebruikt, niet nog eens geschreven.
+ * Ze staan daar en niet hier, omdat `RecurrenceService` ze ook nodig heeft en twee
+ * modules die elkaar importeren een kring vormen. Hier blijven ze bereikbaar, want
+ * dit is waar de rest van de app ze zoekt.
  */
-export function dagenVanItem(item: CalendarEvent): IsoDate[] {
-  if (item.allDay) return dagenVan(item.start, item.end);
-
-  const begin = vandaag(new Date(item.start));
-  const einde = vandaag(new Date(item.end));
-  return dagenVan(begin, einde < begin ? begin : einde);
-}
-
-/** Raakt dit item de periode van `van` tot en met `tot`? */
-export function raaktPeriode(item: CalendarEvent, van: IsoDate, tot: IsoDate): boolean {
-  const dagen = dagenVanItem(item);
-  const eerste = dagen[0];
-  const laatste = dagen[dagen.length - 1];
-  return Boolean(eerste && laatste && overlapt(eerste, laatste, van, tot));
-}
-
-/**
- * De items per kalenderdag, voor week, maand en jaar.
- *
- * Een item dat over meer dagen loopt staat op elke dag die het raakt: een vakantie
- * hoort in de maandweergave op elk van haar negen cellen te kleuren, niet alleen op
- * de eerste.
- */
-export function perDag(
-  items: readonly CalendarEvent[],
-  van: IsoDate,
-  tot: IsoDate,
-): Map<IsoDate, CalendarEvent[]> {
-  const uit = new Map<IsoDate, CalendarEvent[]>(dagenVan(van, tot).map((dag) => [dag, []]));
-
-  for (const item of items) {
-    for (const dag of dagenVanItem(item)) {
-      uit.get(dag)?.push(item);
-    }
-  }
-
-  for (const rij of uit.values()) rij.sort((a, b) => a.start.localeCompare(b.start));
-  return uit;
-}
+export { dagenVanItem, perDag, raaktPeriode } from "./itemdagen";
 
 /* ------------------------------------------------------------------ */
 /* Welke weergave er open gaat                                        */

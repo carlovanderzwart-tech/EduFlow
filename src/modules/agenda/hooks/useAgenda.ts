@@ -46,6 +46,10 @@ export interface Agendastand {
   verschoven: Vakantie[];
   van: IsoDate;
   tot: IsoDate;
+  /** Het moment van de laatste ICS-export, of `null` (B-124). */
+  laatsteExport: string | null;
+  /** Hoeveel items er sindsdien zijn gewijzigd (`FR-AGE-27`). */
+  gewijzigdSindsExport: number;
 }
 
 /**
@@ -57,7 +61,7 @@ export interface Agendastand {
  */
 export function useAgenda(weergave: Weergave, anker: IsoDate) {
   const laad = useCallback(
-    async ({ agenda, holidays }: Diensten) => {
+    async ({ agenda, holidays, settings }: Diensten) => {
       const jaar = await agenda.huidigSchooljaar();
       if (!jaar.ok) return jaar;
 
@@ -88,11 +92,22 @@ export function useAgenda(weergave: Weergave, anker: IsoDate) {
             })
           : new Map<IsoDate, Jaardag>();
 
+      // FR-AGE-27: hoeveel er is gewijzigd sinds de laatste export. Op de wortels
+      // en niet op de uitgeklapte verschijningen — een verschijning heeft geen
+      // eigen `updatedAt` en zou de teller opblazen.
+      const laatsteExport = settings.voorkeur("lastIcsExportAt");
+      const alle = await agenda.lijst();
+      if (!alle.ok) return alle;
+
       return {
         ok: true as const,
         value: {
           schooljaar,
           items: items.value,
+          laatsteExport,
+          gewijzigdSindsExport: laatsteExport
+            ? alle.value.filter((item) => item.updatedAt > laatsteExport).length
+            : 0,
           perDag: perDag(items.value, van, tot),
           vakanties: vakanties.value,
           jaardagen: dagen,

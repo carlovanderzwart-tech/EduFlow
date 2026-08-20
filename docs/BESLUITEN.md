@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-122** · **T-46** · **INV-54** · **FR-AGE-31**
+> ## Laatst uitgegeven nummers: **B-124** · **T-46** · **INV-54** · **FR-AGE-31**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,100 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 16 augustus 2026 — tijdens D09b
+
+## B-124 — Een zevende sleutel in `localStorage`: `eduflow.lastIcsExportAt`
+
+**Probleem.** `FR-AGE-27` wil dat het agendascherm toont *"hoeveel items er zijn gewijzigd
+sinds de laatste export"* en een nieuwe export aanbiedt. Daarvoor moet ergens staan wannéér
+er voor het laatst is geëxporteerd, en die plek bestaat niet.
+
+§8.2.2 is er stellig over: zes sleutels, *"en er komt er geen zevende bij zonder dat dit
+hoofdstuk wordt gewijzigd"*. `eduflow.onboardingFlags` heeft de goede vórm — een tijdstip
+per vlag — maar is in diezelfde tabel toegewezen aan drie met name genoemde eenmalige
+vragen. Er iets anders in stoppen zou de tabel laten liegen.
+
+**Besluit.** Er komt een zevende sleutel, en §8.2.2 wordt daarvoor gewijzigd:
+
+| Sleutel | Type | Standaard |
+|---|---|---|
+| `eduflow.lastIcsExportAt` | `IsoDateTime \| null` | `null` |
+
+**Waarom `localStorage` en niet de opslag.** Hij is het spiegelbeeld van
+`eduflow.lastBackupAt`, die er al staat: een apparaatvoorkeur, geen persoonsgegeven, en
+niet iets dat mee hoort te gaan in een back-up of een synchronisatie. Exporteer je op je
+laptop, dan hoort je telefoon niet te denken dat híj geëxporteerd heeft — precies de
+redenering waarmee §8.2.2 de andere zes verantwoordt.
+
+**Waarom niet in `settings`.** Dat record gaat wél mee in de back-up, en dan zou het
+terugzetten van een back-up de teller op nul zetten voor een export die op dat apparaat
+nooit heeft plaatsgevonden.
+
+**Gevolg.** §8.2.2 telt zeven sleutels. `SettingsService` leest en schrijft hem via
+dezelfde smalle omhulling als de andere zes; het agendascherm telt de items met een
+`updatedAt` ná dat tijdstip.
+
+**Herziening.** Komt er ooit synchronisatie tussen apparaten, dan hoort deze sleutel per
+apparaat te blijven en niet mee te reizen.
+
+## B-123 — `recurrence` komt terug; `B-101` heeft nooit bestaan
+
+**Probleem.** `calendar.ts` schrijft: *"Er is geen `recurrence` (B-101). Een agenda-item
+herhaalt niet; wat zich herhaalt is de basisweek."* Het schema laat het veld niet toe en
+een toets bewaakt dat actief.
+
+`B-101` staat nergens. Niet in hoofdstuk 19, niet in dit bestand, niet in het volledige
+handboek. Het is hetzelfde soort spooknummer als de zes uit B-117, alleen viel deze buiten
+de grep van dat besluit — die zocht op `T-4[5-9]`, `T-50` en `INV-5[4-9]`.
+
+En dit spooknummer is niet alleen een losse verwijzing: het heeft **het model veranderd**.
+Wat er werkelijk staat:
+
+| Bron | Wat er staat |
+|---|---|
+| §6.2.2, veldtabel | `recurrence` \| regel \| nee \| geen \| zie 6.2.5 |
+| §6.2.5 | "Alleen drie regels: elke week, elke twee weken, elke maand op dezelfde weekdag. Met een einddatum of een aantal keren." |
+| `FR-AGE-15` | "Een herhaling wijzigen vraagt om reikwijdte" |
+| B-115 | de basisweek "maakt daar gewone **herhalende agenda-items** van" |
+| §9.5 | geen enkele invariant die herhaling verbiedt |
+
+B-115 zegt dus het tegenovergestelde van wat het commentaar hem toeschrijft: de basisweek
+bestaat júist bij de gratie van herhalende items. Zonder `recurrence` is B-115 niet te
+bouwen, en werkopdracht D09b begint met "Herhalen".
+
+**Besluit.** `recurrence` komt terug, precies zoals §6.2.5 hem beschrijft en niet ruimer:
+drie frequenties, en een einde dat óf een datum óf een aantal is. Geen `RRULE`.
+
+De vorm:
+
+```ts
+interface Recurrence {
+  frequency: "wekelijks" | "tweewekelijks" | "maandelijks";
+  until: IsoDate | null;   // precies één van deze twee is gevuld
+  count: number | null;
+  excludedDates: IsoDate[]; // de gaten van §6.2.5
+}
+```
+
+**Waarom precies één van `until` en `count`.** §6.2.5 zegt "met een einddatum of een aantal
+keren"; allebei leeg zou een reeks zonder einde opleveren, en die is in geen enkele weergave
+te tellen en nooit klaar met uitrekenen. Allebei gevuld zou twee einden geven waarvan de
+app er één moet kiezen — en welke, dat staat nergens.
+
+**Waarom niet het spooknummer alsnog betekenis geven.** Dat is wat B-117 verbiedt en het is
+hier extra verleidelijk, want het commentaar klínkt als een besluit. Maar er is nooit iemand
+geweest die dit heeft afgewogen; er is een regel geschreven en er is een nummer bij gezet.
+
+**Gevolg.** `Recurrence` staat in `domain/types/calendar.ts` en in het schema. De toets die
+een herhaalregel weigerde, toetst nu dat een geldige regel wordt aanvaard en een ongeldige
+niet. `RecurrenceService` rekent de instanties uit; de opslag draagt één record per reeks,
+niet per instantie (U-02: wat af te leiden is, wordt niet opgeslagen).
+
+**Herziening.** Vraagt iemand om een uitdrukking die deze drie regels niet aankunnen, dan
+is dat een nieuw besluit met een eigen afweging — niet een uitbreiding van dit.
 
 ---
 

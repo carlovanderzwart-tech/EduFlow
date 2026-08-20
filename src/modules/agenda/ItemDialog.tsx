@@ -12,15 +12,29 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Switch } from "@/ui/switch";
 import { Textarea } from "@/ui/textarea";
 import type { IsoDate } from "@/lib/dates";
-import { naarLokaleInvoer, opDag, plusMinuten, vanLokaleInvoer, volgendHalfUur } from "@/lib/weergave";
-import type { CalendarEvent, Student } from "@/domain/types";
+import {
+  naarLokaleInvoer,
+  opDag,
+  plusMinuten,
+  vandaag,
+  vanLokaleInvoer,
+  volgendHalfUur,
+} from "@/lib/weergave";
+import type { CalendarEvent, Recurrence, Student } from "@/domain/types";
 import {
   EIGEN_SOORTEN,
   HELE_DAG_STANDAARD,
   SOORTNAMEN,
   type EigenSoort,
 } from "@/services/agenda/AgendaService";
+import {
+  isVerschijning,
+  reeksVan,
+  type Reikwijdte,
+} from "@/services/agenda/RecurrenceService";
 import { diensten } from "@/services/diensten";
+
+import { Herhaalvelden } from "./Herhaalvelden";
 
 /**
  * Eén item maken of wijzigen (§6.2.5, `FR-AGE-04`, `FR-AGE-16`).
@@ -60,6 +74,7 @@ function beginstand(item: CalendarEvent | null, dag: IsoDate) {
       van,
       tot: plusMinuten(van, 30),
       studentId: "",
+      recurrence: null as Recurrence | null,
     };
   }
 
@@ -74,6 +89,7 @@ function beginstand(item: CalendarEvent | null, dag: IsoDate) {
     van: item.allDay ? opDag(dag, volgendHalfUur()) : item.start,
     tot: item.allDay ? plusMinuten(opDag(dag, volgendHalfUur()), 30) : item.end,
     studentId: item.studentIds[0] ?? "",
+    recurrence: item.recurrence,
   };
 }
 
@@ -81,6 +97,7 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
   const [stand, setStand] = useState(() => beginstand(item, dag));
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
+  const [vraagReikwijdte, setVraagReikwijdte] = useState(false);
 
   function wijzig(deel: Partial<typeof stand>) {
     setStand((huidig) => ({ ...huidig, ...deel }));
@@ -91,27 +108,53 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
     wijzig({ kind: nieuw, heleDag: HELE_DAG_STANDAARD[nieuw] });
   }
 
-  async function bewaar() {
-    setBezig(true);
-    setFout(null);
-
-    const { agenda } = await diensten();
+  /** Wat er wordt opgeslagen, in de vorm die `AgendaService` verwacht (INV-31). */
+  function invoerVan() {
     const gemeenschappelijk = {
       title: stand.title,
       kind: stand.kind,
       note: stand.note,
       location: stand.location,
       studentIds: stand.studentId ? [stand.studentId] : [],
+      recurrence: stand.recurrence,
     };
-    const invoer = stand.heleDag
+
+    return stand.heleDag
       ? ({ ...gemeenschappelijk, allDay: true, start: stand.dagVan, end: stand.dagTot } as const)
       : ({ ...gemeenschappelijk, allDay: false, start: stand.van, end: stand.tot } as const);
+  }
 
-    const uitkomst = item ? await agenda.wijzig(item.id, invoer) : await agenda.maak(invoer);
+  /**
+   * Hoort dit item bij een reeks?
+   *
+   * Twee gevallen: het opgeslagen record met de regel erop, of een uitgerekende
+   * verschijning ervan. Beide vragen om de reikwijdtevraag van `FR-AGE-15`.
+   */
+  const uitReeks = Boolean(item && (item.recurrence || isVerschijning(item.id)));
+
+  async function bewaar(reikwijdte?: Reikwijdte) {
+    setBezig(true);
+    setFout(null);
+
+    const { agenda } = await diensten();
+    const invoer = invoerVan();
+
+    const uitkomst =
+      item && reikwijdte
+        ? await agenda.wijzigReeks(reeksVan(item.id), dagVan(item), reikwijdte, invoer)
+        : item
+          ? await agenda.wijzig(item.id, invoer)
+          : await agenda.maak(invoer);
     setBezig(false);
 
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
     onKlaar();
+  }
+
+  function begin() {
+    // FR-AGE-15: bij een reeks eerst de vraag, met "Alleen deze" als voorselectie.
+    if (uitReeks) setVraagReikwijdte(true);
+    else void bewaar();
   }
 
   async function verwijder() {
@@ -134,7 +177,7 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
           className="space-y-4 px-4 pb-6"
           onSubmit={(gebeurtenis) => {
             gebeurtenis.preventDefault();
-            void bewaar();
+            begin();
           }}
         >
           <Field>
@@ -186,6 +229,12 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
             <Tijdvelden stand={stand} onWijzig={wijzig} />
           )}
 
+          <Herhaalvelden
+            waarde={stand.recurrence}
+            begin={stand.heleDag ? stand.dagVan : stand.van.slice(0, 10)}
+            onWijzig={(recurrence) => wijzig({ recurrence })}
+          />
+
           <Field>
             <FieldLabel htmlFor="item-notitie">Notitie</FieldLabel>
             <Textarea
@@ -213,9 +262,57 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
             ) : null}
           </div>
         </form>
+
+        {vraagReikwijdte ? (
+          <Reikwijdtevraag
+            onKies={(reikwijdte) => {
+              setVraagReikwijdte(false);
+              void bewaar(reikwijdte);
+            }}
+            onAfbreken={() => setVraagReikwijdte(false)}
+          />
+        ) : null}
       </SheetContent>
     </Sheet>
   );
+}
+
+/**
+ * "Alleen deze, of alle volgende?" (`FR-AGE-15`).
+ *
+ * **"Alleen deze" staat voorgeselecteerd** en staat daarom eerst. Dat is wat de eis
+ * vraagt, en het is de veilige kant: één dag verzetten is terug te draaien, een hele
+ * reeks omgooien is dat veel minder.
+ */
+function Reikwijdtevraag({
+  onKies,
+  onAfbreken,
+}: {
+  onKies: (reikwijdte: Reikwijdte) => void;
+  onAfbreken: () => void;
+}) {
+  return (
+    <div className="bg-background border-t px-4 py-3">
+      <p className="pb-2 text-sm font-medium">Dit item hoort bij een herhaling.</p>
+      <p className="text-muted-foreground pb-3 text-sm">Alleen deze, of alle volgende?</p>
+      <div className="flex flex-wrap gap-2">
+        <Button autoFocus onClick={() => onKies("deze")}>
+          Alleen deze
+        </Button>
+        <Button variant="outline" onClick={() => onKies("volgende")}>
+          Alle volgende
+        </Button>
+        <Button variant="ghost" onClick={onAfbreken}>
+          Annuleren
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** De dag waarop deze verschijning valt; die bepaalt waar de reeks wordt geknipt. */
+function dagVan(item: CalendarEvent): IsoDate {
+  return item.allDay ? item.start : vandaag(new Date(item.start));
 }
 
 /** `FR-AGE-04`: precies één leerling, en het scherm zegt waarom. */

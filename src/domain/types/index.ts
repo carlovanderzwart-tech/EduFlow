@@ -62,6 +62,8 @@ export type {
   CalendarEvent,
   CalendarEventKind,
   CalendarEventSource,
+  Recurrence,
+  RecurrenceFrequency,
   TimedCalendarEvent,
 } from "./calendar";
 export type { DisableableDetector, PupilNoun, Settings } from "./settings";

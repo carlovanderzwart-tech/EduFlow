@@ -33,6 +33,33 @@ export const zCalendarEventKind = z.enum([
 
 export const zCalendarEventSource = z.enum(["own", "holidayFile", "imported", "derived"]);
 
+export const zRecurrenceFrequency = z.enum(["wekelijks", "tweewekelijks", "maandelijks"]);
+
+/** §6.2.5: het aantal keren is er minstens twee, anders is het geen herhaling. */
+const MIN_HERHALINGEN = 2;
+
+/** Een reeks van drie jaar is de bovengrens; verder vooruit plant niemand een les. */
+const MAX_HERHALINGEN = 160;
+
+/**
+ * De herhaling (§6.2.5, B-123).
+ *
+ * De verfijning is de kern: **precies één** van `until` en `count`. Zonder die
+ * regel bestaat er een reeks zonder einde, en die is in geen enkele weergave te
+ * tellen en nooit klaar met uitrekenen.
+ */
+export const zRecurrence = z
+  .strictObject({
+    frequency: zRecurrenceFrequency,
+    until: zIsoDate.nullable(),
+    count: z.int().min(MIN_HERHALINGEN).max(MAX_HERHALINGEN).nullable(),
+    excludedDates: z.array(zIsoDate),
+  })
+  .refine((regel) => (regel.until === null) !== (regel.count === null), {
+    message: "Een herhaling eindigt op een datum óf na een aantal keren, niet allebei",
+    path: ["until"],
+  });
+
 const GEMEENSCHAPPELIJK = {
   ...BASISVELDEN,
   title: z.string().min(1).max(120),
@@ -44,6 +71,7 @@ const GEMEENSCHAPPELIJK = {
   documentationId: zUuid.nullable(),
   mailDraftId: zUuid.nullable(),
   source: zCalendarEventSource,
+  recurrence: zRecurrence.nullable(),
 };
 
 /** Het einde ligt niet vóór het begin (INV-30). */

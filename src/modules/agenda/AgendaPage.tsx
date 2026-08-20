@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Plus } from "lucide-react";
 import { useCallback, useState, useSyncExternalStore } from "react";
 
 import { ErrorMessage } from "@/ui/ErrorMessage";
@@ -21,13 +21,17 @@ import type { Vakantie } from "@/services/agenda/HolidayService";
 import type { Diensten } from "@/services/diensten";
 
 import { DayView } from "./DayView";
+import { ExportDialog } from "./ExportDialog";
 import { ItemDialog } from "./ItemDialog";
 import { MonthView } from "./MonthView";
+import { QuickAdd } from "./QuickAdd";
 import { VakantieDialoog } from "./VakantieDialoog";
 import { VakantieLijst } from "./VakantieLijst";
 import { WeekView } from "./WeekView";
 import { YearView } from "./YearView";
 import { useAgenda } from "./hooks/useAgenda";
+import { useMeldingen } from "./hooks/useMeldingen";
+import { useVerplaatsen } from "./hooks/useVerplaatsen";
 
 /**
  * De agenda (§6.2, `FR-AGE-01`).
@@ -49,6 +53,9 @@ const NAMEN: Record<Weergave, string> = {
 
 /** De laptopbreedte uit §5.2; wat de server aanneemt zolang er geen venster is. */
 const SERVERBREEDTE = 1280;
+
+/** Eén vaste lege lijst, zodat de meldingslus niet elke render opnieuw begint. */
+const LEEG: CalendarEvent[] = [];
 
 /**
  * De vensterbreedte als externe bron in plaats van als stand.
@@ -88,6 +95,7 @@ export function AgendaPage() {
   const [anker, setAnker] = useState<IsoDate>(vandaagIso());
   const [dialoog, setDialoog] = useState<{ item: CalendarEvent | null } | null>(null);
   const [vakantie, setVakantie] = useState<Vakantie | null>(null);
+  const [exporteren, setExporteren] = useState(false);
 
   const telefoon = breedte < TELEFOON_MAXIMUM_PX;
 
@@ -98,6 +106,10 @@ export function AgendaPage() {
 
   const { waarde, fout, bezig, herlaad } = useAgenda(actief, anker);
   const leerlingen = useLeerlingen();
+  const verplaatsen = useVerplaatsen(herlaad);
+  // FR-AGE-25: meldingen komen alleen terwijl dit tabblad open staat, ook op de
+  // achtergrond. Met de app dicht komt er niets, en dat zegt Instellingen erbij.
+  useMeldingen(waarde?.items ?? LEEG);
 
   return (
     <div className="mx-auto max-w-[80rem] space-y-4 p-4 md:p-6">
@@ -109,7 +121,12 @@ export function AgendaPage() {
         onSchuif={(richting) => setAnker(schuif(actief, anker, richting))}
         onVandaag={() => setAnker(vandaagIso())}
         onNieuw={() => setDialoog({ item: null })}
+        onExporteer={() => setExporteren(true)}
+        kanExporteren={Boolean(waarde?.schooljaar)}
       />
+
+      {/* FR-AGE-13: het snelveld ontleedt lokaal; er gaat niets naar een provider. */}
+      <QuickAdd dag={anker} leerlingen={leerlingen} onKlaar={herlaad} />
 
       {fout ? <ErrorMessage message={fout.message} nextStep="Vernieuw de pagina." /> : null}
       <Meldingen stand={waarde} />
@@ -128,6 +145,19 @@ export function AgendaPage() {
           }}
           onKiesItem={(item) => setDialoog({ item })}
           onKiesVakantie={setVakantie}
+          onToets={verplaatsen.opToets}
+          onLaatVallen={(item, naar) => void verplaatsen.laatVallen(item, naar)}
+        />
+      ) : null}
+
+      {verplaatsen.fout ? (
+        <ErrorMessage message={verplaatsen.fout} nextStep="Probeer het opnieuw." />
+      ) : null}
+
+      {verplaatsen.wachtend ? (
+        <Verplaatsvraag
+          onKies={verplaatsen.kiesReikwijdte}
+          onAfbreken={verplaatsen.laatWachtendVallen}
         />
       ) : null}
 
@@ -146,6 +176,20 @@ export function AgendaPage() {
           herlaad();
         }}
       />
+
+      {exporteren && waarde?.schooljaar ? (
+        <ExportDialog
+          schooljaar={waarde.schooljaar}
+          items={waarde.items}
+          vakanties={waarde.vakanties}
+          van={waarde.schooljaar.firstSchoolDay}
+          tot={waarde.schooljaar.lastSchoolDay}
+          laatste={waarde.laatsteExport}
+          gewijzigd={waarde.gewijzigdSindsExport}
+          onOpenChange={(open) => !open && setExporteren(false)}
+          onGeexporteerd={herlaad}
+        />
+      ) : null}
     </div>
   );
 }
@@ -203,6 +247,8 @@ interface BalkProps {
   onSchuif: (richting: -1 | 1) => void;
   onVandaag: () => void;
   onNieuw: () => void;
+  onExporteer: () => void;
+  kanExporteren: boolean;
 }
 
 /**
@@ -214,7 +260,17 @@ interface BalkProps {
  */
 const KEUZES: Weergave[] = ["dag", "week", "maand", "jaar"];
 
-function Balk({ weergave, telefoon, titel, onWeergave, onSchuif, onVandaag, onNieuw }: BalkProps) {
+function Balk({
+  weergave,
+  telefoon,
+  titel,
+  onWeergave,
+  onSchuif,
+  onVandaag,
+  onNieuw,
+  onExporteer,
+  kanExporteren,
+}: BalkProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
@@ -252,6 +308,18 @@ function Balk({ weergave, telefoon, titel, onWeergave, onSchuif, onVandaag, onNi
           ))}
         </div>
 
+        {/* Zonder schooljaar is er geen periode om te exporteren. De knop zegt dat
+            in plaats van niets te doen — een knop die stil weigert is erger dan een
+            knop die uit staat. */}
+        <Button
+          variant="outline"
+          disabled={!kanExporteren}
+          title={kanExporteren ? undefined : "Stel eerst je schooljaar in bij Instellingen."}
+          onClick={onExporteer}
+        >
+          <Download aria-hidden="true" />
+          Exporteren
+        </Button>
         <Button onClick={onNieuw}>
           <Plus aria-hidden="true" />
           Nieuw
@@ -269,6 +337,8 @@ interface VlakProps {
   onKiesDag: (dag: IsoDate) => void;
   onKiesItem: (item: CalendarEvent) => void;
   onKiesVakantie: (vakantie: Vakantie) => void;
+  onToets: (item: CalendarEvent, gebeurtenis: React.KeyboardEvent) => void;
+  onLaatVallen: (item: CalendarEvent, dag: IsoDate) => void;
 }
 
 function Weergavevlak({
@@ -279,6 +349,8 @@ function Weergavevlak({
   onKiesDag,
   onKiesItem,
   onKiesVakantie,
+  onToets,
+  onLaatVallen,
 }: VlakProps) {
   const vandaag = vandaagIso();
 
@@ -302,6 +374,8 @@ function Weergavevlak({
         vandaag={vandaag}
         onKiesDag={onKiesDag}
         onKiesItem={onKiesItem}
+        onToets={onToets}
+        onLaatVallen={onLaatVallen}
       />
     );
   }
@@ -343,6 +417,35 @@ function Weergavevlak({
 
 function Melding({ tekst }: { tekst: string }) {
   return <p className="bg-muted rounded-md px-3 py-2 text-sm">{tekst}</p>;
+}
+
+/**
+ * De reikwijdtevraag bij een verplaatsing (`FR-AGE-15`).
+ *
+ * Ook een sleep is een wijziging, en ook een pijltoets. Dat de vraag hier terugkomt is
+ * geen dubbeling met de itemdialoog maar dezelfde eis op de tweede weg.
+ */
+function Verplaatsvraag({
+  onKies,
+  onAfbreken,
+}: {
+  onKies: (reikwijdte: "deze" | "volgende") => void;
+  onAfbreken: () => void;
+}) {
+  return (
+    <div className="bg-muted flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-sm">
+      <span className="me-2">Dit item hoort bij een herhaling. Alleen deze, of alle volgende?</span>
+      <Button size="sm" autoFocus onClick={() => onKies("deze")}>
+        Alleen deze
+      </Button>
+      <Button size="sm" variant="outline" onClick={() => onKies("volgende")}>
+        Alle volgende
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onAfbreken}>
+        Annuleren
+      </Button>
+    </div>
+  );
 }
 
 /**
