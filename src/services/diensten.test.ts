@@ -73,6 +73,7 @@ describe("SettingsService — §8.3.14, §8.2.2", () => {
       defaultGroupId: null,
       defaultStudentIds: [],
       attentionThresholdDays: 42,
+      showAttention: true,
       pupilNoun: "leerling",
       disabledDetectors: [],
       showOutgoingRequest: true,
@@ -202,7 +203,35 @@ describe("DocumentationService — INV-07, INV-08, INV-16", () => {
     expect(fout(await documentation.maak({ ...invoer, date: "2026-08-19" }))).toMatch(/week vooruit/i);
   });
 
-  it("weigert een datum vóór het oudste schooljaar in de opslag (INV-16)", async () => {
+  /**
+   * INV-16's ondergrens, zoals B-126 hem heeft bijgesteld.
+   *
+   * Deze toets eiste eerst dat een documentatie van **vandaag** werd geweigerd zolang
+   * het schooljaar nog niet begonnen was. Dat is precies de fout die het lopen van de
+   * doorloop opleverde: vanaf een verse installatie in augustus was er geen
+   * documentatie te maken. De eis is bijgesteld met een besluit; de toets volgt dat
+   * besluit en niet omgekeerd.
+   */
+  it("laat een datum van vandaag door vóór de eerste schooldag (INV-16, B-126)", async () => {
+    await storage.create("schoolYears", {
+      name: "2026/2027",
+      firstSchoolDay: "2026-08-24",
+      lastSchoolDay: "2027-07-16",
+      region: "midden",
+      isCurrent: true,
+    });
+
+    const uitkomst = await documentation.maak({
+      title: "In de week vóór de start",
+      date: VANDAAG,
+      studentIds: [],
+      text: "",
+    });
+
+    expect(uitkomst.ok).toBe(true);
+  });
+
+  it("weigert een datum die echt vóór je opslag ligt (INV-16)", async () => {
     await storage.create("schoolYears", {
       name: "2026/2027",
       firstSchoolDay: "2026-08-24",
@@ -212,7 +241,7 @@ describe("DocumentationService — INV-07, INV-08, INV-16", () => {
     });
 
     const melding = fout(
-      await documentation.maak({ title: "Te vroeg", date: VANDAAG, studentIds: [], text: "" }),
+      await documentation.maak({ title: "Te vroeg", date: "2019-05-01", studentIds: [], text: "" }),
     );
 
     expect(melding).toMatch(/oudste schooljaar/i);

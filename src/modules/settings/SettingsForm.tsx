@@ -11,16 +11,23 @@ import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import { Switch } from "@/ui/switch";
 import { diensten } from "@/services/diensten";
 import type { PupilNoun, Region } from "@/domain/types";
+import {
+  AANDACHT_REGEL,
+  DREMPEL_MAX,
+  DREMPEL_MIN,
+} from "@/services/documentation/aandacht";
 
 export interface Instellingenformulier {
   pupilNoun: PupilNoun;
   attentionThresholdDays: number;
+  /** `FR-DAS-07`, B-125: uit betekent ook: niet berekenen. */
+  showAttention: boolean;
   showOutgoingRequest: boolean;
   region: Region;
 }
 
 /**
- * De vier instellingen die een scherm hebben, zonder opslaanknop (FR-INS-45).
+ * De instellingen die een scherm hebben, zonder opslaanknop (FR-INS-45).
  *
  * "Wanneer je het scherm verlaat, dan is er geen opslaanknop geweest: elke
  * wijziging is meteen opgeslagen en meteen van kracht, met een korte bevestiging in
@@ -44,9 +51,13 @@ export function SettingsForm({ begin }: { begin: Instellingenformulier }) {
     // De regio staat in `localStorage` en de rest in het ene record (§8.2.2, T-01).
     if (deel.region) settings.zetVoorkeur("region", deel.region);
 
+    // Elk veld dat een scherm heeft, staat hier. `Instellingenwijziging` is een
+    // `Partial`, dus een vergeten veld levert geen typefout op — het verdwijnt
+    // stilletjes en de schakelaar lijkt te werken tot je de pagina vernieuwt.
     const uitkomst = await settings.wijzig({
       pupilNoun: bijgewerkt.pupilNoun,
       attentionThresholdDays: bijgewerkt.attentionThresholdDays,
+      showAttention: bijgewerkt.showAttention,
       showOutgoingRequest: bijgewerkt.showOutgoingRequest,
     });
 
@@ -94,24 +105,44 @@ export function SettingsForm({ begin }: { begin: Instellingenformulier }) {
         </NativeSelect>
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="attention">Na hoeveel dagen vraagt een leerling aandacht?</FieldLabel>
-        <FieldDescription>
-          Zes weken is de periode tussen twee vakanties. Tussen 1 en 365 dagen.
+      {/* FR-DAS-07: uitzetten laat het blok verdwijnen én stopt de berekening. */}
+      <div>
+        <Field orientation="horizontal">
+          <Switch
+            id="show-attention"
+            checked={formulier.showAttention}
+            onCheckedChange={(aan) => void wijzig({ showAttention: aan })}
+          />
+          <Label htmlFor="show-attention">Toon het blok Aandacht op het dashboard</Label>
+        </Field>
+        <FieldDescription className="pt-1">
+          {AANDACHT_REGEL} Zet je het uit, dan wordt er ook niets meer uitgerekend.
         </FieldDescription>
-        <Input
-          id="attention"
-          type="number"
-          min={1}
-          max={365}
-          inputMode="numeric"
-          className="max-w-28"
-          value={formulier.attentionThresholdDays}
-          onChange={(gebeurtenis) =>
-            void wijzig({ attentionThresholdDays: Number(gebeurtenis.target.value) })
-          }
-        />
-      </Field>
+      </div>
+
+      {formulier.showAttention ? (
+        <Field>
+          <FieldLabel htmlFor="attention">
+            Na hoeveel schooldagen vraagt een leerling aandacht?
+          </FieldLabel>
+          <FieldDescription>
+            Eenentwintig schooldagen is ongeveer een maand lesgeven. Tussen {DREMPEL_MIN} en{" "}
+            {DREMPEL_MAX}. Vakantiedagen tellen niet mee.
+          </FieldDescription>
+          <Input
+            id="attention"
+            type="number"
+            min={DREMPEL_MIN}
+            max={DREMPEL_MAX}
+            inputMode="numeric"
+            className="max-w-28"
+            value={formulier.attentionThresholdDays}
+            onChange={(gebeurtenis) =>
+              void wijzig({ attentionThresholdDays: Number(gebeurtenis.target.value) })
+            }
+          />
+        </Field>
+      ) : null}
 
       <Field orientation="horizontal">
         <Switch

@@ -43,10 +43,14 @@ export function soortklasse(kind: CalendarEventKind): string {
   return SOORTKLASSE[kind];
 }
 
-/** De vakantie waarin deze dag valt, of `null`. */
-export function isVakantiedag(dag: IsoDate, vakanties: readonly Vakantie[]): Vakantie | null {
-  return vakanties.find((vakantie) => vakantie.from <= dag && dag <= vakantie.to) ?? null;
-}
+/**
+ * De vakantie waarin deze dag valt.
+ *
+ * Doorgegeven vanuit `HolidayService`: het is een vraag over vakanties en niet over de
+ * weergave, en het dashboard stelt hem ook. Twee weergaven die het elk zelf uitrekenen
+ * zijn twee plekken waar dezelfde regel staat (§10.2, DR-11).
+ */
+export { vakantieOp as isVakantiedag } from "@/services/agenda/HolidayService";
 
 /** De dag waarop dit item begint; bij een reeks bepaalt die waar hij wordt geknipt. */
 export function dagVanItem(item: { allDay: boolean; start: string }): IsoDate {
