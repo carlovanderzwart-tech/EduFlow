@@ -22,7 +22,7 @@
 
 import { tokenize } from "@/lib/text";
 import type { Uuid } from "@/lib/uuid";
-import type { Block, Documentation, Group, Page, Series, Student } from "@/domain/types";
+import type { Block, Documentation, Page, Series, Student } from "@/domain/types";
 import type { Result } from "@/lib/result";
 
 import type { StorageService } from "../storage/StorageService";

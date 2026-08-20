@@ -16,17 +16,9 @@
  * item laat bestaan en terugvinden.
  */
 
-import {
-  dagenVan,
-  isIsoDate,
-  isIsoDateTime,
-  overlapt,
-  type IsoDate,
-  type IsoDateTime,
-} from "@/lib/dates";
+import { isIsoDate, isIsoDateTime, type IsoDate, type IsoDateTime } from "@/lib/dates";
 import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
-import { vandaag } from "@/lib/weergave";
 import type {
   CalendarEvent,
   CalendarEventKind,
