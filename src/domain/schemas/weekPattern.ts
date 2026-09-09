@@ -1,5 +1,9 @@
 /**
- * Schema's van `weekPatterns` en `weekPatternOverrides` (§8.3.15, §8.3.16, B-98).
+ * Schema's van `weekPatterns` en `weekPatternOverrides`.
+ *
+ * > **Verdwijnt met B-131**, samen met de twee tabellen. Zie de kop van
+ * > `domain/types/weekPattern.ts` voor waarom. De verwijzingen naar `§8.3.15`,
+ * > `§8.3.16` en `B-98` stonden hier en bestaan geen van drieën.
  *
  * Eén regel staat hier: een weekonderdeel eindigt ná zijn begin, op dezelfde dag.
  * Vergelijken op de tekenreeks mag, want `UU:MM` heeft een vaste breedte.

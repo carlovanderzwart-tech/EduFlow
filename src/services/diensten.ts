@@ -34,6 +34,7 @@ import {
   type DocumentationService,
 } from "./documentation/DocumentationService";
 import { createLayoutService, type LayoutService } from "./documentation/LayoutService";
+import { createPdfService, type PdfService } from "./documentation/PdfService";
 import { createGroupService, type GroupService } from "./groups/GroupService";
 import { createRenderService, type RenderService } from "./render/RenderService";
 import { createPhotoService, type PhotoService } from "./photo/PhotoService";
@@ -71,6 +72,8 @@ export interface Diensten {
   layout: LayoutService;
   /** De enige weg van paginaplan naar beeld — voorbeeld én export (FR-DOC-113). */
   render: RenderService;
+  /** Diezelfde pagina's als één PDF (`FR-DOC-116`, B-128). */
+  pdf: PdfService;
   photos: PhotoService;
   /** De index in het geheugen; IndexedDB kan geen tekst doorzoeken (T-09). */
   search: SearchService;
@@ -106,6 +109,9 @@ async function bouw(): Promise<Diensten> {
     layout: createLayoutService({ meet: render.meet }),
     render,
     documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
+    // `pdf-lib` komt pas binnen als er geprint wordt; 400 kB hoort niet in het
+    // eerste scherm van een app die op een schoollaptop start (§17.2).
+    pdf: createPdfService({ laad: () => import("pdf-lib") }),
     // De hertekenaar komt uit `lib/`, want hij heeft een canvas nodig en DR-12 wil
     // `PhotoService` toetsbaar houden zonder browser.
     photos: createPhotoService({ storage, tekenen: hertekenViaCanvas }),

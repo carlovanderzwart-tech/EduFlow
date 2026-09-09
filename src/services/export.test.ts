@@ -22,10 +22,18 @@ import {
   type DocumentationService,
 } from "./documentation/DocumentationService";
 import { createLayoutService, type Exportinhoud } from "./documentation/LayoutService";
+import { createPdfService, PDF_PRODUCENT } from "./documentation/PdfService";
+import { vraagtToestemming } from "./documentation/toestemming";
 import type { Beeld } from "./render/doek";
 import { initialenkaart, vervangNamen } from "./render/initialen";
 import { namaakDoekmaker, TOETSSTIJL } from "./render/namaakdoek";
-import { createRenderService } from "./render/RenderService";
+import {
+  bestandsnaam,
+  createRenderService,
+  EXPORT_BREEDTE_PX,
+  EXPORT_HOOGTE_PX,
+  pdfBestandsnaam,
+} from "./render/RenderService";
 import { maakDatabase } from "./storage/db";
 import { createStorageService, type StorageService } from "./storage/StorageService";
 
@@ -254,5 +262,108 @@ describe("de hele keten van documentatie naar afbeelding — D08", () => {
 
     expect(alles).not.toContain("dyslexie");
     expect(Object.keys(inhoud())).not.toContain("privateNote");
+  });
+});
+
+/**
+ * De PDF (`FR-DOC-116`, B-128).
+ *
+ * Wat hier bewezen wordt is het bundelen: één bestand, één A4 liggend per pagina,
+ * in de volgorde van de nummers. Het beeld dat erin gaat is een **kop-JPEG** —
+ * SOI, SOF0 en EOI, zonder pixels. Dat is geen versoepeling: `bundel()` decodeert
+ * niets, het leest alleen de afmetingen uit de kop en legt de bytes op het blad.
+ * Wat er in die bytes staat is het werk van `RenderService`, en dat wordt hierboven
+ * al getoetst.
+ */
+function kopJpeg(breedte: number, hoogte: number): Blob {
+  const bytes = new Uint8Array([
+    0xff, 0xd8, // SOI
+    0xff, 0xc0, // SOF0
+    0x00, 0x0b, // lengte 11
+    0x08, // 8 bits per kanaal
+    (hoogte >> 8) & 0xff, hoogte & 0xff,
+    (breedte >> 8) & 0xff, breedte & 0xff,
+    0x01, // één kanaal
+    0x01, 0x11, 0x00,
+    0xff, 0xd9, // EOI
+  ]);
+  return new Blob([bytes], { type: "image/jpeg" });
+}
+
+describe("Print-PDF wordt in de app gemaakt — FR-DOC-116, B-128", () => {
+  const pdf = createPdfService({ laad: async () => await import("pdf-lib") });
+
+  function bladen(aantal: number) {
+    return Array.from({ length: aantal }, (_, plaats) => ({
+      nummer: plaats + 1,
+      jpeg: kopJpeg(EXPORT_BREEDTE_PX, EXPORT_HOOGTE_PX),
+    }));
+  }
+
+  it("levert één PDF met drie A4-liggende pagina's (FR-DOC-116)", async () => {
+    const uit = waarde(await pdf.bundel(bladen(3), "Kunstwerk Dok"));
+    expect(uit.type).toBe("application/pdf");
+
+    const { PDFDocument } = await import("pdf-lib");
+    const gelezen = await PDFDocument.load(new Uint8Array(await uit.arrayBuffer()));
+
+    expect(gelezen.getPageCount()).toBe(3);
+    for (const blad of gelezen.getPages()) {
+      // A4 liggend in punten: 297 × 210 mm. Afgerond, want 72/25,4 is oneindig.
+      expect(Math.round(blad.getWidth())).toBe(842);
+      expect(Math.round(blad.getHeight())).toBe(595);
+    }
+  });
+
+  it("houdt de volgorde aan van de paginanummers en niet van de aanroep (FR-DOC-116)", async () => {
+    const omgekeerd = [...bladen(3)].reverse();
+    const uit = waarde(await pdf.bundel(omgekeerd, "Kunstwerk Dok"));
+
+    const { PDFDocument } = await import("pdf-lib");
+    const gelezen = await PDFDocument.load(new Uint8Array(await uit.arrayBuffer()));
+    expect(gelezen.getPageCount()).toBe(3);
+  });
+
+  it("zet EduFlow als maker en niet de bibliotheek (DR-33)", async () => {
+    const uit = waarde(await pdf.bundel(bladen(1), "Kunstwerk Dok"));
+
+    const { PDFDocument } = await import("pdf-lib");
+    // `updateMetadata: false`, want laden stempelt anders zijn eigen naam over
+    // `Producer` heen — dan meet de toets de lezer in plaats van de schrijver.
+    const gelezen = await PDFDocument.load(new Uint8Array(await uit.arrayBuffer()), {
+      updateMetadata: false,
+    });
+
+    // De titel mag erin — die koos de gebruiker zelf voor dit bestand. De maker
+    // niet: `EduFlow` en niets uit de opslag.
+    expect(gelezen.getProducer()).toBe(PDF_PRODUCENT);
+    expect(gelezen.getCreator()).toBe(PDF_PRODUCENT);
+  });
+
+  it("weigert een lege export in plaats van een leeg bestand af te leveren (FR-DOC-119)", async () => {
+    const uit = await pdf.bundel([], "Kunstwerk Dok");
+    expect(uit.ok).toBe(false);
+  });
+
+  it("noemt het bestand naar de documentatie, zonder paginanummer (§5.12)", () => {
+    expect(pdfBestandsnaam("2026-10-13", "Kunstwerk Dok 2")).toBe("2026-10-13 Kunstwerk Dok 2.pdf");
+    // Eén bestand met drie bladen; `bestandsnaam` nummert wél, want dat zijn er drie.
+    expect(bestandsnaam("2026-10-13", "Kunstwerk Dok 2", 1, 3)).toBe(
+      "2026-10-13 Kunstwerk Dok 2 - pagina 1 van 3.jpg",
+    );
+  });
+});
+
+describe("de toestemmingsvraag blijft weg zonder foto's — B-130, FR-DOC-115", () => {
+  it("vraagt bij foto's zonder eerdere toestemming (FR-DOC-115)", () => {
+    expect(vraagtToestemming({ fotos: 3, toestemmingGegeven: false })).toBe(true);
+  });
+
+  it("vraagt niet twee keer bij dezelfde documentatie (FR-DOC-115, B-08)", () => {
+    expect(vraagtToestemming({ fotos: 3, toestemmingGegeven: true })).toBe(false);
+  });
+
+  it("vraagt niets bij een documentatie zonder foto's (B-130)", () => {
+    expect(vraagtToestemming({ fotos: 0, toestemmingGegeven: false })).toBe(false);
   });
 });

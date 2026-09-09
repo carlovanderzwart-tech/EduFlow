@@ -16,7 +16,7 @@
 import type { BaseRecord, Uuid } from "./base";
 
 /**
- * De vijf detectoren die je mag uitzetten (§6.3.10, FR-MAI-24).
+ * De vijf detectoren die je mag uitzetten (FR-MAI-24).
  *
  * BSN, IBAN, e-mailadres en telefoonnummer staan er met opzet niet bij: die zijn
  * "vast aan en grijs". Dat ze hier ontbreken is de handhaving — het type laat niet

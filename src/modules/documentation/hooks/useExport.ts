@@ -8,7 +8,7 @@ import { diensten, type Diensten } from "@/services/diensten";
 import type { Exportinhoud, Exportplan } from "@/services/documentation/LayoutService";
 import type { Beeld } from "@/services/render/doek";
 import { initialenkaart, vervangNamen } from "@/services/render/initialen";
-import { bestandsnaam } from "@/services/render/RenderService";
+import { bestandsnaam, pdfBestandsnaam } from "@/services/render/RenderService";
 
 /** Eén klaargemaakte pagina: het bestand zoals het verstuurd wordt (§5.12). */
 export interface Exportpagina {
@@ -23,6 +23,10 @@ export interface Exportstand {
   fout: string | null;
   plan: Exportplan | null;
   paginas: Exportpagina[];
+  /** De naam van de PDF; één bestand, dus zonder paginanummer (`FR-DOC-116`). */
+  pdfnaam: string;
+  /** Hoeveel foto's er op de pagina's staan; bepaalt of de vraag van B-08 komt. */
+  fotos: number;
   /** Waar de documentatie nu staat; het paneel meldt de overgang na het delen. */
   gedeeld: boolean;
   toestemmingGegeven: boolean;
@@ -33,6 +37,8 @@ const LEEG: Exportstand = {
   fout: null,
   plan: null,
   paginas: [],
+  pdfnaam: "",
+  fotos: 0,
   gedeeld: false,
   toestemmingGegeven: false,
 };
@@ -96,6 +102,8 @@ export function useExport(documentId: string, initialen: boolean, open: boolean)
         fout: null,
         plan,
         paginas,
+        pdfnaam: pdfBestandsnaam(verzameld.inhoud.datum, verzameld.inhoud.titel),
+        fotos: verzameld.inhoud.fotos.length,
         gedeeld: verzameld.status === "gedeeld",
         toestemmingGegeven: verzameld.toestemming,
       });

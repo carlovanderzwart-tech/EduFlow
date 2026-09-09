@@ -1,6 +1,6 @@
 "use client";
 
-import { NotebookPen, Plus, SearchX } from "lucide-react";
+import { Layers, NotebookPen, Plus, SearchX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -16,6 +16,7 @@ import { diensten, type Diensten } from "@/services/diensten";
 import type { Sortering, Treffer } from "@/services/search/SearchService";
 
 import { FilterBar, LEGE_STAND, type Zoekstand } from "./FilterBar";
+import { NieuweReeks } from "./NieuweReeks";
 
 /** FR-DOC-14: in blokken van vijftig, met een knop — geen oneindig scrollen. */
 const BLOK = 50;
@@ -39,6 +40,7 @@ export function DocumentationPage() {
   const router = useRouter();
   const [stand, setStand] = useState<Zoekstand>(LEGE_STAND);
   const [getoond, setGetoond] = useState(BLOK);
+  const [maaktReeks, setMaaktReeks] = useState(false);
 
   const laad = useCallback(async ({ search, series, groups, students, agenda, settings }: Diensten) => {
     const gevuld = await search.vul();
@@ -67,7 +69,7 @@ export function DocumentationPage() {
     };
   }, []);
 
-  const { waarde, fout, bezig } = useDienst(laad);
+  const { waarde, fout, bezig, herlaad } = useDienst(laad);
 
   // FR-DOC-12: zolang de gebruiker niets koos, geldt wat er onthouden is. Afgeleid
   // en niet in de toestand gekopieerd, want dat zou een effect vragen dat tijdens
@@ -112,12 +114,32 @@ export function DocumentationPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        {/* FR-DOC-126, B-127: een reeks maak je waar je hem gebruikt. Zonder deze
+            knop is de weg naar een nieuwe reeks: naar Instellingen, terug, en
+            hopen dat je filter er nog staat. */}
+        <Button variant="outline" onClick={() => setMaaktReeks((aan) => !aan)}>
+          <Layers aria-hidden="true" />
+          Nieuwe reeks
+        </Button>
         <Button onClick={() => router.push("/documentation/nieuw")}>
           <Plus aria-hidden="true" />
           Nieuwe documentatie
         </Button>
       </div>
+
+      {maaktReeks ? (
+        <NieuweReeks
+          aantalBestaand={waarde?.reeksen.length ?? 0}
+          onAnnuleer={() => setMaaktReeks(false)}
+          onGemaakt={() => {
+            setMaaktReeks(false);
+            // Het overzicht heeft geen onbewaard concept, dus herladen mag: de
+            // nieuwe reeks hoort meteen in het filter te staan.
+            herlaad();
+          }}
+        />
+      ) : null}
 
       {waarde ? (
         <FilterBar

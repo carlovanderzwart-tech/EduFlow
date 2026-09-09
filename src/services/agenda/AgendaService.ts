@@ -11,7 +11,7 @@
  * melding in plaats van een record.
  *
  * Wat er in deze eerste versie **niet** in zit: de vier weergaven van FR-AGE-01, het
- * snelveld van FR-AGE-13, slepen, de ICS-export, en de basisweek van §6.2.11 met
+ * snelveld van FR-AGE-13, slepen, de ICS-export, en de basisweek van B-115 met
  * `dagVan()`. Die staan in het handboek en komen later; hier staat alleen wat een
  * item laat bestaan en terugvinden.
  */

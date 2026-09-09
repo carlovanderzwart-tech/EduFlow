@@ -43,7 +43,7 @@ export interface MailMessageSummarised {
   summaryChars: number;
 }
 
-/** DE-34 — bij "Als concept in je mailprogramma" of "Kopieer" (§6.3.9). */
+/** DE-34 — bij "Als concept in je mailprogramma" of "Kopieer" (§9.6). */
 export interface MailDraftHandedOff {
   type: "MailDraftHandedOff";
   mailDraftId: Uuid;

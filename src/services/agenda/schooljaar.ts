@@ -14,6 +14,7 @@ import { dagenVan, isWeekend, plusMaanden, type IsoDate } from "@/lib/dates";
 import type { CalendarEvent } from "@/domain/types";
 
 import type { Vakantie } from "./HolidayService";
+import { dagenVanItem } from "./itemdagen";
 
 /** Wat een dag in de jaarweergave is. De volgorde is de voorrangsvolgorde. */
 export type Dagsoort = "vakantie" | "studiedag" | "margedag" | "weekend" | "schooldag" | "buiten";
@@ -25,6 +26,14 @@ export interface Jaardag {
   holidayKey: string | null;
   /** De naam van wat er die dag is, voor het tekstlabel bij de cel. */
   label: string;
+  /**
+   * Hoeveel afspraken er die dag staan (`FR-AGE-33`, B-129).
+   *
+   * Studiedagen en margedagen tellen niet mee: die kleuren de cel al, en een stip
+   * bovenop hun eigen kleur zegt niets nieuws. Een vakantie is geen agenda-item en
+   * komt hier dus vanzelf niet in voor.
+   */
+  items: number;
 }
 
 export interface Jaartellingen {
@@ -55,8 +64,15 @@ function sterkste(soorten: Dagsoort[]): Dagsoort {
   return VOORRANG.find((soort) => soorten.includes(soort)) ?? "schooldag";
 }
 
-/** Op welke dagen valt dit hele-dag-item? Een item met tijden telt hier niet mee. */
-function dagenVanItem(item: CalendarEvent): IsoDate[] {
+/**
+ * Op welke dagen valt dit hele-dag-item? Een item met tijden telt hier niet mee.
+ *
+ * Alleen voor studiedag en margedag: die zijn per definitie hele dagen, en een
+ * "studiedag" van 14:00 tot 15:00 hoort de kolom niet zwart te maken. Voor het
+ * tellen van afspraken geldt het omgekeerde — daar tellen tijden juist wél mee, en
+ * daarvoor staat `dagenVanItem` uit `itemdagen.ts` klaar.
+ */
+function heleDagenVan(item: CalendarEvent): IsoDate[] {
   return item.allDay ? dagenVan(item.start, item.end) : [];
 }
 
@@ -88,6 +104,7 @@ export function jaardagen(opzet: Jaaropzet): Map<IsoDate, Jaardag> {
       soort: winnaar,
       holidayKey: houdtOud ? bestaand.holidayKey : (holidayKey ?? bestaand?.holidayKey ?? null),
       label: houdtOud ? bestaand.label : label,
+      items: bestaand?.items ?? 0,
     });
   };
 
@@ -103,8 +120,18 @@ export function jaardagen(opzet: Jaaropzet): Map<IsoDate, Jaardag> {
 
   for (const item of opzet.items) {
     if (item.kind !== "studiedag" && item.kind !== "margedag") continue;
-    for (const dag of dagenVanItem(item)) {
+    for (const dag of heleDagenVan(item)) {
       if (uit.has(dag)) raak(dag, item.kind, item.title);
+    }
+  }
+
+  // Tellen gaat ná het toekennen van de soorten: een studiedag hoort niet óók nog
+  // als afspraak mee te tellen, want hij ís de kleur van de cel.
+  for (const item of opzet.items) {
+    if (item.kind === "studiedag" || item.kind === "margedag") continue;
+    for (const dag of dagenVanItem(item)) {
+      const bestaand = uit.get(dag);
+      if (bestaand) bestaand.items += 1;
     }
   }
 
@@ -152,9 +179,18 @@ export function jaarmaanden(
 
     return {
       maand,
-      dagen: dagenVan(maand, laatste).slice(0, -1).map(
-        (dag) => dagen.get(dag) ?? { dag, soort: "buiten" as const, holidayKey: null, label: "" },
-      ),
+      dagen: dagenVan(maand, laatste)
+        .slice(0, -1)
+        .map(
+          (dag) =>
+            dagen.get(dag) ?? {
+              dag,
+              soort: "buiten" as const,
+              holidayKey: null,
+              label: "",
+              items: 0,
+            },
+        ),
     };
   });
 }

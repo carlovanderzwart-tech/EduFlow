@@ -25,7 +25,7 @@ export type IsoDateTime = string;
 export type IsoDate = string;
 
 /**
- * Wandkloktijd zonder dag, Europe/Amsterdam: 08:30 (§8.3.15).
+ * Wandkloktijd zonder dag, Europe/Amsterdam: 08:30 (§8.1.4).
  *
  * De enige uitzondering op "alles in UTC", en hij heeft een reden. Een
  * weekonderdeel van de basisweek begint om half negen, en bij het invullen is nog

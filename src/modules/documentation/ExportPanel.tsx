@@ -2,7 +2,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 
-import { deelBestand, deelwijze, downloadBestand, kopieerAfbeelding } from "@/lib/delen";
+import { deelBestand, deelwijze, downloadBestand, kanDelen, kopieerAfbeelding } from "@/lib/delen";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
@@ -12,12 +12,16 @@ import { Skeleton } from "@/ui/skeleton";
 import { Switch } from "@/ui/switch";
 import { diensten } from "@/services/diensten";
 import { LAYOUTS } from "@/services/documentation/LayoutService";
+import { vraagtToestemming } from "@/services/documentation/toestemming";
 
 import { useExport, type Exportpagina, type Exportstand } from "./hooks/useExport";
 
 /** FR-DOC-115, B-08: de vraag die één keer per documentatie komt. */
 const TOESTEMMINGSVRAAG =
   "Op deze foto's staan kinderen. Heb je voor deze kinderen toestemming voor beeldgebruik?";
+
+/** De twee wegen naar buiten (§6.1.12). Beide zijn een export in de zin van `FR-DOC-118`. */
+export type Uitvoer = "afbeelding" | "pdf";
 
 interface ExportPanelProps {
   documentId: string;
@@ -42,15 +46,14 @@ interface ExportPanelProps {
  */
 export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps) {
   const [initialen, setInitialen] = useState(false);
-  const [vraagToestemming, setVraagToestemming] = useState(false);
+  const [vraagToestemming, setVraagToestemming] = useState<Uitvoer | null>(null);
   const { stand, setStand } = useExport(documentId, initialen, open);
   const { melding, fout, bezig, setFout, verstuur, bevestig } = useVersturen(documentId, stand, setStand);
 
-  /** FR-DOC-115: de vraag komt één keer per documentatie, daarna niet meer. */
-  function begin() {
+  function begin(soort: Uitvoer) {
     setFout(null);
-    if (stand.toestemmingGegeven) void verstuur();
-    else setVraagToestemming(true);
+    if (vraagtToestemming(stand)) setVraagToestemming(soort);
+    else void verstuur(soort);
   }
 
   return (
@@ -83,18 +86,25 @@ export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps
           <Knoppen
             kanVersturen={!stand.bezig && !bezig && stand.paginas.length > 0}
             bezig={bezig}
+            paginas={stand.paginas.length}
             onVerstuur={begin}
           />
         </div>
       </SheetContent>
 
       <ConfirmDialog
-        open={vraagToestemming}
-        onOpenChange={setVraagToestemming}
+        open={vraagToestemming !== null}
+        onOpenChange={(aan) => {
+          if (!aan) setVraagToestemming(null);
+        }}
         title="Toestemming beeldgebruik"
         description={TOESTEMMINGSVRAAG}
         confirmLabel="Ja, ik heb toestemming"
-        onConfirm={() => void bevestig()}
+        onConfirm={() => {
+          const soort = vraagToestemming;
+          setVraagToestemming(null);
+          if (soort) void bevestig(soort);
+        }}
       />
     </Sheet>
   );
@@ -118,14 +128,15 @@ function useVersturen(
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  async function verstuur() {
+  async function verstuur(soort: Uitvoer) {
     if (stand.paginas.length === 0) return setFout("Er is nog niets om te versturen.");
 
     // Het omzetten naar het klembord duurt bij een blad van 2480 px merkbaar lang.
     // Zonder deze merker lijkt de knop niets te doen en tikt de gebruiker nog eens.
     setBezig(true);
+    setMelding(null);
     try {
-      const wijze = await lever(stand.paginas);
+      const wijze = soort === "pdf" ? await leverPdf(stand) : await lever(stand.paginas);
       const { documentation } = await diensten();
       const uitkomst = await documentation.markeerGedeeld(documentId);
       if (!uitkomst.ok) return setFout(uitkomst.error.message);
@@ -140,13 +151,13 @@ function useVersturen(
     }
   }
 
-  async function bevestig() {
+  async function bevestig(soort: Uitvoer) {
     const { documentation } = await diensten();
     const uitkomst = await documentation.geefBeeldtoestemming(documentId);
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
 
     setStand((huidig) => ({ ...huidig, toestemmingGegeven: true }));
-    void verstuur();
+    void verstuur(soort);
   }
 
   return { melding, fout, bezig, setFout, verstuur, bevestig };
@@ -170,29 +181,34 @@ function Initialenschakelaar({ aan, onWijzig }: { aan: boolean; onWijzig: (aan: 
 /**
  * De twee knoppen (§6.1.12).
  *
- * Print-PDF is in de doorloop de printfunctie van de browser en dat staat er ook
- * zo bij; de eigen PDF uit `pdf-lib` is sprint 2 (T-03). Een knop die iets anders
- * doet dan hij belooft is erger dan een knop die zegt wat hij wél doet.
+ * Beide leveren precies de pagina's uit het voorbeeld hierboven en verder niets.
+ * Print-PDF liep tot B-128 via `window.print()`; dat drukte het scherm af — het
+ * formulier, de navigatie en dit paneel — in plaats van de documentatie. De PDF
+ * wordt nu in de app gemaakt, zoals `FR-DOC-116` al vroeg.
  */
 function Knoppen({
   kanVersturen,
   bezig,
+  paginas,
   onVerstuur,
 }: {
   kanVersturen: boolean;
   bezig: boolean;
-  onVerstuur: () => void;
+  paginas: number;
+  onVerstuur: (soort: Uitvoer) => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Button onClick={onVerstuur} disabled={!kanVersturen}>
+      <Button onClick={() => onVerstuur("afbeelding")} disabled={!kanVersturen}>
         {bezig ? "Bezig…" : "Deelbare afbeelding"}
       </Button>
-      <Button variant="outline" onClick={() => window.print()}>
+      <Button variant="outline" onClick={() => onVerstuur("pdf")} disabled={!kanVersturen}>
         Print-PDF
       </Button>
       <FieldDescription>
-        Print-PDF gebruikt in deze versie de printfunctie van je browser. De eigen PDF komt later.
+        {paginas === 1
+          ? "De PDF bevat één A4 liggend: precies het blad hierboven."
+          : `De PDF bevat ${paginas} A4's liggend: precies de bladen hierboven.`}
       </FieldDescription>
     </div>
   );
@@ -202,6 +218,8 @@ const MELDING = {
   gedeeld: "Het deelmenu is geopend met de afbeelding erin.",
   gekopieerd: "De afbeelding staat op je klembord. Plak hem in je mail.",
   gedownload: "De afbeelding staat in je map Downloads.",
+  "pdf-gedeeld": "Het deelmenu is geopend met de PDF erin.",
+  "pdf-gedownload": "De PDF staat in je map Downloads.",
 } as const;
 
 /**
@@ -220,6 +238,31 @@ async function lever(paginas: Exportpagina[]) {
   else for (const pagina of paginas) downloadBestand(pagina.bestand);
 
   return wijze;
+}
+
+/**
+ * De PDF: één bestand, alle bladen (`FR-DOC-116`, B-128).
+ *
+ * Geen klembord in de rij: een PDF plak je niet in een mailvenster. Delen als het
+ * apparaat het kan, anders downloaden — de twee wegen die voor een document
+ * bestaan.
+ */
+async function leverPdf(stand: Exportstand) {
+  const { pdf } = await diensten();
+  const uitkomst = await pdf.bundel(
+    stand.paginas.map((pagina) => ({ nummer: pagina.nummer, jpeg: pagina.bestand })),
+    stand.pdfnaam.replace(/\.pdf$/u, ""),
+  );
+  if (!uitkomst.ok) throw new Error(uitkomst.error.message);
+
+  const bestand = new File([uitkomst.value], stand.pdfnaam, { type: "application/pdf" });
+  if (kanDelen(bestand)) {
+    await deelBestand(bestand, stand.pdfnaam);
+    return "pdf-gedeeld" as const;
+  }
+
+  downloadBestand(bestand);
+  return "pdf-gedownload" as const;
 }
 
 /**

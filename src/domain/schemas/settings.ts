@@ -15,7 +15,7 @@ import { z } from "zod";
 
 import { recordSchema, zUuid } from "./base";
 
-/** De vijf detectoren die je mag uitzetten (§6.3.10, FR-MAI-24). */
+/** De vijf detectoren die je mag uitzetten (FR-MAI-24). */
 export const zDisableableDetector = z.enum([
   "adres",
   "aanhef",
