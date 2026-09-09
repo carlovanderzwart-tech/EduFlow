@@ -33,7 +33,7 @@ export const zIsoDateTime = z
   .string()
   .refine(isIsoDateTime, "Verwacht een tijdstip in UTC met milliseconden");
 export const zIsoDate = z.string().refine(isIsoDate, "Verwacht JJJJ-MM-DD");
-/** Wandkloktijd zonder dag (§8.3.15). */
+/** Wandkloktijd zonder dag; het omrekenen gebeurt in de weergavelaag (§8.1.4). */
 export const zLocalTime = z.string().refine(isLocalTime, "Verwacht UU:MM");
 
 /**

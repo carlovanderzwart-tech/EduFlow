@@ -1,15 +1,30 @@
 /**
- * De basisweek en wat er per dag van afwijkt (§6.2.11, §8.3.15, §8.3.16, B-98).
+ * De basisweek en wat er per dag van afwijkt.
+ *
+ * > **Dit model staat op de nominatie om te verdwijnen (B-131).** B-115 heeft
+ * > besloten dat de basisweek een *invoerscherm* is en geen tweede gegevensmodel:
+ * > je vult je vaste week in en de app maakt daar gewone herhalende agenda-items
+ * > van. De omzetting hoorde bij D09b en is daar niet gedaan. Zolang deze bestanden
+ * > er staan, zijn er twee mechanismen voor één probleem — precies wat U-05 en
+ * > DR-03 verbieden. Niets in `services/` of `modules/` raakt dit model nog aan;
+ * > alleen de twee Dexie-tabellen bestaan nog, en die gaan er met een
+ * > versieverhoging uit.
+ *
+ * De kop hierboven beriep zich tot B-131 op `§6.2.11`, `§8.3.15`, `§8.3.16`,
+ * `B-98`, `B-99` en `B-100`. Geen van die zes bestaat: de drie paragrafen staan
+ * niet in het handboek en de drie nummers vallen in het gat tussen `B-97` en
+ * `B-103` dat bij de nummercorrectie van 11 augustus is ontstaan. Ze zijn hier weg
+ * gehaald in plaats van vervangen, want de tekst eronder beschreef een ontwerp dat
+ * B-115 al had teruggedraaid.
  *
  * De leerkracht vult zijn normale week één keer in; de app zet die door naar zijn
- * schooldagen. Wat dat oplevert wordt **berekend en nooit opgeslagen** (B-100):
- * er is geen type voor, want er is geen record.
+ * schooldagen. Wat dat oplevert wordt berekend en nooit opgeslagen: er is geen type
+ * voor, want er is geen record.
  *
- * Een wijziging aan de basisweek werkt vanaf een datum (B-99). Daarom is er niet
- * één basisweek per schooljaar maar één per geldigheidsperiode: elke wijziging
- * sluit de lopende af en opent een nieuwe. Oude dagen wijzen zo vanzelf naar de
- * versie die toen gold, en het verleden kan niet stukgaan. Dat is dezelfde vorm
- * als `GroupMembership` met `from` en `to` (INV-24, B-16), en om dezelfde reden.
+ * Een wijziging werkt vanaf een datum. Daarom is er niet één basisweek per
+ * schooljaar maar één per geldigheidsperiode: elke wijziging sluit de lopende af en
+ * opent een nieuwe. Dat is dezelfde vorm als `GroupMembership` met `from` en `to`
+ * (INV-24, B-16), en om dezelfde reden.
  */
 
 import type { BaseRecord, IsoDate, LocalTime, Uuid } from "./base";
@@ -42,7 +57,10 @@ export interface WeekPattern extends BaseRecord {
 }
 
 /**
- * Wat er op één concrete dag anders is (FR-AGE-29).
+ * Wat er op één concrete dag anders is.
+ *
+ * `FR-AGE-29` stond hier als bron, maar B-115 heeft die eis herschreven: hij gaat nu
+ * over het invoerscherm dat herhalende items maakt, niet over dit record.
  *
  * Drie varianten die elkaar uitsluiten. Een **extra** activiteit op één dag staat
  * hier niet bij: dat is gewoon een agenda-item, en daar bestaat `CalendarEvent`

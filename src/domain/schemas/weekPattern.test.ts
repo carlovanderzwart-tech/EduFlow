@@ -6,7 +6,7 @@ import { aangepasteDag, basisweek, vakantieperiode, zonderVeld } from "../toetsg
 import { zHolidayPeriod } from "./schoolYear";
 import { zWeekPattern, zWeekPatternOverride } from "./weekPattern";
 
-describe("zWeekPattern — §8.3.15, B-98", () => {
+describe("zWeekPattern — B-115, B-131", () => {
   it("laat een geldige basisweek door", () => {
     expect(zWeekPattern.safeParse(basisweek()).success).toBe(true);
   });
@@ -15,7 +15,7 @@ describe("zWeekPattern — §8.3.15, B-98", () => {
     expect(zWeekPattern.safeParse({ ...basisweek(), validTo: null }).success).toBe(true);
   });
 
-  it("weigert een geldigheidsperiode die eindigt vóór hij begint (B-99)", () => {
+  it("weigert een geldigheidsperiode die eindigt vóór hij begint", () => {
     const omgekeerd = { ...basisweek(), validFrom: "2026-11-01", validTo: "2026-10-31" };
 
     expect(zWeekPattern.safeParse(omgekeerd).success).toBe(false);
@@ -47,7 +47,7 @@ describe("B-115 — een weekonderdeel eindigt ná zijn begin", () => {
     expect(zWeekPattern.safeParse(metOnderdeel({ endTime: "08:30" })).success).toBe(false);
   });
 
-  it("weigert een tijd die geen wandkloktijd is (§8.3.15)", () => {
+  it("weigert een tijd die geen wandkloktijd is (§8.1.4)", () => {
     expect(zWeekPattern.safeParse(metOnderdeel({ startTime: "8:30" })).success).toBe(false);
     expect(zWeekPattern.safeParse(metOnderdeel({ startTime: "24:00" })).success).toBe(false);
     expect(
@@ -61,7 +61,7 @@ describe("B-115 — een weekonderdeel eindigt ná zijn begin", () => {
   });
 });
 
-describe("zWeekPatternOverride — §8.3.16", () => {
+describe("zWeekPatternOverride — B-115, B-131", () => {
   it("kent drie soorten en geen vierde", () => {
     expect(zWeekPatternOverride.safeParse(aangepasteDag()).success).toBe(true);
     expect(

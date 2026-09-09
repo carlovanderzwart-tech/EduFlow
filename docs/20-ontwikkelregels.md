@@ -82,7 +82,7 @@ Voor je één regel code schrijft:
 |---|---|
 | DR-51 | Nederlandse schermteksten, Engelse code (§9.9 en §20.2). Nooit half. |
 | DR-52 | Namen uit §5.1 en §5.2 zijn bindend. Verzin geen `DocService` naast `DocumentationService`. |
-| DR-53 | Geen bestand boven 400 regels, geen functie boven 60 regels (NFR-44). |
+| DR-53 | Geen bestand boven 400 regels, geen functie boven 60 regels (NFR-44). Overschrijding is een lintwaarschuwing en geen fout, maar wél een verplichte overweging: je splitst hem, of je zet erbij waarom niet. De grens geldt voor een scherm net zo hard als voor een service — hij verruimen zodat de code er weer onder past, is hetzelfde als een toets versoepelen tot hij groen wordt (B-131, DR-45). |
 | DR-54 | Geen magische getallen. Een drempel, een grens of een duur staat als benoemde constante, met een verwijzing naar de eis. |
 | DR-55 | Geen vaste waarden in componenten: kleuren, ruimtes, straal en duur komen uit de tokens (§5.6). |
 | DR-56 | Commentaar legt uit *waarom*, niet *wat*. Een regel die uitlegt wat de code doet, is een regel die de code niet duidelijk genoeg maakt. |

@@ -109,11 +109,19 @@ const eslintConfig = defineConfig([
           basePath: "./src",
           zones: [
             // modules/ importeert nooit uit een andere modules/-map.
+            //
+            // De namen hieronder zijn de **mapnamen op schijf** en niet de
+            // Nederlandse modulenamen uit §6. Twee regels noemden `documentaties`
+            // en `instellingen`, maar de mappen heten `documentation` en
+            // `settings`. Een zone die naar een niet-bestaande map wijst grijpt
+            // nergens op aan en faalt ook niet — hij zwijgt. Daardoor mochten
+            // precies die twee modules jarenlang uit elkaar importeren terwijl de
+            // regel op `error` stond. Gevonden bij de registeraudit van B-131.
             { target: "./modules/dashboard", from: "./modules", except: ["./dashboard"] },
-            { target: "./modules/documentaties", from: "./modules", except: ["./documentaties"] },
+            { target: "./modules/documentation", from: "./modules", except: ["./documentation"] },
             { target: "./modules/agenda", from: "./modules", except: ["./agenda"] },
             { target: "./modules/mail", from: "./modules", except: ["./mail"] },
-            { target: "./modules/instellingen", from: "./modules", except: ["./instellingen"] },
+            { target: "./modules/settings", from: "./modules", except: ["./settings"] },
 
             // DR-17 — geen service kent een scherm.
             {

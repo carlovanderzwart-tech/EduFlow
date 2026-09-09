@@ -455,6 +455,90 @@ describe("het schooljaar als raster — §6.2.3, B-10", () => {
     expect(augustus.dagen[0]!.soort).toBe("buiten");
     expect(augustus.dagen[23]!.soort).toBe("schooldag");
   });
+
+  describe("de stip bij een geplande dag — FR-AGE-33, B-129", () => {
+    function met(items: unknown[]) {
+      return jaardagen({ ...opzet, items: items as never });
+    }
+
+    it("telt een afspraak met tijden op de dag waarop hij valt (FR-AGE-33)", () => {
+      const dagen = met([
+        {
+          kind: "afspraak",
+          allDay: false,
+          start: "2026-09-15T12:30:00.000Z",
+          end: "2026-09-15T13:00:00.000Z",
+          title: "Oudergesprek",
+        },
+      ]);
+
+      expect(dagen.get("2026-09-15")!.items).toBe(1);
+      expect(dagen.get("2026-09-16")!.items).toBe(0);
+    });
+
+    it("zet een meerdaagse afspraak op elke dag die hij raakt (FR-AGE-33)", () => {
+      const dagen = met([
+        {
+          kind: "afspraak",
+          allDay: true,
+          start: "2026-09-15",
+          end: "2026-09-17",
+          title: "Schoolreis",
+        },
+      ]);
+
+      expect(dagen.get("2026-09-15")!.items).toBe(1);
+      expect(dagen.get("2026-09-16")!.items).toBe(1);
+      expect(dagen.get("2026-09-17")!.items).toBe(1);
+      expect(dagen.get("2026-09-18")!.items).toBe(0);
+    });
+
+    it("telt een studiedag niet mee, want die is al de kleur van de cel (FR-AGE-33)", () => {
+      const dagen = met([
+        { kind: "studiedag", allDay: true, start: "2026-09-15", end: "2026-09-15", title: "Teamdag" },
+        { kind: "margedag", allDay: true, start: "2026-09-16", end: "2026-09-16", title: "Margedag" },
+      ]);
+
+      expect(dagen.get("2026-09-15")!.soort).toBe("studiedag");
+      expect(dagen.get("2026-09-15")!.items).toBe(0);
+      expect(dagen.get("2026-09-16")!.items).toBe(0);
+    });
+
+    it("telt twee afspraken op dezelfde dag als twee (FR-AGE-33)", () => {
+      const dagen = met([
+        {
+          kind: "afspraak",
+          allDay: false,
+          start: "2026-09-15T08:00:00.000Z",
+          end: "2026-09-15T09:00:00.000Z",
+          title: "Overleg",
+        },
+        {
+          kind: "afspraak",
+          allDay: false,
+          start: "2026-09-15T12:00:00.000Z",
+          end: "2026-09-15T13:00:00.000Z",
+          title: "Oudergesprek",
+        },
+      ]);
+
+      expect(dagen.get("2026-09-15")!.items).toBe(2);
+    });
+
+    it("laat een afspraak buiten het schooljaar het raster niet raken (FR-AGE-33)", () => {
+      const dagen = met([
+        {
+          kind: "afspraak",
+          allDay: true,
+          start: "2026-08-01",
+          end: "2026-08-01",
+          title: "Vakantieklus",
+        },
+      ]);
+
+      expect(dagen.has("2026-08-01")).toBe(false);
+    });
+  });
 });
 
 describe("twee keer synchroniseren vult niet twee keer", () => {

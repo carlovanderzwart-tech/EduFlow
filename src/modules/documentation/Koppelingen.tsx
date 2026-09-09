@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Checkbox } from "@/ui/checkbox";
 import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/ui/field";
 import { Label } from "@/ui/label";
@@ -7,11 +9,21 @@ import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import type { Group, Series, Student } from "@/domain/types";
 import { weergavenaam } from "@/services/students/StudentService";
 
+import { NieuweReeks } from "./NieuweReeks";
+
 interface Koppelingenvelden {
   seriesId: string;
   studentIds: string[];
   groupIds: string[];
 }
+
+/**
+ * De regel onderaan de reekskeuze, letterlijk uit §6.1.
+ *
+ * De waarde begint met een teken dat geen uuid kan zijn, zodat hij nooit met een
+ * echte reeks kan botsen.
+ */
+const NIEUW = "+nieuw";
 
 /**
  * Waar een documentatie aan hangt (FR-DOC-05, FR-DOC-06).
@@ -43,24 +55,11 @@ export function Koppelingen({
 
   return (
     <div className="space-y-6">
-      <Field>
-        <FieldLabel htmlFor="reeks">Reeks</FieldLabel>
-        <FieldDescription>
-          Hoort deze documentatie bij een reeks? De naam komt niet in de titel te staan.
-        </FieldDescription>
-        <NativeSelect
-          id="reeks"
-          value={formulier.seriesId}
-          onChange={(gebeurtenis) => onWijzig({ seriesId: gebeurtenis.target.value })}
-        >
-          <NativeSelectOption value="">Geen reeks</NativeSelectOption>
-          {reeksen.map((reeks) => (
-            <NativeSelectOption key={reeks.id} value={reeks.id}>
-              {reeks.name}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-      </Field>
+      <Reeksveld
+        gekozen={formulier.seriesId}
+        reeksen={reeksen}
+        onKies={(seriesId) => onWijzig({ seriesId })}
+      />
 
       <FieldSet>
         <FieldLegend variant="label">Leerlingen</FieldLegend>
@@ -107,5 +106,73 @@ export function Koppelingen({
         </FieldSet>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * De reekskeuze, met "Nieuwe reeks maken…" onderaan (§6.1, `FR-DOC-125`, B-127).
+ *
+ * De net gemaakte reeks wordt hier bij de lijst gezet in plaats van dat het hele
+ * scherm opnieuw laadt. Herladen zou het concept waar je in typt weggooien — en
+ * dat is precies het werk dat je probeerde te bewaren.
+ */
+function Reeksveld({
+  gekozen,
+  reeksen,
+  onKies,
+}: {
+  gekozen: string;
+  reeksen: Series[];
+  onKies: (seriesId: string) => void;
+}) {
+  const [nieuwe, setNieuwe] = useState<Series[]>([]);
+  const [maakt, setMaakt] = useState(false);
+
+  const alle = [...reeksen, ...nieuwe].sort((a, b) => a.name.localeCompare(b.name, "nl"));
+
+  if (maakt) {
+    return (
+      <Field>
+        <FieldLabel htmlFor="reeks">Reeks</FieldLabel>
+        <NieuweReeks
+          aantalBestaand={alle.length}
+          onAnnuleer={() => setMaakt(false)}
+          onGemaakt={(reeks) => {
+            setNieuwe((eerder) => [...eerder, reeks]);
+            setMaakt(false);
+            // Wie een reeks maakt terwijl hij aan het schrijven is, wil hem er
+            // ook aan hangen. Anders staat hij er wel maar hangt de documentatie
+            // nog nergens aan.
+            onKies(reeks.id);
+          }}
+        />
+      </Field>
+    );
+  }
+
+  return (
+    <Field>
+      <FieldLabel htmlFor="reeks">Reeks</FieldLabel>
+      <FieldDescription>
+        Hoort deze documentatie bij een reeks? De naam komt niet in de titel te staan.
+      </FieldDescription>
+      <NativeSelect
+        id="reeks"
+        value={gekozen}
+        onChange={(gebeurtenis) => {
+          const waarde = gebeurtenis.target.value;
+          if (waarde === NIEUW) setMaakt(true);
+          else onKies(waarde);
+        }}
+      >
+        <NativeSelectOption value="">Geen reeks</NativeSelectOption>
+        {alle.map((reeks) => (
+          <NativeSelectOption key={reeks.id} value={reeks.id}>
+            {reeks.name}
+          </NativeSelectOption>
+        ))}
+        <NativeSelectOption value={NIEUW}>Nieuwe reeks maken…</NativeSelectOption>
+      </NativeSelect>
+    </Field>
   );
 }

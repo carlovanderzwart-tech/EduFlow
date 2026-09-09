@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-126** · **T-46** · **INV-54** · **FR-AGE-31**
+> ## Laatst uitgegeven nummers: **B-131** · **T-46** · **INV-54** · **FR-AGE-33** · **FR-DOC-126**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,211 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 9 september 2026 — na de eerste eigen test
+
+De opdrachtgever heeft de doorloop voor het eerst zelf gelopen. Vijf punten kwamen
+terug, en twee openstaande adviezen zijn met "ga volledig mee in jouw advies"
+afgehandeld. Wat daaruit volgt staat hieronder.
+
+## B-127 — Een reeks maak je waar je hem nodig hebt
+
+**Probleem.** *"In de documentatie kan ik wel een reeks selecteren maar niet
+aanmaken."* Reeksen bestonden alleen in Instellingen. Wie tijdens het schrijven merkt
+dat deze documentatie bij een nieuwe reeks hoort, moest opslaan, wegnavigeren, de
+reeks maken, terugkomen en hopen dat zijn concept er nog stond.
+
+**En het stond er al.** §6.1 schrijft voor: *"Reeks is een keuzeveld met zoeken, met
+onderaan altijd de regel «Nieuwe reeks maken…»"*. Die regel was nooit gebouwd. Dit
+besluit is dus voor de helft geen besluit maar een omissie die wordt ingelost.
+
+**Besluit.** Een reeks is te maken op twee plekken buiten Instellingen: onderaan de
+reekskeuze in het schrijfscherm, en met een knop op het overzicht. Beide gebruiken
+hetzelfde blok, dat **inline** verschijnt en geen venster is — een overlay boven een
+formulier waarin je net typte legt je eigen tekst weg achter een tweede laag.
+
+**Waarom niet alleen in het schrijfscherm.** Het overzicht is waar je op reeks
+filtert. Merk je daar dat een reeks ontbreekt, dan is de omweg via Instellingen
+hetzelfde probleem in een ander scherm.
+
+**Grens.** Alleen aanmaken. Wijzigen en verwijderen blijven in Instellingen, want
+§6.5.3 kent die twee daar en een reeks verwijderen raakt documentaties (INV-20,
+`FR-INS-12`). De regels blijven van `SeriesService`; er wordt niets nagerekend wat
+daar al staat (U-03).
+
+### Nieuwe eisen
+
+**FR-DOC-125 — De reekskeuze eindigt op "Nieuwe reeks maken…".** *Gegeven* het
+schrijfscherm, *wanneer* je de reekskeuze opent, *dan* staat onderaan de lijst de
+regel "Nieuwe reeks maken…"; *wanneer* je hem kiest, *dan* komt er een invulblok op
+de plaats van het keuzeveld, en na het toevoegen staat de nieuwe reeks in de lijst
+én is hij gekozen. Volgt uit §6.1 en B-127.
+
+**FR-DOC-126 — Een reeks is te maken vanuit het overzicht.** *Gegeven* het overzicht
+van documentaties, *wanneer* je "Nieuwe reeks" kiest, *dan* verschijnt hetzelfde
+invulblok, en na het toevoegen staat de reeks in het reeksfilter. Volgt uit B-127.
+
+## B-128 — Print-PDF komt uit de app, niet uit de browser
+
+**Probleem.** *"In de bijlage heb ik het printbare pdf opgenomen, dit is nog steeds
+niet goed. Ik wil alleen de documentatie printen, al die andere dingen niet."* De
+bijgeleverde PDF telde dertien pagina's met het schrijfformulier, de leerlingenlijst,
+de navigatie en het exportpaneel erop. De documentatie zelf stond er niet als pagina
+in.
+
+**Oorzaak.** De knop riep `window.print()` aan. Dat drukt het scherm af. Er was geen
+`@media print` in de hele codebase, dus "het scherm" betekende letterlijk alles.
+
+**Dit was al beslist.** `FR-DOC-116` staat er sinds het handboek: *"één PDF met drie
+A4-liggende pagina's, gegenereerd in de app en niet via de printfunctie van de
+browser"*. D08 heeft die eis niet ingelost en er een eerlijk bijschrift onder gezet —
+*"Print-PDF gebruikt in deze versie de printfunctie van je browser"* — maar een
+eerlijk bijschrift onder iets wat niet werkt, blijft iets wat niet werkt.
+
+**Besluit.** De PDF wordt in de app gemaakt met `pdf-lib` (T-14, §16), en het blad is
+**de al gerenderde JPEG**. Er wordt niets opnieuw getekend en niets opnieuw gemeten:
+`RenderService` heeft de pagina al op 2480 × 1754 gezet en die afbeelding gaat als
+geheel op een A4 liggend van 297 × 210 mm.
+
+**Waarom het beeld en niet opnieuw tekenen.** Dan kan de PDF per definitie niet
+afwijken van de deelbare afbeelding — hetzelfde beeld, een andere verpakking. Dat is
+`FR-DOC-113` ("het voorbeeld ís het bestand") doorgetrokken naar papier. Een tweede
+tekenpad naar de printer is precies waar B-27 al voor waarschuwde.
+
+**Gevolg.** `window.print()` is weg. `pdf-lib` wordt pas geladen als je op de knop
+drukt: 400 kB in het eerste scherm van een app die op een schoollaptop moet starten,
+voor een knop die de meeste sessies niet wordt aangeraakt, is de verkeerde ruil
+(§17.2). Print-PDF telt als export in de zin van `FR-DOC-118`, net als de afbeelding.
+
+## B-129 — De jaarcel toont zijn dagnummer en een stip
+
+**Probleem.** Twee punten uit dezelfde weergave. *"In het jaaroverzicht van de agenda
+staan nu geen datums."* En: *"Ook kan ik niet zien of er iets gepland is op een dag."*
+
+Zonder nummer is "welke dag is dit" alleen te beantwoorden door rijen te tellen vanaf
+de bovenkant van de kolom. Zonder stip is de jaarweergave een vakantiekalender: hij
+toont wat de school besloot en niet wat jij hebt afgesproken.
+
+**Besluit.** Elke cel draagt links zijn dagnummer en rechts een stip zodra er die dag
+iets in de agenda staat. De cel groeit van 14 naar 16 px hoog; de letter is `2xs`
+(11 px), de laagste trap van §5.4.
+
+**Wat de stip telt.** Alle agenda-items van die dag, **behalve** studiedagen en
+margedagen. Die kleuren de cel al, en een stip bovenop hun eigen kleur zegt niets
+nieuws. Een vakantie is geen agenda-item en komt er vanzelf niet in voor.
+
+**`FR-AGE-06` blijft staan.** Nagemeten op 1280 × 800: geen horizontaal en geen
+verticaal schuiven. 31 rijen van 16 px met 1 px ertussen is 526 px.
+
+**Kleur is nooit de enige drager** (NFR-38). De stip staat in de legenda, en het
+`aria-label` van de cel zegt het voluit: "15 september — schooldag — 1 afspraak".
+
+**Contrast.** Het dagnummer komt op vijf ondergronden te staan en §5.3 vraagt overal
+4,5:1. Nagemeten in beide thema's; alles haalt het. Eén regel is daarvoor aangepast:
+de weekendcel krijgt de gewone letterkleur en niet de gedempte, want die haalde op
+`bg-muted` maar 4,34. Dat de weekendkolom terugtreedt doet de vulling al.
+
+### Nieuwe eisen
+
+**FR-AGE-32 — Elke cel in de jaarweergave draagt zijn dagnummer.** *Gegeven* de
+jaarweergave, *dan* staat in elke cel het nummer van die dag, ook bij dagen buiten
+het schooljaar. Volgt uit B-129.
+
+**FR-AGE-33 — Een stip zegt dat er die dag iets staat.** *Gegeven* een dag met
+minstens één agenda-item dat geen studiedag of margedag is, *dan* draagt de cel een
+stip en noemt zijn toegankelijke naam het aantal afspraken. Volgt uit B-129.
+
+## B-130 — Geen toestemmingsvraag bij een documentatie zonder foto's
+
+**Probleem.** Gevonden bij het narekenen van B-128. Een documentatie zónder foto's
+kreeg bij het exporteren de vraag: *"Op deze foto's staan kinderen. Heb je voor deze
+kinderen toestemming voor beeldgebruik?"*
+
+**Waarom dat erger is dan het lijkt.** B-08 kiest voor één keer vragen per
+documentatie met de reden: *"elke keer vragen leidt tot wegklikken"*. Een vraag die
+niet klopt doet precies dat, en sneller: hij leert je hem wegklikken vóórdat je hem
+leest. Dan staat de vraag er nog wel bij de documentatie waar wél twintig foto's van
+kinderen in zitten, maar leest niemand hem meer.
+
+**Besluit.** De vraag komt alleen bij een documentatie met minstens één foto.
+`FR-DOC-115` verandert niet van tekst — hij zegt "waarvan je voor het eerst een
+deelbare afbeelding maakt" en niets over nul foto's — maar de regel staat nu apart in
+`services/documentation/toestemming.ts` en niet in de klikafhandeling, zodat hij
+toetsbaar is zonder browser (DR-12) en op één plek staat (DR-15).
+
+## B-131 — De registeraudit van de `B`-reeks, en wat hij vond
+
+B-117 legde de `T-` en `INV-`reeksen langs het register. De `B-`reeks zelf was nooit
+gecontroleerd. Dat is nu gedaan, met dezelfde regel als B-117: **óf een echt nummer,
+óf de verwijzing gaat eruit.** De controle is uitgebreid naar paragraafverwijzingen,
+want een `§8.3.15` die niet bestaat is net zo misleidend als een `B-98` die niet
+bestaat.
+
+**Uitkomst: 128 `B-`nummers genoemd, 120 gedefinieerd, drie spoken.** `B-98`, `B-99`
+en `B-100` in `domain/types/weekPattern.ts` en `domain/schemas/weekPattern.ts`. Ze
+vallen in het gat tussen `B-97` en `B-103` dat bij de nummercorrectie van 11 augustus
+is ontstaan. `B-101` staat er ook nog, maar die is in orde: B-123 heeft hem
+uitdrukkelijk als niet-bestaand vastgelegd en de code zegt dat er zo bij.
+
+**Vijf paragrafen die niet bestaan.** `§6.2.11`, `§6.3.9`, `§6.3.10`, `§8.3.15` en
+`§8.3.16` werden op elf plekken aangehaald. Hoofdstuk 6.2 loopt tot §6.2.10,
+hoofdstuk 6.3 tot §6.3.8 en §8.3 tot §8.3.14. In `src/` zijn ze vervangen door de
+paragraaf die het wél zegt (§8.1.4 voor de wandkloktijd, §9.6 voor de
+domeingebeurtenis) of door het besluit dat erachter zit (B-115). Twee staan nog in
+`docs/07-gebruikersflows.md` en `docs/12-ai-architectuur.md`; die hoofdstukken raak
+ik niet zonder toestemming.
+
+**En de grootste vondst: de basisweek heeft nog een eigen gegevensmodel.** B-115
+besliste dat de basisweek *een invoerscherm is en geen tweede gegevensmodel*, en
+schreef erbij: *"Bestaande code die een eigen basisweek-record schrijft, wordt in
+D09b omgezet naar het genereren van herhalende items."* Dat is in D09b niet gebeurd.
+Er staan nog twee Dexie-tabellen — `weekPatterns` en `weekPatternOverrides` — met
+hun typen, schema's en toetsgegevens. Geen enkele service en geen enkel scherm raakt
+ze aan.
+
+**Besluit.** De tabellen en hun typen gaan eruit, maar **niet in deze wijziging**.
+Een tabel verwijderen vraagt een verhoging van `DB_VERSIE` en daarmee een migratie op
+een database waar de opdrachtgever nu zijn proefgegevens in heeft staan. Dat hoort
+een eigen wijziging te zijn met een eigen controle, niet een bijrijder van een
+feedbackronde. Tot die tijd staat er bovenaan beide bestanden waaróm ze er nog zijn.
+
+## DR-53 — de nuance van NFR-44 hoort er wél bij
+
+**Ik had dit eerder verkeerd voorgesteld.** Bij het opleveren van blok 1 meldde ik dat
+DR-53 niet met de code klopte omdat de lintregel op *waarschuwing* stond en de
+bouwstraat 28 te lange functies doorliet, en ik adviseerde §20 te splitsen: een
+ruimere grens voor schermen dan voor services. Dat advies was gebaseerd op een
+onvolledige lezing.
+
+**NFR-44 zegt het zelf al:** *"Geen bestand boven 400 regels; geen functie boven 60
+regels. Overschrijding is een lintwaarschuwing, niet een fout, maar wel een
+verplichte overweging."* Het niveau `warn` is dus geen gat in de bouwstraat maar de
+bedoelde instelling. Daar hoefde niets aan te veranderen.
+
+**En het splitsen deugt niet.** Van de 28 overschrijdingen zitten er negen in
+`services/`, met `createStorageService` op 221 regels en `DocumentationService` op
+149. Daar gaat het argument "een JSX-boom is nu eenmaal lang" niet op. De grootste
+overschrijding is bovendien `DocumentEditor.tsx` met 236 regels in één functie, en
+dat is geen natuurlijk lange boom maar werk dat blijft liggen. Een grens verruimen
+zodat de code er weer onder past, is dezelfde beweging als een toets versoepelen tot
+hij groen wordt (DR-45).
+
+**Besluit.** DR-53 wordt niet gesplitst. Hij krijgt wél de tweede helft van NFR-44
+erbij, want die stond er niet en het is precies de helft die zegt wat je moet doen
+als je eroverheen gaat. De 28 overschrijdingen worden opgeruimd als eigen werk, met
+de negen in `services/` eerst.
+
+> **Correctie op de bouwstraat.** Bij dezelfde ronde bleek dat twee van de vijf
+> DR-11-zones in `eslint.config.mjs` naar mappen wezen die niet bestaan:
+> `modules/documentaties` en `modules/instellingen`, terwijl de mappen
+> `modules/documentation` en `modules/settings` heten. Een zone die nergens op
+> aangrijpt zwijgt; hij faalt niet. Daardoor gold "een module importeert nooit uit
+> een andere module" voor die twee modules feitelijk niet, terwijl de regel op
+> `error` stond. Namen gecorrigeerd. Er bleken geen overtredingen te zijn — de deur
+> stond open, er is niemand doorheen gelopen.
+
 
 ---
 

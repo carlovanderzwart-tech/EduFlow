@@ -103,7 +103,22 @@ export type RenderService = ReturnType<typeof createRenderService>;
  * anders stilzwijgend een map aan.
  */
 export function bestandsnaam(datum: string, titel: string, nummer: number, vanAantal: number): string {
+  return `${bestandskern(datum, titel)} - pagina ${nummer} van ${vanAantal}.jpg`;
+}
+
+/**
+ * Het deel vóór de paginanummering: `2026-10-13 Kunstwerk Dok 2`.
+ *
+ * Apart omdat de PDF hem ook gebruikt (`FR-DOC-116`) maar geen paginanummer in
+ * zijn naam heeft — het is één bestand met drie bladen. Twee keer dezelfde
+ * opschoning schrijven is twee keer een andere lijst verboden tekens (U-03).
+ */
+export function bestandskern(datum: string, titel: string): string {
   const schoon = titel.replace(/[\\/:*?"<>|]/gu, " ").replace(/\s+/gu, " ").trim();
-  const kern = schoon ? `${datum} ${schoon}` : datum;
-  return `${kern} - pagina ${nummer} van ${vanAantal}.jpg`;
+  return schoon ? `${datum} ${schoon}` : datum;
+}
+
+/** De naam van de PDF: `2026-10-13 Kunstwerk Dok 2.pdf`, ongeacht het aantal bladen. */
+export function pdfBestandsnaam(datum: string, titel: string): string {
+  return `${bestandskern(datum, titel)}.pdf`;
 }
