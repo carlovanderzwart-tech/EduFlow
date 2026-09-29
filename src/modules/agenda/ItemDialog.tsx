@@ -20,7 +20,7 @@ import {
   vanLokaleInvoer,
   volgendHalfUur,
 } from "@/lib/weergave";
-import type { CalendarEvent, Recurrence, Student } from "@/domain/types";
+import type { CalendarEvent, Colour, Recurrence, Student } from "@/domain/types";
 import {
   EIGEN_SOORTEN,
   HELE_DAG_STANDAARD,
@@ -35,6 +35,7 @@ import {
 import { diensten } from "@/services/diensten";
 
 import { Herhaalvelden } from "./Herhaalvelden";
+import { Kleurveld } from "./Kleurveld";
 
 /**
  * Eén item maken of wijzigen (§6.2.5, `FR-AGE-04`, `FR-AGE-16`).
@@ -75,6 +76,7 @@ function beginstand(item: CalendarEvent | null, dag: IsoDate) {
       tot: plusMinuten(van, 30),
       studentId: "",
       recurrence: null as Recurrence | null,
+      colour: null as Colour | null,
     };
   }
 
@@ -90,6 +92,7 @@ function beginstand(item: CalendarEvent | null, dag: IsoDate) {
     tot: item.allDay ? plusMinuten(opDag(dag, volgendHalfUur()), 30) : item.end,
     studentId: item.studentIds[0] ?? "",
     recurrence: item.recurrence,
+    colour: item.colour,
   };
 }
 
@@ -117,6 +120,7 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
       location: stand.location,
       studentIds: stand.studentId ? [stand.studentId] : [],
       recurrence: stand.recurrence,
+      colour: stand.colour,
     };
 
     return stand.heleDag
@@ -233,6 +237,12 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
             waarde={stand.recurrence}
             begin={stand.heleDag ? stand.dagVan : stand.van.slice(0, 10)}
             onWijzig={(recurrence) => wijzig({ recurrence })}
+          />
+
+          <Kleurveld
+            waarde={stand.colour}
+            soort={stand.kind}
+            onWijzig={(colour) => wijzig({ colour })}
           />
 
           <Field>

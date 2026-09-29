@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { weekdag } from "@/lib/dates";
 import { newId } from "@/lib/uuid";
+import { zCalendarEvent } from "@/domain/schemas";
+import { agendaItem } from "@/domain/toetsgegevens";
 import type { CalendarEvent } from "@/domain/types";
 
 import {
@@ -776,10 +778,43 @@ describe("het snelveld ontleedt lokaal — FR-AGE-13", () => {
   it("kent de vier tijdvormen uit §6.2.5", () => {
     expect(ontleed("14u overleg", VANDAAG, LIJST).van).toBe("14:00");
     expect(ontleed("14:30 overleg", VANDAAG, LIJST).van).toBe("14:30");
-    // "half 3" is half drie, dus 14:30 en niet 15:30.
-    expect(ontleed("half 3 overleg", VANDAAG, LIJST).van).toBe("02:30");
-    expect(ontleed("kwart voor 4 overleg", VANDAAG, LIJST).van).toBe("03:45");
-    expect(ontleed("kwart over 4 overleg", VANDAAG, LIJST).van).toBe("04:15");
+    expect(ontleed("half 9 overleg", VANDAAG, LIJST).van).toBe("08:30");
+    expect(ontleed("kwart voor 9 overleg", VANDAAG, LIJST).van).toBe("08:45");
+    expect(ontleed("kwart over 9 overleg", VANDAAG, LIJST).van).toBe("09:15");
+  });
+
+  describe("een kale tijd vóór zevenen is de middag — FR-AGE-34, B-132", () => {
+    // De toets hierboven stond tot B-132 op 02:30 voor "half 3". Dat is niet
+    // versoepeld maar omgedraaid: de opdrachtgever typte "donderdag half 4
+    // bouwvergadering" en kreeg een afspraak om half vier 's nachts.
+    it("maakt van half 4 kwart voor 4 en kwart over 3 de middag (FR-AGE-34)", () => {
+      expect(ontleed("half 4 bouwvergadering", VANDAAG, LIJST).van).toBe("15:30");
+      expect(ontleed("kwart voor 4 overleg", VANDAAG, LIJST).van).toBe("15:45");
+      expect(ontleed("kwart over 3 overleg", VANDAAG, LIJST).van).toBe("15:15");
+    });
+
+    it("schuift ook een kaal uur op (FR-AGE-34)", () => {
+      expect(ontleed("4u overleg", VANDAAG, LIJST).van).toBe("16:00");
+      expect(ontleed("6 uur ouderavond", VANDAAG, LIJST).van).toBe("18:00");
+    });
+
+    it("laat de schooldag zelf met rust (FR-AGE-34)", () => {
+      // 07:00 is de ondergrens; vanaf daar verandert er niets.
+      expect(ontleed("7u inloop", VANDAAG, LIJST).van).toBe("07:00");
+      expect(ontleed("half 8 inloop", VANDAAG, LIJST).van).toBe("07:30");
+      expect(ontleed("14u overleg", VANDAAG, LIJST).van).toBe("14:00");
+      expect(ontleed("16:00 einde", VANDAAG, LIJST).van).toBe("16:00");
+    });
+
+    it("laat de 24-uurs notatie met voorloopnul staan (FR-AGE-34)", () => {
+      // De uitweg voor wie écht om half zeven 's ochtends begint.
+      expect(ontleed("06:30 inloop", VANDAAG, LIJST).van).toBe("06:30");
+      expect(ontleed("6:30 inloop", VANDAAG, LIJST).van).toBe("18:30");
+    });
+
+    it("maakt van half 1 de lunch en niet middernacht (FR-AGE-34)", () => {
+      expect(ontleed("half 1 lunchoverleg", VANDAAG, LIJST).van).toBe("12:30");
+    });
   });
 
   it("kent de duurwoorden", () => {
@@ -1119,6 +1154,7 @@ describe("meldingen — FR-AGE-25, FR-AGE-28, B-108", () => {
       mailDraftId: null,
       source: "own",
       recurrence: null,
+      colour: null,
       createdAt: NU,
       updatedAt: NU,
       deletedAt: null,
@@ -1198,5 +1234,83 @@ describe("meldingen — FR-AGE-25, FR-AGE-28, B-108", () => {
     expect(EERLIJKE_UITLEG).toBe(
       "EduFlow stuurt geen meldingen als de app dicht is. Wil je een herinnering op je telefoon, exporteer de agenda dan naar je eigen agenda-app — die doet het wel.",
     );
+  });
+});
+
+describe("een afspraak mag een eigen kleur krijgen — FR-AGE-35, B-133", () => {
+  it("bewaart de gekozen kleur en geeft hem terug (FR-AGE-35)", async () => {
+    const gemaakt = waarde(
+      await agenda.maak({
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-15T08:00:00.000Z",
+        end: "2026-09-15T09:00:00.000Z",
+        colour: "series-5",
+      }),
+    );
+
+    expect(gemaakt.colour).toBe("series-5");
+    const uitLijst = waarde(await agenda.lijst()).find((item) => item.id === gemaakt.id);
+    expect(uitLijst?.colour).toBe("series-5");
+  });
+
+  it("staat standaard op de kleur van de soort (FR-AGE-35)", async () => {
+    const gemaakt = waarde(
+      await agenda.maak({
+        title: "Overleg",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-15T08:00:00.000Z",
+        end: "2026-09-15T09:00:00.000Z",
+      }),
+    );
+
+    expect(gemaakt.colour).toBeNull();
+  });
+
+  it("zet de kleur terug op die van de soort (FR-AGE-35)", async () => {
+    const gemaakt = waarde(
+      await agenda.maak({
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-15T08:00:00.000Z",
+        end: "2026-09-15T09:00:00.000Z",
+        colour: "series-5",
+      }),
+    );
+
+    const terug = waarde(
+      await agenda.wijzig(gemaakt.id, {
+        title: "Gymles",
+        kind: "afspraak",
+        allDay: false,
+        start: "2026-09-15T08:00:00.000Z",
+        end: "2026-09-15T09:00:00.000Z",
+        colour: null,
+      }),
+    );
+
+    expect(terug.colour).toBeNull();
+  });
+
+  it("leest een item dat nog geen kleurveld heeft (B-133, B-125)", () => {
+    // De rij zoals hij vóór B-133 is weggeschreven. Zou het schema hier struikelen,
+    // dan laat `list()` hem weg en is de agenda leeg zonder dat er iets kapot lijkt
+    // — precies wat er bij `settings.showAttention` gebeurde.
+    const oud = { ...agendaItem() } as unknown as Record<string, unknown>;
+    delete oud.colour;
+
+    const uitkomst = zCalendarEvent.safeParse(oud);
+
+    expect(uitkomst.success).toBe(true);
+    expect(uitkomst.success && uitkomst.data.colour).toBeNull();
+  });
+
+  it("weigert een kleur buiten de acht van §5.5 (FR-AGE-35)", () => {
+    const fout = { ...agendaItem(), colour: "knalroze" };
+
+    expect(zCalendarEvent.safeParse(fout).success).toBe(false);
   });
 });

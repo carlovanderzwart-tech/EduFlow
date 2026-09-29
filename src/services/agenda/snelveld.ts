@@ -86,6 +86,35 @@ function tijd(uur: number, minuut: number): LocalTime {
   return `${String(uur).padStart(2, "0")}:${String(minuut).padStart(2, "0")}`;
 }
 
+/**
+ * Het uur waarop de schooldag begint (B-132).
+ *
+ * Een getal en geen gevoel: de opdrachtgever heeft de schooldag begrensd op 07:00
+ * tot 16:00, en dit is de ondergrens daarvan.
+ */
+export const SCHOOLDAG_BEGINT_UUR = 7;
+
+/**
+ * Een kaal uur vóór zevenen wordt de middag of de avond (`FR-AGE-34`, B-132).
+ *
+ * "donderdag half 4 bouwvergadering" leverde 03:30 's nachts op. Dat is wat er
+ * staat, maar niet wat er bedoeld wordt: een schooldag loopt van 07:00 tot 16:00 en
+ * daarbuiten hooguit een ouderavond. Elke tijd die vóór zevenen uitkomt krijgt er
+ * daarom twaalf uur bij — half 4 wordt 15:30, kwart voor 4 wordt 15:45, 6u wordt
+ * 18:00.
+ *
+ * **De uitweg is de voorloopnul.** Wie écht om half zeven 's ochtends begint typt
+ * `06:30`, en dat blijft staan: twee cijfers met een dubbele punt is de 24-uurs
+ * notatie en die is niet dubbelzinnig. `6:30` is dat wél, en wordt 18:30.
+ *
+ * `FR-AGE-14` toont het concept-item vóór de bevestiging, dus je ziet altijd welke
+ * tijd het geworden is voordat er iets wordt opgeslagen.
+ */
+export function naarSchooldag(uur: number, isExpliciet = false): number {
+  if (isExpliciet) return uur;
+  return uur < SCHOOLDAG_BEGINT_UUR ? uur + 12 : uur;
+}
+
 /** Haalt een stuk uit de tekst en onthoudt wat het was. */
 function pak(tekst: string, patroon: RegExp, herkend: Herkenning[], soort: Woordsoort) {
   const gevonden = patroon.exec(tekst);
@@ -139,26 +168,31 @@ function leesTijd(tekst: string, herkend: Herkenning[]) {
   const half = pak(tekst, HALF, herkend, "tijd");
   if (half.gevonden) {
     // "half 3" is half drie: dertig minuten vóór drie uur.
-    return { tekst: half.tekst, van: tijd(Number(half.gevonden[1]) - 1, 30) };
+    return { tekst: half.tekst, van: tijd(naarSchooldag(Number(half.gevonden[1]) - 1), 30) };
   }
 
   const kwartVoor = pak(tekst, KWART_VOOR, herkend, "tijd");
   if (kwartVoor.gevonden) {
-    return { tekst: kwartVoor.tekst, van: tijd(Number(kwartVoor.gevonden[1]) - 1, 45) };
+    return { tekst: kwartVoor.tekst, van: tijd(naarSchooldag(Number(kwartVoor.gevonden[1]) - 1), 45) };
   }
 
   const kwartOver = pak(tekst, KWART_OVER, herkend, "tijd");
   if (kwartOver.gevonden) {
-    return { tekst: kwartOver.tekst, van: tijd(Number(kwartOver.gevonden[1]), 15) };
+    return { tekst: kwartOver.tekst, van: tijd(naarSchooldag(Number(kwartOver.gevonden[1])), 15) };
   }
 
   const klok = pak(tekst, KLOKTIJD, herkend, "tijd");
   if (klok.gevonden) {
-    return { tekst: klok.tekst, van: tijd(Number(klok.gevonden[1]), Number(klok.gevonden[2])) };
+    // Twee cijfers met een dubbele punt is de 24-uurs notatie; die blijft staan.
+    const expliciet = klok.gevonden[1]!.length === 2;
+    return {
+      tekst: klok.tekst,
+      van: tijd(naarSchooldag(Number(klok.gevonden[1]), expliciet), Number(klok.gevonden[2])),
+    };
   }
 
   const uur = pak(tekst, UURTIJD, herkend, "tijd");
-  if (uur.gevonden) return { tekst: uur.tekst, van: tijd(Number(uur.gevonden[1]), 0) };
+  if (uur.gevonden) return { tekst: uur.tekst, van: tijd(naarSchooldag(Number(uur.gevonden[1])), 0) };
 
   return { tekst, van: null };
 }

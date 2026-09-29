@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-131** · **T-46** · **INV-54** · **FR-AGE-33** · **FR-DOC-126**
+> ## Laatst uitgegeven nummers: **B-134** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-45**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,114 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 29 september 2026 — tweede feedbackronde
+
+De opdrachtgever heeft de doorloop een tweede keer gelopen. Vijf punten. Drie ervan
+gaan over de agenda en de export en staan hieronder; twee gaan over verwijderen en
+volgen in B-135 en B-136.
+
+## B-132 — Het snelveld leest een kale tijd als schooldag
+
+**Probleem.** *"donderdag half 4 bouwvergadering"* leverde een afspraak om **03:30 's
+nachts** op. Dat is letterlijk wat er staat, maar niet wat er bedoeld wordt.
+
+**De grens komt van de opdrachtgever zelf:** *"schooldagen zijn eigenlijk altijd vanaf
+7 uur 's ochtends tot 16.00 middag."*
+
+**Besluit.** Een tijd die vóór 07:00 uitkomt krijgt er twaalf uur bij. `half 4` wordt
+15:30, `kwart voor 4` wordt 15:45, `6u` wordt 18:00, `half 1` wordt 12:30. Vanaf 07:00
+verandert er niets: `half 8` blijft 07:30 en `14u` blijft 14:00.
+
+**De uitweg is de voorloopnul.** Wie écht om half zeven 's ochtends begint typt
+`06:30`, en dat blijft staan — twee cijfers met een dubbele punt is de 24-uurs notatie
+en die is niet dubbelzinnig. `6:30` is dat wél, en wordt 18:30.
+
+**Waarom dit veilig is.** `FR-AGE-14` toont het concept-item vóór de bevestiging. Je
+ziet dus altijd welke tijd het geworden is voordat er iets wordt opgeslagen, en je kunt
+hem in hetzelfde veld corrigeren.
+
+### Nieuwe eis
+
+**FR-AGE-34 — Een kale tijd vóór zevenen wordt de middag.** *Gegeven* invoer in het
+snelveld waarvan de tijd vóór 07:00 uitkomt, *wanneer* de app die ontleedt, *dan* komt
+er twaalf uur bij, tenzij het uur met een voorloopnul in 24-uurs notatie is getypt.
+Volgt uit B-132.
+
+## B-133 — Een agenda-item mag een eigen kleur krijgen
+
+**Probleem.** *"Ook wil ik graag kleuren van afspraken in de agenda kunnen aanpassen."*
+De kleurkolom van §6.2.2 legt de kleur vast per soort, en er was geen manier om ervan af
+te wijken.
+
+**Besluit.** `calendarEvents` krijgt een veld `colour`: één van de acht uit §5.5, of
+`null`. `null` is de normale toestand en betekent: de kleur van de soort. De tabel van
+§6.2.2 blijft dus de regel; dit is de uitzondering die je zelf zet, bijvoorbeeld om alle
+gymlessen in één oogopslag terug te vinden.
+
+**Hetzelfde palet als reeksen en groepen.** §5.5 somt precies één verzameling op, en een
+negende kleur herkent niemand. Het scherm toont negen knoppen: "Zoals de soort" vooraan,
+daarna de acht.
+
+**Contrast.** De acht zijn getoetst als vlak op wit (4,75 tot 7,08), dus wit erop haalt
+overal de 4,5:1 van §5.3; zwart haalt dat bij `series-4` net niet. De letterkleur ligt
+daarom vast op wit, en hoeft niet met het thema mee te draaien omdat de vulling dat ook
+niet doet.
+
+**Eén valkuil, met opzet vermeden.** Het schema krijgt `.nullable().default(null)` en
+niet alleen `.nullable()`. De items die er al staan hebben dit veld niet; zonder
+standaardwaarde valt elk bestaand agenda-item bij het lezen door de controle, en
+`list()` laat ongeldige rijen weg. Dan is je agenda leeg zonder dat er iets kapot lijkt
+— precies wat er bij `settings.showAttention` gebeurde (B-125). Er is een toets die een
+rij zonder `colour` door het schema haalt.
+
+### Nieuwe eis
+
+**FR-AGE-35 — Een agenda-item heeft een eigen kleur of die van zijn soort.** *Gegeven*
+de itemdialoog, *wanneer* je een van de acht kleuren van §5.5 kiest, *dan* toont het item
+die kleur in dag-, week- en maandweergave; *wanneer* je "Zoals de soort" kiest, *dan*
+geldt de kleur uit de tabel van §6.2.2. Volgt uit B-133.
+
+## B-134 — Exporteren downloadt; het deelmenu vervalt
+
+**Probleem.** *"De deelbare pdf/afbeelding opent nu een deelscherm, dit wil ik niet. Ik
+wil dat de gebruiker het bestand 'download', waardoor het in de download map staat, dit
+maakt het makkelijker te vinden."* En over de PDF: *"ziet er wel goed uit, alleen dus nog
+onvindbaar op pc."*
+
+**Dit draait B-09 om.** B-09 zette het deelmenu voorop met het klembord erachter, met als
+redenering: *"downloaden, terugzoeken in je fotorol en dan pas versturen zijn vier
+handelingen voor iets wat er één kan zijn."* Die redenering ging over de telefoon. Op de
+laptop levert hij het omgekeerde op: een venster dat je niet wilde, en daarna een bestand
+dat nergens staat.
+
+**Besluit.** Beide knoppen downloaden. Eén voorspelbare plek — de map Downloads — wint
+het van een menu waarvan je per apparaat niet weet wat erin staat. `navigator.share`
+wordt niet meer aangeroepen; `deelwijze`, `deelBestand` en `kanDelen` zijn verdwenen.
+
+**Kopiëren blijft, als tweede knop.** Dat is ook wat `FR-DOC-117` letterlijk zegt: *"Op
+de laptop verschijnt daarnaast «Kopieer afbeelding»"* — daarnaast, niet in plaats van.
+De knop staat er alleen waar het klembord bestaat, want een knop die op dit apparaat
+niets kan doen is erger dan een knop die er niet is. Kopiëren telt niet als export in de
+zin van `FR-DOC-118`: het is een tussenstap, geen aflevering, en de status blijft op
+concept.
+
+**Wat dit op de telefoon kost.** Daar wás het deelmenu de betere weg, en die valt nu weg.
+De opdrachtgever heeft het punt na eigen gebruik gemaakt en B-14 zet de laptop voorop;
+komt het op de telefoon terug als bezwaar, dan is een keuze per apparaat de volgende
+stap. Dat is niet vooruit gebouwd.
+
+**Eén detail dat anders stilletjes misgaat.** Het adres van het gedownloade bestand wordt
+pas na een minuut ingetrokken en niet op dezelfde tik. Bij een blad van enkele megabytes
+leest de browser er nog uit terwijl de regel eronder al draait; meteen intrekken levert
+dan een lege download op.
+
+**Gewijzigd in het handboek.** `FR-DOC-117` in §6.1 beschreef het deelmenu als de eerste
+weg. Die eis is herschreven naar wat er nu gebeurt, in plaats van hem te laten staan als
+tegenspraak.
+
 
 ---
 

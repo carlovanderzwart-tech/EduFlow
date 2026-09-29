@@ -2,7 +2,7 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 
-import { deelBestand, deelwijze, downloadBestand, kanDelen, kopieerAfbeelding } from "@/lib/delen";
+import { downloadBestand, kanKopieren, kopieerAfbeelding } from "@/lib/delen";
 import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
@@ -40,15 +40,20 @@ interface ExportPanelProps {
  * op ware grootte gerenderd en door de browser kleiner getoond (`FR-DOC-113`). Er
  * is geen tweede weergave die ernaast kan gaan lopen.
  *
- * **Delen, niet downloaden** (B-09). Op de telefoon opent het deelmenu met het
- * bestand er al in; op de laptop gaat de afbeelding naar het klembord zodat je hem
- * in een mail plakt. Downloaden is de uitwijk voor wie geen van beide heeft.
+ * **Downloaden, niet delen** (B-134). Tot die beslissing opende er een deelmenu,
+ * en dan stond het bestand nergens terug te vinden. Nu komt het in de map
+ * Downloads. Kopiëren naar het klembord staat ernaast als tweede knop, precies
+ * zoals `FR-DOC-117` het formuleert.
  */
 export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps) {
   const [initialen, setInitialen] = useState(false);
   const [vraagToestemming, setVraagToestemming] = useState<Uitvoer | null>(null);
   const { stand, setStand } = useExport(documentId, initialen, open);
-  const { melding, fout, bezig, setFout, verstuur, bevestig } = useVersturen(documentId, stand, setStand);
+  const { melding, fout, bezig, setFout, verstuur, bevestig, kopieer } = useVersturen(
+    documentId,
+    stand,
+    setStand,
+  );
 
   function begin(soort: Uitvoer) {
     setFout(null);
@@ -88,6 +93,7 @@ export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps
             bezig={bezig}
             paginas={stand.paginas.length}
             onVerstuur={begin}
+            onKopieer={() => void kopieer()}
           />
         </div>
       </SheetContent>
@@ -136,7 +142,7 @@ function useVersturen(
     setBezig(true);
     setMelding(null);
     try {
-      const wijze = soort === "pdf" ? await leverPdf(stand) : await lever(stand.paginas);
+      const wijze = await lever(soort, stand);
       const { documentation } = await diensten();
       const uitkomst = await documentation.markeerGedeeld(documentId);
       if (!uitkomst.ok) return setFout(uitkomst.error.message);
@@ -160,7 +166,30 @@ function useVersturen(
     void verstuur(soort);
   }
 
-  return { melding, fout, bezig, setFout, verstuur, bevestig };
+  /**
+   * De afbeelding naar het klembord (`FR-DOC-117`).
+   *
+   * Geen export in de zin van `FR-DOC-118`: kopiëren is een tussenstap en geen
+   * aflevering. De status blijft daarom op concept tot je hem echt verstuurt.
+   */
+  async function kopieer() {
+    const eerste = stand.paginas[0];
+    if (!eerste) return setFout("Er is nog niets om te kopiëren.");
+
+    setBezig(true);
+    setMelding(null);
+    try {
+      await kopieerAfbeelding(eerste.bestand);
+      setMelding(MELDING.gekopieerd);
+    } catch (oorzaak) {
+      const reden = oorzaak instanceof Error ? oorzaak.message : "onbekend";
+      setFout(`Kopiëren is niet gelukt (${reden}). Gebruik de knop Afbeelding downloaden.`);
+    } finally {
+      setBezig(false);
+    }
+  }
+
+  return { melding, fout, bezig, setFout, verstuur, bevestig, kopieer };
 }
 
 /** FR-DOC-114: de schakelaar die namen door initialen vervangt. */
@@ -191,21 +220,31 @@ function Knoppen({
   bezig,
   paginas,
   onVerstuur,
+  onKopieer,
 }: {
   kanVersturen: boolean;
   bezig: boolean;
   paginas: number;
   onVerstuur: (soort: Uitvoer) => void;
+  onKopieer: () => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
       <Button onClick={() => onVerstuur("afbeelding")} disabled={!kanVersturen}>
-        {bezig ? "Bezig…" : "Deelbare afbeelding"}
+        {bezig ? "Bezig…" : "Afbeelding downloaden"}
       </Button>
       <Button variant="outline" onClick={() => onVerstuur("pdf")} disabled={!kanVersturen}>
-        Print-PDF
+        PDF downloaden
       </Button>
+      {/* `FR-DOC-117`: "daarnaast", en alleen waar het klembord bestaat. Een knop
+          die op dit apparaat niets kan doen is erger dan een knop die er niet is. */}
+      {kanKopieren() ? (
+        <Button variant="ghost" onClick={onKopieer} disabled={!kanVersturen}>
+          Kopieer afbeelding
+        </Button>
+      ) : null}
       <FieldDescription>
+        Beide komen in je map Downloads.{" "}
         {paginas === 1
           ? "De PDF bevat één A4 liggend: precies het blad hierboven."
           : `De PDF bevat ${paginas} A4's liggend: precies de bladen hierboven.`}
@@ -215,39 +254,33 @@ function Knoppen({
 }
 
 const MELDING = {
-  gedeeld: "Het deelmenu is geopend met de afbeelding erin.",
+  afbeelding: "De afbeelding staat in je map Downloads.",
+  afbeeldingen: "De pagina's staan als losse afbeeldingen in je map Downloads.",
+  pdf: "De PDF staat in je map Downloads.",
   gekopieerd: "De afbeelding staat op je klembord. Plak hem in je mail.",
-  gedownload: "De afbeelding staat in je map Downloads.",
-  "pdf-gedeeld": "Het deelmenu is geopend met de PDF erin.",
-  "pdf-gedownload": "De PDF staat in je map Downloads.",
 } as const;
 
 /**
- * Delen als het kan, anders kopiëren, anders downloaden (FR-DOC-117, B-09).
+ * Het bestand naar de map Downloads (`FR-DOC-117`, B-134).
  *
- * Delen en kopiëren gaan over de eerste pagina; downloaden over alle. Dat is geen
- * inconsistentie maar de aard van de wegen: een deelmenu en een klembord dragen
- * één beeld, een map draagt er meer.
+ * Eén weg voor beide knoppen. Er is geen deelmenu meer en geen keten van
+ * uitwijkmogelijkheden: het bestand komt in de map Downloads en daar is het terug
+ * te vinden. Kopiëren staat als aparte knop naast deze, niet erachter.
+ *
+ * De afbeelding levert alle pagina's, de PDF één bestand met alle bladen erin.
  */
-async function lever(paginas: Exportpagina[]) {
-  const eerste = paginas[0]!;
-  const wijze = deelwijze(eerste.bestand);
+async function lever(soort: Uitvoer, stand: Exportstand) {
+  if (soort === "pdf") {
+    downloadBestand(await maakPdf(stand));
+    return "pdf" as const;
+  }
 
-  if (wijze === "gedeeld") await deelBestand(eerste.bestand, eerste.bestand.name);
-  else if (wijze === "gekopieerd") await kopieerAfbeelding(eerste.bestand);
-  else for (const pagina of paginas) downloadBestand(pagina.bestand);
-
-  return wijze;
+  for (const pagina of stand.paginas) downloadBestand(pagina.bestand);
+  return stand.paginas.length === 1 ? ("afbeelding" as const) : ("afbeeldingen" as const);
 }
 
-/**
- * De PDF: één bestand, alle bladen (`FR-DOC-116`, B-128).
- *
- * Geen klembord in de rij: een PDF plak je niet in een mailvenster. Delen als het
- * apparaat het kan, anders downloaden — de twee wegen die voor een document
- * bestaan.
- */
-async function leverPdf(stand: Exportstand) {
+/** De gerenderde pagina's als één PDF (`FR-DOC-116`, B-128). */
+async function maakPdf(stand: Exportstand): Promise<File> {
   const { pdf } = await diensten();
   const uitkomst = await pdf.bundel(
     stand.paginas.map((pagina) => ({ nummer: pagina.nummer, jpeg: pagina.bestand })),
@@ -255,14 +288,7 @@ async function leverPdf(stand: Exportstand) {
   );
   if (!uitkomst.ok) throw new Error(uitkomst.error.message);
 
-  const bestand = new File([uitkomst.value], stand.pdfnaam, { type: "application/pdf" });
-  if (kanDelen(bestand)) {
-    await deelBestand(bestand, stand.pdfnaam);
-    return "pdf-gedeeld" as const;
-  }
-
-  downloadBestand(bestand);
-  return "pdf-gedownload" as const;
+  return new File([uitkomst.value], stand.pdfnaam, { type: "application/pdf" });
 }
 
 /**

@@ -8,7 +8,9 @@
 
 import { type IsoDate } from "@/lib/dates";
 import { vandaag } from "@/lib/weergave";
-import type { CalendarEventKind } from "@/domain/types";
+import type { CSSProperties } from "react";
+
+import type { CalendarEventKind, Colour } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 
 /** Maandag eerst, zoals de week in Nederland begint. */
@@ -55,4 +57,32 @@ export { vakantieOp as isVakantiedag } from "@/services/agenda/HolidayService";
 /** De dag waarop dit item begint; bij een reeks bepaalt die waar hij wordt geknipt. */
 export function dagVanItem(item: { allDay: boolean; start: string }): IsoDate {
   return item.allDay ? item.start : vandaag(new Date(item.start));
+}
+
+/**
+ * Hoe een item eruitziet: de kleur van de soort, of zijn eigen (`FR-AGE-35`, B-133).
+ *
+ * Twee waarden en niet één klassenaam, want de acht van §5.5 zijn paletkleuren en
+ * geen Tailwind-rollen. Ze staan als tekenverwijzing in `style` — precies zoals de
+ * jaarweergave de vakantiekleuren zet, en zoals DR-55 het bedoelt: geen letterlijke
+ * kleur in de component, wel een verwijzing naar `tokens.css`.
+ *
+ * De letterkleur ligt vast op wit. De acht zijn getoetst als vlak op wit (contrast
+ * 4,75 tot 7,08), dus wit erop haalt overal de 4,5:1 van §5.3 en zwart haalt dat bij
+ * `series-4` net niet. Dat de kleur in beide thema's dezelfde hex is, is hier een
+ * voordeel: de letterkleur hoeft dus ook niet mee te draaien.
+ */
+export function itemstijl(item: { kind: CalendarEventKind; colour: Colour | null }): {
+  className: string;
+  style: CSSProperties | undefined;
+} {
+  if (!item.colour) return { className: SOORTKLASSE[item.kind], style: undefined };
+
+  return {
+    className: "",
+    style: {
+      backgroundColor: `var(--palette-${item.colour})`,
+      color: "var(--color-text-on-accent)",
+    },
+  };
 }

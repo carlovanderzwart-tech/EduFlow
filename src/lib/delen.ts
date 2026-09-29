@@ -1,76 +1,63 @@
 /**
- * Delen en kopiëren (FR-DOC-117, B-09).
+ * Het bestand naar buiten brengen (`FR-DOC-117`, B-134).
  *
- * **Downloaden is de uitwijk, niet het doel.** Downloaden, terugzoeken in je
- * fotorol en dan pas versturen zijn vier handelingen voor iets wat er één kan zijn.
- * Daarom eerst het deelmenu van het apparaat met het bestand er al in; op de laptop
- * het klembord, zodat je hem rechtstreeks in een mail plakt; en pas als geen van
- * beide kan, een download.
+ * **Downloaden is de weg, niet de uitwijk.** Tot B-134 stond het deelmenu voorop
+ * (B-09) met het klembord erachter, met als redenering dat downloaden en dan
+ * terugzoeken vier handelingen zijn. De eerste eigen test wees anders uit: op de
+ * laptop opende er een deelvenster dat je niet wilde, en het bestand stond nergens.
+ * Eén voorspelbare plek — de map Downloads — wint het van een menu waarvan je per
+ * apparaat niet weet wat erin staat.
+ *
+ * Kopiëren blijft, maar als **tweede knop** en niet als schakel in een keten. Dat
+ * is ook wat `FR-DOC-117` letterlijk zegt: *"Op de laptop verschijnt daarnaast
+ * «Kopieer afbeelding»"* — daarnaast, niet in plaats van.
  */
-
-export type Deelwijze = "gedeeld" | "gekopieerd" | "gedownload";
-
-/** Kan dit apparaat een bestand het deelmenu in sturen? */
-export function kanDelen(bestand: File): boolean {
-  return typeof navigator !== "undefined" && Boolean(navigator.canShare?.({ files: [bestand] }));
-}
 
 /** Kan deze browser een afbeelding op het klembord zetten? */
 export function kanKopieren(): boolean {
-  return typeof navigator !== "undefined" && Boolean(navigator.clipboard?.write) && typeof ClipboardItem !== "undefined";
+  return (
+    typeof navigator !== "undefined" &&
+    Boolean(navigator.clipboard?.write) &&
+    typeof ClipboardItem !== "undefined"
+  );
 }
 
 /**
- * Welke weg dit apparaat aankan, in de volgorde van B-09.
- *
- * Delen boven kopiëren boven downloaden. Los van het uitvoeren, zodat de keuze te
- * toetsen is zonder klembord en zonder deelmenu — en zodat het paneel vooraf kan
- * zeggen wat er gaat gebeuren.
- */
-export function deelwijze(bestand: File): Deelwijze {
-  if (kanDelen(bestand)) return "gedeeld";
-  if (kanKopieren()) return "gekopieerd";
-  return "gedownload";
-}
-
-/**
- * Zet de afbeelding op het klembord (B-09).
+ * Zet de afbeelding op het klembord (B-09, `FR-DOC-117`).
  *
  * JPEG is niet overal een toegestaan klembordtype; PNG wel. Het beeld wordt daarom
  * omgezet — dezelfde pixels, ander omhulsel. Dat is geen tweede renderpad: er wordt
- * niets opnieuw getekend, alleen anders verpakt.
+ * niets opnieuw getekend, alleen opnieuw verpakt.
  */
 export async function kopieerAfbeelding(blob: Blob): Promise<void> {
-  const png = blob.type === "image/png" ? blob : await naarPng(blob);
+  const beeld = await createImageBitmap(blob);
+  const doek = document.createElement("canvas");
+  doek.width = beeld.width;
+  doek.height = beeld.height;
+  doek.getContext("2d")?.drawImage(beeld, 0, 0);
+
+  const png = await new Promise<Blob | null>((klaar) => doek.toBlob(klaar, "image/png"));
+  if (!png) throw new Error("De afbeelding kon niet naar het klembord");
+
   await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
 }
 
-async function naarPng(blob: Blob): Promise<Blob> {
-  const beeld = await createImageBitmap(blob);
-  const canvas = document.createElement("canvas");
-  canvas.width = beeld.width;
-  canvas.height = beeld.height;
-  canvas.getContext("2d")?.drawImage(beeld, 0, 0);
-
-  return new Promise((klaar, mislukt) => {
-    canvas.toBlob(
-      (uit) => (uit ? klaar(uit) : mislukt(new Error("De afbeelding kon niet worden gekopieerd."))),
-      "image/png",
-    );
-  });
-}
-
-/** Opent het deelmenu van het apparaat met het bestand erin (FR-DOC-117). */
-export async function deelBestand(bestand: File, titel: string): Promise<void> {
-  await navigator.share({ files: [bestand], title: titel });
-}
-
-/** De uitwijk: het bestand naar de map Downloads. */
+/**
+ * Het bestand naar de map Downloads (`FR-DOC-117`, B-134).
+ *
+ * Het adres wordt pas vrijgegeven nadat de browser de klik heeft afgehandeld. Bij
+ * een blad van enkele megabytes leest hij er nog uit terwijl de regel eronder al
+ * draait; intrekken op dezelfde tik levert dan een lege download op.
+ */
 export function downloadBestand(bestand: File): void {
   const url = URL.createObjectURL(bestand);
   const schakel = document.createElement("a");
   schakel.href = url;
   schakel.download = bestand.name;
   schakel.click();
-  URL.revokeObjectURL(url);
+
+  setTimeout(() => URL.revokeObjectURL(url), TERUGGEEFVERTRAGING_MS);
 }
+
+/** Ruim genoeg voor een blad van 2480 px, kort genoeg om niets op te hopen. */
+const TERUGGEEFVERTRAGING_MS = 60_000;

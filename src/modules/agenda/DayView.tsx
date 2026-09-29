@@ -6,7 +6,7 @@ import { datumLang, tijdstipKort } from "@/lib/weergave";
 import type { CalendarEvent } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 
-import { DAG_BEGINUUR, DAG_EINDUUR, isVakantiedag, soortklasse } from "./weergavehulp";
+import { DAG_BEGINUUR, DAG_EINDUUR, isVakantiedag, itemstijl } from "./weergavehulp";
 
 /**
  * De dagweergave (§6.2.3), de standaard op de telefoon.
@@ -57,7 +57,8 @@ export function DayView({ dag, items, vakanties, onKiesItem }: DayViewProps) {
               <button
                 type="button"
                 onClick={() => onKiesItem(item)}
-                className={cn("w-full rounded-md px-3 py-2 text-left text-sm", soortklasse(item.kind))}
+                className={cn("w-full rounded-md px-3 py-2 text-left text-sm", itemstijl(item).className)}
+                style={itemstijl(item).style}
               >
                 {item.title}
               </button>
@@ -100,7 +101,8 @@ function Uurrij({
             key={item.id}
             type="button"
             onClick={() => onKiesItem(item)}
-            className={cn("block w-full truncate rounded-xs px-2 py-1 text-left text-sm", soortklasse(item.kind))}
+            className={cn("block w-full truncate rounded-xs px-2 py-1 text-left text-sm", itemstijl(item).className)}
+            style={itemstijl(item).style}
           >
             {tijdstipKort(item.start).split(" ").pop()} {item.title}
           </button>

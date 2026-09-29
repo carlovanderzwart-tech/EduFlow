@@ -7,7 +7,7 @@ import type { CalendarEvent } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 import { TOETSENHINT } from "@/services/agenda/verplaatsen";
 
-import { DAGNAMEN, isVakantiedag, soortklasse } from "./weergavehulp";
+import { DAGNAMEN, isVakantiedag, itemstijl } from "./weergavehulp";
 
 /**
  * De weekweergave (§6.2.3).
@@ -186,7 +186,8 @@ function Blokje({
         gebeurtenis.dataTransfer.effectAllowed = "move";
       }}
       onDragEnd={() => SLEPEND.delete(item.id)}
-      className={cn("block w-full truncate rounded-xs px-1 py-0.5 text-left text-xs", soortklasse(item.kind))}
+      className={cn("block w-full truncate rounded-xs px-1 py-0.5 text-left text-xs", itemstijl(item).className)}
+      style={itemstijl(item).style}
     >
       {metTijd ? `${tijdstipKort(item.start).split(" ").pop()} ` : ""}
       {item.title}

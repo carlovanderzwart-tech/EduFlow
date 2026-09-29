@@ -1016,8 +1016,8 @@ Het exportpaneel schuift over het schrijfscherm (B-06). Het bestaat uit vier del
 **FR-DOC-116 — Print-PDF levert één bestand.**
 *Gegeven* een documentatie van drie pagina's, *wanneer* je Print-PDF kiest, *dan* komt er één PDF met drie A4-liggende pagina's, gegenereerd in de app en niet via de printfunctie van de browser. Volgt uit T-03 en T-14.
 
-**FR-DOC-117 — De deelbare afbeelding gaat het deelmenu in.**
-*Gegeven* een telefoon met ondersteuning voor delen van bestanden, *wanneer* je Deelbare afbeelding kiest en bevestigt, *dan* opent het deelmenu van het apparaat met de afbeelding erin. Zonder die ondersteuning wordt hij gedownload. Op de laptop verschijnt daarnaast "Kopieer afbeelding". Volgt uit B-09.
+**FR-DOC-117 — De export komt in de map Downloads.**
+*Gegeven* het exportpaneel, *wanneer* je "Afbeelding downloaden" of "PDF downloaden" kiest en bevestigt, *dan* komt het bestand in de map Downloads van het apparaat. Waar het klembord bestaat staat daarnaast "Kopieer afbeelding"; die knop kopieert en verandert de status niet. Er wordt geen deelmenu geopend. Gewijzigd door B-134; verving de eerdere formulering die uit B-09 volgde.
 
 **FR-DOC-118 — Exporteren zet de status op gedeeld.**
 *Gegeven* een documentatie met status concept, *wanneer* een export geslaagd is, *dan* wordt de status gedeeld en wordt de datum van de eerste export vastgelegd. Volgt uit B-05 en B-13.

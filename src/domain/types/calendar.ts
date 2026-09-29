@@ -19,7 +19,7 @@
  * agenda-items.
  */
 
-import type { BaseRecord, IsoDate, IsoDateTime, Uuid } from "./base";
+import type { BaseRecord, Colour, IsoDate, IsoDateTime, Uuid } from "./base";
 
 /** De drie regels van §6.2.5. Meer niet, en met opzet geen `RRULE`. */
 export type RecurrenceFrequency = "wekelijks" | "tweewekelijks" | "maandelijks";
@@ -73,6 +73,17 @@ interface CalendarEventBase extends BaseRecord {
   source: CalendarEventSource;
   /** De herhaling, of `null` voor een item dat één keer valt (§6.2.5, B-123). */
   recurrence: Recurrence | null;
+  /**
+   * Een eigen kleur uit de acht van §5.5, of `null` (`FR-AGE-35`, B-133).
+   *
+   * `null` is de normale toestand en betekent: neem de kleur van de soort uit de
+   * tabel in §6.2.2. Die tabel blijft de regel; dit veld is de uitzondering die je
+   * zelf zet, bijvoorbeeld om alle gymlessen in één oogopslag terug te vinden.
+   *
+   * Hetzelfde palet als reeksen en groepen, want §5.5 somt precies één verzameling
+   * op en een negende kleur herkent niemand.
+   */
+  colour: Colour | null;
 }
 
 /** Een studiedag, margedag of vakantie: kalenderdagen, geen tijden (INV-31). */

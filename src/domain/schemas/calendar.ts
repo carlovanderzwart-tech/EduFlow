@@ -19,6 +19,7 @@
 import { z } from "zod";
 
 import { BASISVELDEN, metChronologie, zIsoDate, zIsoDateTime, zUuid } from "./base";
+import { zColour } from "./colour";
 
 export const zCalendarEventKind = z.enum([
   "afspraak",
@@ -72,6 +73,16 @@ const GEMEENSCHAPPELIJK = {
   mailDraftId: zUuid.nullable(),
   source: zCalendarEventSource,
   recurrence: zRecurrence.nullable(),
+  /**
+   * De eigen kleur (`FR-AGE-35`, B-133).
+   *
+   * `.default(null)` en niet alleen `.nullable()`, en dat is hier het hele punt: de
+   * items die er al staan hebben dit veld niet. Zonder standaardwaarde valt elk
+   * bestaand agenda-item bij het lezen door de controle, en `list()` laat ongeldige
+   * rijen weg — dan is je agenda leeg zonder dat er iets kapot lijkt. Dat is precies
+   * wat er bij `settings.showAttention` (B-125) gebeurde.
+   */
+  colour: zColour.nullable().default(null),
 };
 
 /** Het einde ligt niet vóór het begin (INV-30). */
