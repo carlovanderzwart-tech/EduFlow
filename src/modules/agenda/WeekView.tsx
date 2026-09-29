@@ -133,7 +133,9 @@ function Dagkolom({
         onClick={() => onKiesDag(dag)}
         className={cn(
           "w-full rounded-t-md border-b-2 px-1 py-1 text-center text-xs",
-          isVandaag ? "border-accent text-accent font-medium" : "border-border text-muted-foreground",
+          isVandaag
+            ? "border-(--color-accent) text-(--color-accent) font-medium"
+            : "border-border text-muted-foreground",
         )}
       >
         <span className="block truncate">{naam}</span>

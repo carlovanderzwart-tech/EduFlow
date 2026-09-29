@@ -1,13 +1,14 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { useCallback, useState } from "react";
 
+import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { EmptyState } from "@/ui/EmptyState";
 import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
 import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import { Skeleton } from "@/ui/skeleton";
 import { useDienst } from "@/app/providers/useDienst";
@@ -32,6 +33,7 @@ export function GroupsPage() {
   const [naam, setNaam] = useState("");
   const [soort, setSoort] = useState<GroupKind>("stamgroep");
   const [fout, setFout] = useState<string | null>(null);
+  const [teVerwijderen, setTeVerwijderen] = useState<{ id: string; naam: string; aantal: number } | null>(null);
 
   const laad = useCallback(async ({ groups, students, storage }: Diensten) => {
     const groepen = await groups.lijst();
@@ -58,6 +60,24 @@ export function GroupsPage() {
   }, []);
 
   const { waarde, fout: laadfout, bezig, herlaad } = useDienst(laad);
+
+  /** FR-INS-46: de app zegt vooraf hoeveel lidmaatschappen eraan hangen. */
+  async function vraagVerwijderen(id: string, naam: string) {
+    const { groups } = await diensten();
+    const aantal = await groups.aantalLidmaatschappen(id);
+    if (!aantal.ok) return setFout(aantal.error.message);
+    setTeVerwijderen({ id, naam, aantal: aantal.value });
+  }
+
+  async function verwijderGroep() {
+    if (!teVerwijderen) return;
+    const { groups } = await diensten();
+    const uitkomst = await groups.verwijder(teVerwijderen.id);
+    setTeVerwijderen(null);
+    if (!uitkomst.ok) return setFout(uitkomst.error.message);
+    setFout(null);
+    herlaad();
+  }
 
   async function maakGroep() {
     if (!waarde?.schoolYearId) return;
@@ -147,10 +167,22 @@ export function GroupsPage() {
 
       {waarde?.groepen.map((groep) => (
         <Item key={groep.id} variant="outline" className="flex-col items-stretch gap-3">
-          <ItemContent>
-            <ItemTitle>{groep.name}</ItemTitle>
-            <ItemDescription>{GROEPSOORTEN[groep.kind]}</ItemDescription>
-          </ItemContent>
+          <div className="flex items-start justify-between gap-2">
+            <ItemContent>
+              <ItemTitle>{groep.name}</ItemTitle>
+              <ItemDescription>{GROEPSOORTEN[groep.kind]}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`${groep.name} verwijderen`}
+                onClick={() => void vraagVerwijderen(groep.id, groep.name)}
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+            </ItemActions>
+          </div>
           <GroupMembers
             leden={waarde.lidmaatschappen.filter((lid) => lid.groupId === groep.id)}
             leerlingen={waarde.leerlingen}
@@ -167,6 +199,28 @@ export function GroupsPage() {
           description="Een leerling zit niet ín een groep maar heeft een lidmaatschap met een looptijd. Maak eerst een groep."
         />
       ) : null}
+
+      <ConfirmDialog
+        open={teVerwijderen !== null}
+        onOpenChange={(aan) => {
+          if (!aan) setTeVerwijderen(null);
+        }}
+        title={`${teVerwijderen?.naam ?? ""} verwijderen?`}
+        description={beschrijfGevolg(teVerwijderen?.aantal ?? 0)}
+        confirmLabel="Verwijderen"
+        destructive
+        onConfirm={() => void verwijderGroep()}
+      />
     </div>
+  );
+}
+
+/** Wat er met de leerlingen gebeurt (`FR-INS-46`, B-136). De app zegt het vooraf. */
+function beschrijfGevolg(aantal: number): string {
+  if (aantal === 0) return "Er zit niemand in deze groep. Er gaat niets verloren.";
+  const wat = aantal === 1 ? "Eén leerling zit" : `${aantal} leerlingen zitten`;
+  return (
+    `${wat} in deze groep. Zij blijven bestaan en raken alleen hun lidmaatschap kwijt. ` +
+    "Documentaties die naar deze groep verwijzen blijven ook bestaan."
   );
 }

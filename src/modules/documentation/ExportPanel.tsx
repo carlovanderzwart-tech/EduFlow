@@ -309,7 +309,7 @@ function Layoutkiezer() {
             disabled={!keuze.beschikbaar}
             aria-pressed={keuze.beschikbaar}
             title={keuze.omschrijving}
-            className="rounded-md border p-2 text-xs aria-pressed:border-accent aria-pressed:bg-accent/10 disabled:opacity-50"
+            className="aria-pressed:border-(--color-accent) rounded-md border p-2 text-xs aria-pressed:bg-(--color-accent-quiet) disabled:opacity-50"
           >
             {keuze.naam}
           </button>

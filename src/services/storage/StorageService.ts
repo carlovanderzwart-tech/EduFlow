@@ -71,6 +71,20 @@ export interface Aggregaatschrijver {
     id: Uuid,
     wijziging: Partial<Nieuw<Naam>>,
   ): Promise<RecordVan<Naam>>;
+  /**
+   * Markeren als verwijderd binnen het aggregaat (`FR-DOC-121`, B-135).
+   *
+   * Nodig omdat een documentatie en haar pagina's samen weggaan of samen blijven.
+   * Buiten een transactie kan het halverwege stoppen, en dan staat er een
+   * documentatie in de prullenbak waarvan de pagina's nog leven — of erger,
+   * andersom.
+   *
+   * `deletedAt` staat niet in `Nieuw<>` en is dus niet met `wijzig` te zetten. Dat
+   * is geen omissie maar §8.1.6: verwijderen is geen veld dat je invult.
+   */
+  verwijder<Naam extends TabelNaam>(tabel: Naam, id: Uuid): Promise<RecordVan<Naam>>;
+  /** De tegenhanger: terug uit de prullenbak, binnen dezelfde transactie. */
+  herstel<Naam extends TabelNaam>(tabel: Naam, id: Uuid): Promise<RecordVan<Naam>>;
 }
 
 export interface StorageDeps {
@@ -311,6 +325,33 @@ export function createStorageService(deps: StorageDeps) {
   }
 
   /**
+   * Terug uit de prullenbak (`FR-DOC-121`, B-135).
+   *
+   * De tegenhanger van `softDelete`, en om dezelfde reden een gewone wijziging met
+   * een journaalregel: het andere apparaat moet het herstel kunnen zien, anders
+   * markeert de synchronisatie het record bij de eerstvolgende ronde opnieuw als
+   * verwijderd (§8.1.6).
+   *
+   * Een record dat niet in de prullenbak staat blijft ongemoeid. Herstellen wat
+   * bestaat is geen fout, het is een handeling zonder gevolg.
+   */
+  async function herstel<Naam extends TabelNaam>(
+    tabel: Naam,
+    id: Uuid,
+  ): Promise<Result<RecordVan<Naam>>> {
+    try {
+      const teruggezet = await db.transaction("rw", db[tabel], db.changeLog, async () => {
+        const record = await werkBijRecord(tabel, id, { deletedAt: null });
+        await journaal(tabel, record as BaseRecord, "update");
+        return record;
+      });
+      return { ok: true, value: teruggezet };
+    } catch (fout) {
+      return mislukt(fout);
+    }
+  }
+
+  /**
    * Eén aggregaat, één transactie, één journaalregel (§10.7, §9.4 regel A, §9.6).
    *
    * Een documentatie met haar pagina's opslaan is geen reeks schrijfacties die
@@ -349,6 +390,16 @@ export function createStorageService(deps: StorageDeps) {
       },
       async wijzig(tabel, id, wijziging) {
         const record = await werkBijRecord(tabel, id, wijziging);
+        onthoud(tabel, record as BaseRecord, "update");
+        return record;
+      },
+      async verwijder(tabel, id) {
+        const record = await werkBijRecord(tabel, id, { deletedAt: nu() });
+        onthoud(tabel, record as BaseRecord, "delete");
+        return record;
+      },
+      async herstel(tabel, id) {
+        const record = await werkBijRecord(tabel, id, { deletedAt: null });
         onthoud(tabel, record as BaseRecord, "update");
         return record;
       },
@@ -400,6 +451,7 @@ export function createStorageService(deps: StorageDeps) {
     listDeleted,
     update,
     softDelete,
+    herstel,
     schrijfAggregaat,
     purge,
     usage,

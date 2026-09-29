@@ -100,6 +100,17 @@ async function bouw(): Promise<Diensten> {
   // andere letter dan tekenen is de stille manier waarop FR-DOC-113 scheurt.
   const render = createRenderService({ doek: browserDoek, stijl: printstijl() });
 
+  const documentation = createDocumentationService({ storage, clock: SYSTEEMKLOK });
+
+  // De opruimronde van §8.8 (`FR-DOC-122`): bij elke start, en niet op een tijdklok.
+  // Een app die je één keer per week opent hoort geen achtergrondtaak te hebben die
+  // draait terwijl niemand kijkt.
+  //
+  // Bewust niet afgewacht. Het opruimen mag de eerste render niet ophouden, en de
+  // uitkomst gaat nergens heen: staat er nog iets in de prullenbak dat er weg had
+  // gemogen, dan is dat geen bericht waar de gebruiker iets mee kan (§4.6).
+  void documentation.ruimOp();
+
   return {
     storage,
     settings,
@@ -108,7 +119,7 @@ async function bouw(): Promise<Diensten> {
     series,
     layout: createLayoutService({ meet: render.meet }),
     render,
-    documentation: createDocumentationService({ storage, clock: SYSTEEMKLOK }),
+    documentation,
     // `pdf-lib` komt pas binnen als er geprint wordt; 400 kB hoort niet in het
     // eerste scherm van een app die op een schoollaptop start (§17.2).
     pdf: createPdfService({ laad: () => import("pdf-lib") }),

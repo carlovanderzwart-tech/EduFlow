@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-134** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-45**
+> ## Laatst uitgegeven nummers: **B-137** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-46**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -116,6 +116,112 @@ dan een lege download op.
 **Gewijzigd in het handboek.** `FR-DOC-117` in §6.1 beschreef het deelmenu als de eerste
 weg. Die eis is herschreven naar wat er nu gebeurt, in plaats van hem te laten staan als
 tegenspraak.
+
+
+## B-135 — Documentaties verwijderen, met een prullenbak van dertig dagen
+
+**Probleem.** *"Er is geen manier om documentatie te verwijderen."* Dat klopte
+letterlijk: er was geen knop, geen menu-item, geen sneltoets. Wat je maakte bleef.
+
+**En ook dit stond er al.** §6.1.13 kent `FR-DOC-120` t/m `FR-DOC-123` sinds het
+handboek: archiveren, verwijderen als markeren, de prullenbak van dertig dagen, en
+het legen ervan. Alleen `FR-DOC-120` — archiveren — blijft nog liggen; dat is een
+ander gebaar dan weggooien en de opdrachtgever vroeg om het tweede.
+
+**Besluit.** Verwijderen is markeren, zoals §8.1.6 en T-11 het al voorschrijven. Er
+komt geen `delete()` bij. Wat er bij komt:
+
+- een knop **Verwijderen** in het schrijfscherm, met een bevestiging die zegt dat
+  het naar de prullenbak gaat en dertig dagen terug te halen is;
+- een **prullenbak** onderaan het overzicht, met per regel het aantal resterende
+  dagen en een knop Terugzetten;
+- **Leeg de prullenbak** met één bevestiging die het aantal noemt (`FR-DOC-123`);
+- een **opruimronde bij elke start** die wist wat over de dertig dagen heen is
+  (`FR-DOC-122`, §8.8).
+
+**Een documentatie en haar pagina's gaan samen.** Beide handelingen lopen via
+`schrijfAggregaat`: één transactie, één journaalregel op de wortel (§9.4 regel A).
+Zou het halverwege stoppen, dan stond er een documentatie in de prullenbak waarvan
+de pagina's nog leefden — of erger, een levende documentatie zonder tekst. Daarvoor
+heeft `Aggregaatschrijver` er twee handelingen bij gekregen, `verwijder` en
+`herstel`, want `deletedAt` staat niet in `Nieuw<>` en is dus niet met `wijzig` te
+zetten. Dat is geen omissie maar §8.1.6: verwijderen is geen veld dat je invult.
+
+**De opruimronde wordt niet afgewacht.** Hij mag de eerste render niet ophouden, en
+de uitkomst gaat nergens heen: staat er nog iets in de prullenbak dat er weg had
+gemogen, dan is dat geen bericht waar de gebruiker iets mee kan (§4.6). Bij elke
+start en niet op een tijdklok — een app die je één keer per week opent hoort geen
+achtergrondtaak te hebben die draait terwijl niemand kijkt.
+
+**Waar het staat.** De prullenbak staat in `services/documentation/prullenbak.ts` en
+`verwijderen.ts` en niet in `DocumentationService`: dat bestand zat al tegen de 400
+regels van DR-53 aan, en dit is een eigen onderwerp met een eigen bewaartermijn uit
+§8.8. `DocumentationService` geeft ze door, zodat een scherm maar één plek hoeft te
+kennen.
+
+**Nog niet gedaan:** `FR-DOC-120`, archiveren. Uit beeld halen zonder weg te gooien
+is een derde toestand naast concept en gedeeld, met een filter in het overzicht en
+een uitzondering in het dashboard. Dat is een eigen stuk werk en niet wat er gevraagd
+werd.
+
+## B-136 — Een groep verwijderen haalt lidmaatschappen weg, geen leerlingen
+
+**Probleem.** *"Er is geen manier om groepen te verwijderen."* §6.5.2 kent er ook
+geen eis voor: `FR-INS-06` t/m `FR-INS-10` gaan over lidmaatschappen, de jaarovergang
+en het overzicht per kind, maar niet over het weghalen van een groep. Reeksen hebben
+die eis wél (`FR-INS-12`).
+
+**Besluit.** Een groep is te verwijderen, en dat werkt zoals bij een reeks: **de
+groep is een ordening en geen eigenaar** (B-35, INV-20). Een leerling raakt zijn
+lidmaatschap kwijt, niet zichzelf. Documentaties die naar de groep verwijzen blijven
+bestaan en raken alleen de verwijzing kwijt. De app zegt vooraf hoeveel leerlingen
+het betreft, net als `FR-INS-12` dat voor reeksen doet.
+
+**De volgorde is niet willekeurig.** Eerst de lidmaatschappen, dan de verwijzingen in
+documentaties, dan de groep zelf. Zou de groep als eerste verdwijnen en daarna iets
+misgaan, dan wijzen er lidmaatschappen en documentaties naar een groep die niet meer
+bestaat — precies de toestand die geen enkel scherm kan tekenen.
+
+De lidmaatschappen gaan mee naar de prullenbak en worden niet gewist: een lidmaatschap
+zonder groep is een rij die niets meer betekent en die je niet kunt terugzetten.
+
+### Nieuwe eis
+
+**FR-INS-46 — Een groep verwijderen laat de leerlingen en hun documentaties staan.**
+*Gegeven* een groep met lidmaatschappen, *wanneer* je hem verwijdert, *dan* noemt de
+app vooraf hoeveel leerlingen erin zitten; *daarna* verdwijnt de groep uit de lijst,
+blijven de leerlingen bestaan zonder dit lidmaatschap, en blijven documentaties die
+naar deze groep verwezen bestaan zonder die verwijzing. Volgt uit B-136.
+
+## B-137 — `accent` betekende twee dingen, en het onleesbare won
+
+**Probleem.** Gevonden doordat de schermtoets op de agenda faalde, en dat was geen
+gevolg van deze ronde: de jaarweergave is tussen 1 juli en 15 september de standaard
+(B-31), dus vóór 16 september tekende de toets een ander scherm. Vanaf eind september
+komt de weekweergave in beeld, en daar stond de kop van *vandaag* in `text-accent` op
+de paginakleur — contrast onder de 4,5:1, en axe noemde het terecht *serious*.
+
+**Oorzaak.** `@theme inline` in `globals.css` zet Tailwinds `accent` op `var(--accent)`,
+en `inline` betekent dat die waarde op de gebruiksplek wordt ingevuld. De
+`--color-accent` uit `tokens.css` — het blauw van §5.5 — wordt dus overgeslagen. Wat
+`text-accent` oplevert is shadcns `--accent`: `oklch(0.97 0 0)`, bijna wit. De
+toelichting bovenaan `globals.css` beweert het tegendeel en klopt op dit punt niet.
+
+**Besluit.** `accent` als **paar** — `bg-accent` mét `text-accent-foreground` — blijft
+van shadcn: bijna wit met bijna zwart erop is leesbaar en het is het gebaar dat
+dropdowns en tabbladen nodig hebben. `accent` als **letter of rand op de paginakleur**
+wijst voortaan rechtstreeks naar het teken: `text-(--color-accent)`,
+`border-(--color-accent)`, `bg-(--color-accent-quiet)`.
+
+Vier plekken: de kop van vandaag in de weekweergave, de hoverkleur in een
+dashboardblok, de hoverrand van een jaarcel, en de gekozen layout in het exportpaneel.
+De laatste drie waren onzichtbaar in plaats van onleesbaar, en waren daarom nooit
+opgevallen.
+
+**Wat hier níet gebeurt.** `accent` globaal op §5.5 zetten. Dan wordt shadcns paar
+blauw-op-bijna-zwart, en dat is onleesbaar in elke dropdown. Twee betekenissen die je
+uit elkaar houdt is hier goedkoper dan één betekenis die de helft van de componenten
+breekt.
 
 
 ---

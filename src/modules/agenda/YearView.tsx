@@ -208,7 +208,8 @@ function Dagcel({ dag, onKies }: { dag: Jaardag; onKies: (dag: IsoDate) => void 
         dag.soort === "weekend" && "bg-muted",
         dag.soort === "studiedag" && "bg-foreground",
         dag.soort === "margedag" && "bg-muted-foreground",
-        dag.soort !== "buiten" && "hover:border-accent focus-visible:border-accent",
+        dag.soort !== "buiten" &&
+          "hover:border-(--color-accent) focus-visible:border-(--color-accent)",
       )}
     >
       {/* Verborgen voor de voorleesfunctie: het `aria-label` hierboven zegt al
