@@ -207,6 +207,62 @@ async function uitDienst(
   return { ok: true, value: open.length };
 }
 
+/**
+ * Hoeveel lidmaatschappen er aan deze groep hangen (`FR-INS-46`).
+ *
+ * Het scherm vraagt dit vóór het verwijderen, want de gebruiker hoort te weten wat
+ * hij meeneemt. De telling staat hier en niet in het scherm: een tweede plek met
+ * dezelfde vraag loopt uiteen (U-03). Verwijderde lidmaatschappen tellen niet mee.
+ */
+async function aantalLidmaatschappen(storage: StorageService, id: Uuid): Promise<Result<number>> {
+  const uitkomst = await leden(storage, id);
+  if (!uitkomst.ok) return uitkomst;
+  return { ok: true, value: uitkomst.value.length };
+}
+
+/**
+ * Een groep verwijderen (`FR-INS-46`, B-136).
+ *
+ * **Een leerling raakt zijn lidmaatschap kwijt, niet zichzelf.** Dat is dezelfde
+ * regel als bij een reeks (INV-20, B-35): de groep is een ordening en geen
+ * eigenaar. Documentaties die naar deze groep verwijzen blijven bestaan en raken
+ * alleen de verwijzing kwijt.
+ *
+ * Verwijderen is markeren, ook hier (§8.1.6, T-11). De lidmaatschappen gaan mee
+ * naar de prullenbak en niet weg: een lidmaatschap zonder groep is een rij die
+ * niets meer betekent en die je niet kunt terugzetten.
+ *
+ * De volgorde is niet willekeurig. Eerst de lidmaatschappen, dan de verwijzingen
+ * in documentaties, dan de groep zelf. Zou de groep als eerste verdwijnen en
+ * daarna iets misgaan, dan wijzen er lidmaatschappen en documentaties naar een
+ * groep die niet meer bestaat — precies de toestand die geen enkel scherm kan
+ * tekenen.
+ */
+async function verwijder(storage: StorageService, id: Uuid): Promise<Result<number>> {
+  const lidmaatschappen = await leden(storage, id);
+  if (!lidmaatschappen.ok) return lidmaatschappen;
+
+  for (const lid of lidmaatschappen.value) {
+    const weg = await storage.softDelete("groupMemberships", lid.id);
+    if (!weg.ok) return weg;
+  }
+
+  const documentaties = await storage.list("documentations");
+  if (!documentaties.ok) return documentaties;
+
+  for (const doc of documentaties.value.filter((rij) => rij.groupIds.includes(id))) {
+    const losgemaakt = await storage.update("documentations", doc.id, {
+      groupIds: doc.groupIds.filter((groupId) => groupId !== id),
+    });
+    if (!losgemaakt.ok) return losgemaakt;
+  }
+
+  const weg = await storage.softDelete("groups", id);
+  if (!weg.ok) return weg;
+
+  return { ok: true, value: lidmaatschappen.value.length };
+}
+
 export function createGroupService({ storage }: GroupDeps) {
   return {
     lijst: () => lijst(storage),
@@ -216,6 +272,8 @@ export function createGroupService({ storage }: GroupDeps) {
     voegLidToe: (invoer: Nieuwlidmaatschap) => voegLidToe(storage, invoer),
     beeindig: (membershipId: Uuid, per: IsoDate) => beeindig(storage, membershipId, per),
     uitDienst: (studentId: Uuid, per: IsoDate) => uitDienst(storage, studentId, per),
+    aantalLidmaatschappen: (id: Uuid) => aantalLidmaatschappen(storage, id),
+    verwijder: (id: Uuid) => verwijder(storage, id),
   };
 }
 

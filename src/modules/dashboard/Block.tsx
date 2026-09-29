@@ -68,7 +68,7 @@ export function Regel({
 
   return (
     <li>
-      <button type="button" onClick={onClick} className="hover:text-accent block w-full py-0.5 text-left">
+      <button type="button" onClick={onClick} className="hover:text-(--color-accent) block w-full py-0.5 text-left">
         {inhoud}
       </button>
     </li>

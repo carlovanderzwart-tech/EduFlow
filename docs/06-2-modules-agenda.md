@@ -35,6 +35,8 @@ Er zijn acht soorten. Meer soorten maken de agenda niet rijker maar rommeliger; 
 | `herinnering` | nee | ja | documentatie, mailconcept | neutraal-400 | eigen |
 | `documentatiemoment` | nee | nee | groep, leerlingen, documentatie | accent-zacht | eigen |
 
+De kolom Kleur is de **standaard** en niet de enige mogelijkheid: sinds B-133 kan één item een eigen kleur uit §5.5 dragen, die deze tabel voor dat ene item overschrijft (`FR-AGE-35`).
+
 Gemeenschappelijke velden van een `CalendarEvent`:
 
 | Veld | Type | Verplicht | Standaard | Validatie |

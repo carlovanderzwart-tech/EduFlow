@@ -14,7 +14,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { deelwijze } from "@/lib/delen";
+import { downloadBestand, kanKopieren } from "@/lib/delen";
 import { newId, type Uuid } from "@/lib/uuid";
 
 import {
@@ -149,21 +149,47 @@ describe("een mislukte export verandert niets — FR-DOC-119", () => {
   });
 });
 
-describe("de weg naar buiten — FR-DOC-117, B-09", () => {
-  const bestand = new File([new Uint8Array([1])], "een.jpg", { type: "image/jpeg" });
+describe("de weg naar buiten — FR-DOC-117, B-134", () => {
+  // Deze toetsen stonden tot B-134 op `deelwijze`, de keuze tussen deelmenu,
+  // klembord en download. Die keuze bestaat niet meer: er wordt gedownload, en
+  // kopiëren is een aparte knop ernaast. De functie is weg, dus de toets erop ook.
+  it("heeft geen deelmenu meer, ook niet als het apparaat het kan (B-134)", async () => {
+    const delen = await import("@/lib/delen");
 
-  it("kiest downloaden als er niets anders kan", () => {
-    // jsdom heeft geen `navigator.share` en geen `ClipboardItem`.
-    expect(deelwijze(bestand)).toBe("gedownload");
+    expect("deelwijze" in delen).toBe(false);
+    expect("deelBestand" in delen).toBe(false);
+    expect("kanDelen" in delen).toBe(false);
   });
 
-  it("kiest het deelmenu zodra het apparaat bestanden kan delen", () => {
-    const oud = navigator.canShare;
-    Object.defineProperty(navigator, "canShare", { value: () => true, configurable: true });
+  it("biedt kopiëren alleen waar het klembord bestaat (FR-DOC-117)", () => {
+    // jsdom heeft geen `ClipboardItem`; de knop hoort er dan niet te staan.
+    expect(kanKopieren()).toBe(false);
+  });
 
-    expect(deelwijze(bestand)).toBe("gedeeld");
+  it("downloadt zonder het adres meteen in te trekken (B-134)", () => {
+    const ingetrokken: string[] = [];
+    const oudeMaak = URL.createObjectURL;
+    const oudeTrekIn = URL.revokeObjectURL;
+    const geklikt: string[] = [];
+    const oudeKlik = HTMLAnchorElement.prototype.click;
 
-    Object.defineProperty(navigator, "canShare", { value: oud, configurable: true });
+    URL.createObjectURL = () => "blob:toets";
+    URL.revokeObjectURL = (url: string) => void ingetrokken.push(url);
+    HTMLAnchorElement.prototype.click = function () {
+      geklikt.push((this as HTMLAnchorElement).download);
+    };
+
+    try {
+      downloadBestand(new File([new Uint8Array([1])], "een.jpg", { type: "image/jpeg" }));
+
+      expect(geklikt).toEqual(["een.jpg"]);
+      // Meteen intrekken levert bij een blad van 2480 px een lege download op.
+      expect(ingetrokken).toEqual([]);
+    } finally {
+      URL.createObjectURL = oudeMaak;
+      URL.revokeObjectURL = oudeTrekIn;
+      HTMLAnchorElement.prototype.click = oudeKlik;
+    }
   });
 });
 

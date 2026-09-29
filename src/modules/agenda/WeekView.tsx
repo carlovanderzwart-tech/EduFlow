@@ -7,7 +7,7 @@ import type { CalendarEvent } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 import { TOETSENHINT } from "@/services/agenda/verplaatsen";
 
-import { DAGNAMEN, isVakantiedag, soortklasse } from "./weergavehulp";
+import { DAGNAMEN, isVakantiedag, itemstijl } from "./weergavehulp";
 
 /**
  * De weekweergave (§6.2.3).
@@ -133,7 +133,9 @@ function Dagkolom({
         onClick={() => onKiesDag(dag)}
         className={cn(
           "w-full rounded-t-md border-b-2 px-1 py-1 text-center text-xs",
-          isVandaag ? "border-accent text-accent font-medium" : "border-border text-muted-foreground",
+          isVandaag
+            ? "border-(--color-accent) text-(--color-accent) font-medium"
+            : "border-border text-muted-foreground",
         )}
       >
         <span className="block truncate">{naam}</span>
@@ -186,7 +188,8 @@ function Blokje({
         gebeurtenis.dataTransfer.effectAllowed = "move";
       }}
       onDragEnd={() => SLEPEND.delete(item.id)}
-      className={cn("block w-full truncate rounded-xs px-1 py-0.5 text-left text-xs", soortklasse(item.kind))}
+      className={cn("block w-full truncate rounded-xs px-1 py-0.5 text-left text-xs", itemstijl(item).className)}
+      style={itemstijl(item).style}
     >
       {metTijd ? `${tijdstipKort(item.start).split(" ").pop()} ` : ""}
       {item.title}

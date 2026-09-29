@@ -23,6 +23,13 @@ import type { Block, Documentation, Page, PhotoBlock, TextBlock } from "@/domain
 
 import { MAX_FOTOS } from "../photo/PhotoService";
 import type { Clock, StorageService } from "../storage/StorageService";
+import {
+  herstel,
+  leegPrullenbak,
+  prullenbak,
+  ruimOp,
+  verwijder,
+} from "./verwijderen";
 
 export interface DocumentationDeps {
   storage: StorageService;
@@ -386,7 +393,24 @@ export function createDocumentationService(deps: DocumentationDeps) {
       .map((blok) => blok.photoId);
   }
 
-  return { maak, bewaar, open, lijst, tekstVan, fotosVan, geefBeeldtoestemming, markeerGedeeld };
+  return {
+    maak,
+    bewaar,
+    open,
+    lijst,
+    tekstVan,
+    fotosVan,
+    geefBeeldtoestemming,
+    markeerGedeeld,
+    // De prullenbak staat in `verwijderen.ts` (B-135): dit bestand zat al tegen de
+    // 400 regels van DR-53, en het is een eigen onderwerp met een eigen
+    // bewaartermijn uit §8.8. Een scherm hoeft daardoor maar één plek te kennen.
+    verwijder: (id: Uuid) => verwijder(storage, id),
+    herstel: (id: Uuid) => herstel(storage, id),
+    prullenbak: () => prullenbak(storage, deps.clock),
+    leegPrullenbak: () => leegPrullenbak(storage),
+    ruimOp: () => ruimOp(storage, deps.clock),
+  };
 }
 
 export type DocumentationService = ReturnType<typeof createDocumentationService>;

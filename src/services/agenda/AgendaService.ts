@@ -22,6 +22,7 @@ import type { Uuid } from "@/lib/uuid";
 import type {
   CalendarEvent,
   CalendarEventKind,
+  Colour,
   Recurrence,
   Region,
   SchoolYear,
@@ -43,6 +44,8 @@ interface Gemeenschappelijk {
   studentIds?: Uuid[];
   /** De herhaling, of niets voor een item dat één keer valt (§6.2.5, B-123). */
   recurrence?: Recurrence | null;
+  /** Een eigen kleur uit §5.5, of niets voor de kleur van de soort (`FR-AGE-35`, B-133). */
+  colour?: Colour | null;
 }
 
 /**
@@ -153,6 +156,7 @@ export function createAgendaService(deps: AgendaDeps) {
       // niet, want dat raakt alleen `holidayFile` (§8.7).
       source: "own" as const,
       recurrence: invoer.recurrence ?? null,
+      colour: invoer.colour ?? null,
     };
 
     // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
@@ -201,6 +205,7 @@ export function createAgendaService(deps: AgendaDeps) {
       location: invoer.location ?? "",
       studentIds: invoer.studentIds ?? [],
       recurrence: invoer.recurrence ?? null,
+      colour: invoer.colour ?? null,
     };
 
     return invoer.allDay

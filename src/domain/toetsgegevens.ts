@@ -337,6 +337,7 @@ export function agendaItem(): TimedCalendarEvent {
     mailDraftId: null,
     source: "own",
     recurrence: null,
+    colour: null,
   };
 }
 
@@ -356,6 +357,7 @@ export function heleDagItem(): AllDayCalendarEvent {
     mailDraftId: null,
     source: "own",
     recurrence: null,
+    colour: null,
   };
 }
 

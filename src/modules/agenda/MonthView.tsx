@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/domain/types";
 import type { Vakantie } from "@/services/agenda/HolidayService";
 
-import { DAGNAMEN, isVakantiedag, MAX_ITEMS_PER_CEL, soortklasse } from "./weergavehulp";
+import { DAGNAMEN, isVakantiedag, itemstijl, MAX_ITEMS_PER_CEL } from "./weergavehulp";
 
 /**
  * De maandweergave (§6.2.3).
@@ -96,7 +96,11 @@ function Cel({ dag, items, buitenDeMaand, vakantie, isVandaag, onKies }: CelProp
 
       <ul className="space-y-0.5 pt-0.5">
         {zichtbaar.map((item) => (
-          <li key={item.id} className={cn("truncate rounded-xs px-1 text-[0.6875rem]", soortklasse(item.kind))}>
+          <li
+            key={item.id}
+            className={cn("truncate rounded-xs px-1 text-[0.6875rem]", itemstijl(item).className)}
+            style={itemstijl(item).style}
+          >
             {item.title}
           </li>
         ))}

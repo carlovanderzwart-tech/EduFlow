@@ -17,6 +17,7 @@ import type { Sortering, Treffer } from "@/services/search/SearchService";
 
 import { FilterBar, LEGE_STAND, type Zoekstand } from "./FilterBar";
 import { NieuweReeks } from "./NieuweReeks";
+import { Prullenbak } from "./Prullenbak";
 
 /** FR-DOC-14: in blokken van vijftig, met een knop — geen oneindig scrollen. */
 const BLOK = 50;
@@ -213,6 +214,10 @@ export function DocumentationPage() {
           ) : null}
         </>
       ) : null}
+
+      {/* Onderaan, en niet als eerste: je komt hier om je werk te vinden, niet om
+          te kijken wat je hebt weggegooid (`FR-DOC-121`, B-135). */}
+      <Prullenbak onHersteld={herlaad} />
     </div>
   );
 }
