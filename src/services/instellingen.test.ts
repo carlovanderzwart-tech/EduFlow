@@ -52,8 +52,8 @@ beforeEach(() => {
 
   storage = createStorageService({ db, clock, origin: APPARAAT });
   students = createStudentService({ storage });
-  groups = createGroupService({ storage });
-  series = createSeriesService({ storage });
+  groups = createGroupService({ storage, clock });
+  series = createSeriesService({ storage, clock });
   documentation = createDocumentationService({ storage, clock });
   sampleData = createSampleDataService({
     storage,
@@ -351,9 +351,38 @@ describe("SeriesService — FR-INS-11, FR-INS-12", () => {
 
     const daarna = waarde(await storage.read("documentations", documentatie.id));
     expect(daarna).not.toBeNull();
-    expect(daarna!.seriesId).toBeNull();
     expect(daarna!.title).toBe("Wat we vonden bij de sloot");
     expect(waarde(await series.lijst())).toHaveLength(0);
+  });
+
+  it("houdt de verwijzing vast, zodat terugzetten ook de koppeling terugbrengt (B-138)", async () => {
+    const reeks = waarde(await series.maak({ name: "ONDERZOEK Natuur", colour: "series-2" }));
+    const geopend = waarde(
+      await documentation.maak({
+        title: "Wat we vonden bij de sloot",
+        date: "2026-08-10",
+        studentIds: [],
+        text: "Drie kinderen schepten water uit de sloot.",
+      }),
+    );
+    const documentatie = waarde(
+      await storage.update("documentations", geopend.documentatie.id, { seriesId: reeks.id }),
+    );
+
+    waarde(await series.verwijder(reeks.id));
+
+    // Tot B-138 werd `seriesId` hier op `null` gezet. Dat is omgedraaid en niet
+    // versoepeld: wissen betekende dat je de reeks terugzette en je documentaties
+    // er niet meer aan hingen — een halve herstelling (§8.1.6).
+    const tussendoor = waarde(await storage.read("documentations", documentatie.id));
+    expect(tussendoor!.seriesId).toBe(reeks.id);
+    // En voor de gebruiker is de reeks wél weg: hij staat in geen enkele lijst.
+    expect(waarde(await series.lijst())).toHaveLength(0);
+
+    waarde(await series.herstel(reeks.id));
+
+    expect(waarde(await series.lijst()).map((rij) => rij.id)).toEqual([reeks.id]);
+    expect(waarde(await series.aantalDocumentaties(reeks.id))).toBe(1);
   });
 });
 

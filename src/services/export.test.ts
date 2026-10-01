@@ -318,6 +318,12 @@ function kopJpeg(breedte: number, hoogte: number): Blob {
 
 describe("Print-PDF wordt in de app gemaakt — FR-DOC-116, B-128", () => {
   const pdf = createPdfService({ laad: async () => await import("pdf-lib") });
+  // `pdf-lib` wordt pas bij de eerste aanroep geladen, en dat is precies wat het
+  // scherm ook doet (§17.2). Onder een volle toetsset duurt die ene import meer dan
+  // de standaard vijf seconden; dat is wachten op een module en niet op gedrag, dus
+  // krijgt dit blok er ruimte voor in plaats van dat de bewering wordt afgezwakt.
+  const RUIM = 20_000;
+
 
   function bladen(aantal: number) {
     return Array.from({ length: aantal }, (_, plaats) => ({
@@ -339,7 +345,7 @@ describe("Print-PDF wordt in de app gemaakt — FR-DOC-116, B-128", () => {
       expect(Math.round(blad.getWidth())).toBe(842);
       expect(Math.round(blad.getHeight())).toBe(595);
     }
-  });
+  }, RUIM);
 
   it("houdt de volgorde aan van de paginanummers en niet van de aanroep (FR-DOC-116)", async () => {
     const omgekeerd = [...bladen(3)].reverse();

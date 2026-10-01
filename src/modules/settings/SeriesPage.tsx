@@ -17,6 +17,8 @@ import { diensten, type Diensten } from "@/services/diensten";
 import type { Colour } from "@/domain/types";
 import { PALET, REEKSNAAM_MAX, volgendeKleur } from "@/services/series/SeriesService";
 
+import { Prullenbak } from "./Prullenbak";
+
 /**
  * Reeksen (§6.5.3).
  *
@@ -34,6 +36,7 @@ export function SeriesPage() {
   const [kleur, setKleur] = useState<Colour | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [teVerwijderen, setTeVerwijderen] = useState<{ reeks: Series; aantal: number } | null>(null);
+  const [ronde, setRonde] = useState(0);
 
   const laad = useCallback(({ series }: Diensten) => series.lijst(), []);
   const { waarde: reeksen, fout: laadfout, bezig, herlaad } = useDienst(laad);
@@ -69,6 +72,8 @@ export function SeriesPage() {
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
     setFout(null);
     herlaad();
+    // Zie GroupsPage: de prullenbak eronder blijft anders leeg.
+    setRonde((nu) => nu + 1);
   }
 
   if (laadfout) {
@@ -172,6 +177,9 @@ export function SeriesPage() {
         ))}
       </ul>
 
+      {/* `FR-INS-47`, B-138: dezelfde prullenbak als bij groepen en documentaties. */}
+      <Prullenbak soort="reeksen" ronde={ronde} onHersteld={herlaad} />
+
       <ConfirmDialog
         open={teVerwijderen !== null}
         onOpenChange={(open) => {
@@ -179,8 +187,7 @@ export function SeriesPage() {
         }}
         title={`${teVerwijderen?.reeks.name ?? ""} verwijderen?`}
         description={beschrijfGevolg(teVerwijderen?.aantal ?? 0)}
-        confirmLabel="Verwijderen"
-        destructive
+        confirmLabel="Naar de prullenbak"
         onConfirm={() => void verwijder()}
       />
     </div>
@@ -189,7 +196,9 @@ export function SeriesPage() {
 
 /** Wat er met de documentaties gebeurt (FR-INS-12, INV-20). De app zegt het vooraf. */
 function beschrijfGevolg(aantal: number): string {
-  if (aantal === 0) return "Er hangt geen documentatie aan deze reeks. Er gaat niets verloren.";
+  const terug = "De reeks gaat naar de prullenbak en is daar dertig dagen terug te zetten.";
+  if (aantal === 0) return `Er hangt geen documentatie aan deze reeks. ${terug}`;
+
   const wat = aantal === 1 ? "Eén documentatie hoort" : `${aantal} documentaties horen`;
-  return `${wat} bij deze reeks. Ze blijven bestaan en verliezen alleen hun verwijzing naar de reeks.`;
+  return `${wat} bij deze reeks. Ze blijven bestaan en tonen de reeks niet meer. ${terug}`;
 }

@@ -20,10 +20,13 @@ import type { Uuid } from "@/lib/uuid";
 import { datumKort } from "@/lib/weergave";
 import type { Colour, Group, GroupKind, GroupMembership, MembershipRole } from "@/domain/types";
 
-import type { StorageService } from "../storage/StorageService";
+import { maakPrullenbak } from "../prullenbak";
+import type { Clock, StorageService } from "../storage/StorageService";
 
 export interface GroupDeps {
   storage: StorageService;
+  /** Voor de resterende dagen in de prullenbak (B-138). */
+  clock: Clock;
 }
 
 /** Wat het scherm invult bij een nieuwe groep. De rest leidt de service af. */
@@ -221,50 +224,49 @@ async function aantalLidmaatschappen(storage: StorageService, id: Uuid): Promise
 }
 
 /**
- * Een groep verwijderen (`FR-INS-46`, B-136).
+ * Lidmaatschappen horen bij precies één groep (INV-24).
  *
- * **Een leerling raakt zijn lidmaatschap kwijt, niet zichzelf.** Dat is dezelfde
- * regel als bij een reeks (INV-20, B-35): de groep is een ordening en geen
- * eigenaar. Documentaties die naar deze groep verwijzen blijven bestaan en raken
- * alleen de verwijzing kwijt.
- *
- * Verwijderen is markeren, ook hier (§8.1.6, T-11). De lidmaatschappen gaan mee
- * naar de prullenbak en niet weg: een lidmaatschap zonder groep is een rij die
- * niets meer betekent en die je niet kunt terugzetten.
- *
- * De volgorde is niet willekeurig. Eerst de lidmaatschappen, dan de verwijzingen
- * in documentaties, dan de groep zelf. Zou de groep als eerste verdwijnen en
- * daarna iets misgaan, dan wijzen er lidmaatschappen en documentaties naar een
- * groep die niet meer bestaat — precies de toestand die geen enkel scherm kan
- * tekenen.
+ * Ze gaan mee naar de prullenbak en komen mee terug: een lidmaatschap zonder groep
+ * is een rij die naar niets wijst en die je niet kunt terugzetten.
  */
-async function verwijder(storage: StorageService, id: Uuid): Promise<Result<number>> {
-  const lidmaatschappen = await leden(storage, id);
-  if (!lidmaatschappen.ok) return lidmaatschappen;
+const KINDEREN = [{ tabel: "groupMemberships" as const, veld: "groupId" }];
 
-  for (const lid of lidmaatschappen.value) {
-    const weg = await storage.softDelete("groupMemberships", lid.id);
+export function createGroupService({ storage, clock }: GroupDeps) {
+  const bak = maakPrullenbak(storage, clock, "groups", KINDEREN);
+
+  /**
+   * Een groep verwijderen (`FR-INS-46`, B-136, B-138).
+   *
+   * **Een leerling raakt zijn lidmaatschap kwijt, niet zichzelf.** Dat is dezelfde
+   * regel als bij een reeks (INV-20, B-35): de groep is een ordening en geen
+   * eigenaar. Documentaties die naar deze groep verwijzen blijven bestaan.
+   *
+   * **De verwijzing in een documentatie wordt niet gewist** (B-138). Dat deed B-136
+   * nog wel, en toen was er ook geen weg terug. Nu er een prullenbak is, zou het
+   * wissen betekenen dat je de groep terugzet en je documentaties er niet meer aan
+   * hangen — een halve herstelling, en dat is erger dan geen. §8.1.6 noemt dit als
+   * tweede reden om te markeren in plaats van te wissen: *verwijzingen blijven
+   * geldig*.
+   *
+   * Voor de gebruiker verandert er niets: `list()` laat verwijderde groepen weg, dus
+   * de documentatie toont de groep niet meer en geen enkel filter kent hem nog.
+   */
+  async function verwijder(id: Uuid): Promise<Result<number>> {
+    const lidmaatschappen = await leden(storage, id);
+    if (!lidmaatschappen.ok) return lidmaatschappen;
+
+    const weg = await bak.verwijder(id);
     if (!weg.ok) return weg;
+
+    return { ok: true, value: lidmaatschappen.value.length };
   }
 
-  const documentaties = await storage.list("documentations");
-  if (!documentaties.ok) return documentaties;
-
-  for (const doc of documentaties.value.filter((rij) => rij.groupIds.includes(id))) {
-    const losgemaakt = await storage.update("documentations", doc.id, {
-      groupIds: doc.groupIds.filter((groupId) => groupId !== id),
-    });
-    if (!losgemaakt.ok) return losgemaakt;
-  }
-
-  const weg = await storage.softDelete("groups", id);
-  if (!weg.ok) return weg;
-
-  return { ok: true, value: lidmaatschappen.value.length };
-}
-
-export function createGroupService({ storage }: GroupDeps) {
   return {
+    verwijder,
+    herstel: bak.herstel,
+    prullenbak: bak.inhoud,
+    leegPrullenbak: bak.leeg,
+    ruimOp: bak.ruimOp,
     lijst: () => lijst(storage),
     maak: (invoer: Nieuwegroep) => maak(storage, invoer),
     leden: (groupId: Uuid) => leden(storage, groupId),
@@ -273,7 +275,6 @@ export function createGroupService({ storage }: GroupDeps) {
     beeindig: (membershipId: Uuid, per: IsoDate) => beeindig(storage, membershipId, per),
     uitDienst: (studentId: Uuid, per: IsoDate) => uitDienst(storage, studentId, per),
     aantalLidmaatschappen: (id: Uuid) => aantalLidmaatschappen(storage, id),
-    verwijder: (id: Uuid) => verwijder(storage, id),
   };
 }
 

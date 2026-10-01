@@ -93,8 +93,8 @@ async function bouw(): Promise<Diensten> {
 
   const settings = createSettingsService({ storage, voorkeurenOpslag: browserVoorkeuren() });
   const students = createStudentService({ storage });
-  const groups = createGroupService({ storage });
-  const series = createSeriesService({ storage });
+  const groups = createGroupService({ storage, clock: SYSTEEMKLOK });
+  const series = createSeriesService({ storage, clock: SYSTEEMKLOK });
 
   // De layout meet met de letter waarmee straks getekend wordt; meten met een
   // andere letter dan tekenen is de stille manier waarop FR-DOC-113 scheurt.
@@ -102,14 +102,19 @@ async function bouw(): Promise<Diensten> {
 
   const documentation = createDocumentationService({ storage, clock: SYSTEEMKLOK });
 
-  // De opruimronde van §8.8 (`FR-DOC-122`): bij elke start, en niet op een tijdklok.
-  // Een app die je één keer per week opent hoort geen achtergrondtaak te hebben die
-  // draait terwijl niemand kijkt.
+  // De opruimronde van §8.8 (`FR-DOC-122`, `FR-INS-47`): bij elke start, en niet op
+  // een tijdklok. Een app die je één keer per week opent hoort geen achtergrondtaak
+  // te hebben die draait terwijl niemand kijkt.
+  //
+  // Alle drie de prullenbakken, want sinds B-138 hebben groepen en reeksen er ook
+  // een. Zou er één ontbreken, dan bleef die tak stilletjes vollopen.
   //
   // Bewust niet afgewacht. Het opruimen mag de eerste render niet ophouden, en de
   // uitkomst gaat nergens heen: staat er nog iets in de prullenbak dat er weg had
   // gemogen, dan is dat geen bericht waar de gebruiker iets mee kan (§4.6).
   void documentation.ruimOp();
+  void groups.ruimOp();
+  void series.ruimOp();
 
   return {
     storage,

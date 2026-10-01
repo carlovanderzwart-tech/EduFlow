@@ -23,13 +23,7 @@ import type { Block, Documentation, Page, PhotoBlock, TextBlock } from "@/domain
 
 import { MAX_FOTOS } from "../photo/PhotoService";
 import type { Clock, StorageService } from "../storage/StorageService";
-import {
-  herstel,
-  leegPrullenbak,
-  prullenbak,
-  ruimOp,
-  verwijder,
-} from "./verwijderen";
+import { maakDocumentatieprullenbak } from "./verwijderen";
 
 export interface DocumentationDeps {
   storage: StorageService;
@@ -402,14 +396,10 @@ export function createDocumentationService(deps: DocumentationDeps) {
     fotosVan,
     geefBeeldtoestemming,
     markeerGedeeld,
-    // De prullenbak staat in `verwijderen.ts` (B-135): dit bestand zat al tegen de
-    // 400 regels van DR-53, en het is een eigen onderwerp met een eigen
-    // bewaartermijn uit §8.8. Een scherm hoeft daardoor maar één plek te kennen.
-    verwijder: (id: Uuid) => verwijder(storage, id),
-    herstel: (id: Uuid) => herstel(storage, id),
-    prullenbak: () => prullenbak(storage, deps.clock),
-    leegPrullenbak: () => leegPrullenbak(storage),
-    ruimOp: () => ruimOp(storage, deps.clock),
+    // De prullenbak staat in `verwijderen.ts` en `../prullenbak.ts` (B-135,
+    // B-138): dit bestand zat al tegen de 400 regels van DR-53, en een groep en
+    // een reeks gebruiken hetzelfde werk. Een scherm hoeft maar één plek te kennen.
+    ...maakDocumentatieprullenbak(storage, deps.clock),
   };
 }
 

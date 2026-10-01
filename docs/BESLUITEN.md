@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-137** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-46**
+> ## Laatst uitgegeven nummers: **B-138** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,81 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 1 oktober 2026 — de prullenbak geldt overal
+
+## B-138 — Eén prullenbak voor documentaties, groepen en reeksen
+
+**Probleem.** B-135 gaf documentaties een prullenbak met dertig dagen en een knop
+Terugzetten. Groepen (B-136) en reeksen (`FR-INS-12`) konden wél weg, maar niet
+terug. Dat is een gat waar je één klik voor nodig hebt: een groep met dertig
+lidmaatschappen verwijderen en er is geen weg terug. Gemeld bij het klaarzetten van
+de tweede testronde, en de opdrachtgever zei "doen".
+
+**Besluit.** Alle drie gaan naar dezelfde prullenbak, met dezelfde dertig dagen uit
+§8.8, dezelfde drie handelingen — terugzetten, legen, en de opruimronde bij elke
+start — en dezelfde vorm op het scherm.
+
+**Het werk staat één keer.** `services/prullenbak.ts` kent de rekenkant en een
+`maakPrullenbak(storage, clock, tabel, kinderen)`. Wat per soort verschilt is alleen
+**welke kinderen meegaan**: pagina's bij een documentatie, lidmaatschappen bij een
+groep, niets bij een reeks. De schermkant staat in `ui/TrashPanel`, die geen enkel
+record kent en dus in `ui/` mag staan (§10.2).
+
+### De verwijzing blijft staan, en dat is de kern
+
+Tot nu toe maakte het verwijderen van een reeks `documentations.seriesId` leeg, en
+het verwijderen van een groep haalde het id uit `groupIds`. **Dat gebeurt niet meer.**
+
+Zolang er geen weg terug was, was wissen verdedigbaar. Met een prullenbak erbij is
+het dat niet: je zet de reeks terug en je documentaties hangen er niet meer aan. Een
+halve herstelling is erger dan geen, want je denkt dat het goed is gekomen.
+
+§8.1.6 noemt dit zelf als tweede reden om te markeren in plaats van te wissen:
+*"Verwijzingen blijven geldig. Met markeren blijft het record vindbaar."*
+
+**Voor de gebruiker verandert er niets aan wat `FR-INS-12` belooft.** `list()` laat
+verwijderde records weg, dus:
+
+- de documentatie toont de reeks niet meer;
+- het reeksfilter en het groepsfilter kennen hem niet meer;
+- de zoekindex vindt zijn naam niet meer;
+- de export zet hem niet op de pagina.
+
+De documentatie *blijft bestaan* — dat is wat `FR-INS-12` en INV-20 beschermen, en
+dat is onveranderd. Alleen het id blijft in de rij staan, zodat terugzetten heel is.
+
+### Wat de bevestigingen nu zeggen
+
+Ze meldden allebei een onomkeerbare handeling. Dat klopt niet meer, dus beide zeggen
+nu dat het naar de prullenbak gaat en dertig dagen terug te zetten is, en de knop
+heet *Naar de prullenbak* in plaats van *Verwijderen*. De rode knop is weg: rood is
+voor wat niet terugkomt, en dat is alleen nog het legen van de prullenbak zelf.
+
+### Nieuwe eis
+
+**FR-INS-47 — Een verwijderde groep of reeks is dertig dagen terug te halen.**
+*Gegeven* een verwijderde groep of reeks, *wanneer* je de prullenbak onder het
+bijbehorende scherm opent, *dan* staat hij er met de resterende dagen en is hij terug
+te zetten; bij een groep komen de lidmaatschappen mee. *Wanneer* de dertig dagen
+voorbij zijn, *dan* wist de opruimronde bij de eerstvolgende start het record
+definitief. Volgt uit B-138 en §8.8.
+
+### Twee kleinere dingen in dezelfde ronde
+
+**De PDF-toets viel om onder een volle toetsset.** `pdf-lib` wordt pas bij de eerste
+aanroep geladen — precies wat het scherm ook doet (§17.2) — en die ene import duurde
+meer dan de standaard vijf seconden. Dat is wachten op een module en niet op gedrag,
+dus het blok krijgt er ruimte voor. De bewering is niet aangeraakt.
+
+**`maakPrullenbak` ging over de zestig regels van DR-53.** B-131 stelde vast dat die
+grens blijft staan en dat de 28 bestaande overschrijdingen eigen werk zijn. Er eentje
+bij maken terwijl de inkt van dat besluit nog nat is, is het besluit niet serieus
+nemen: de functie is uit elkaar gehaald in `kindsleutels`, `verzet` en `wis`, met een
+`Opzet` die ze delen.
+
 
 ---
 

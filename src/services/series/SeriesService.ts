@@ -16,10 +16,13 @@ import { ongeldig, type Result } from "@/lib/result";
 import type { Uuid } from "@/lib/uuid";
 import type { Colour, Series } from "@/domain/types";
 
-import type { StorageService } from "../storage/StorageService";
+import { maakPrullenbak } from "../prullenbak";
+import type { Clock, StorageService } from "../storage/StorageService";
 
 export interface SeriesDeps {
   storage: StorageService;
+  /** Voor de resterende dagen in de prullenbak (B-138). */
+  clock: Clock;
 }
 
 export interface Nieuwereeks {
@@ -62,6 +65,10 @@ export function volgendeKleur(aantalBestaand: number): Colour {
 export function createSeriesService(deps: SeriesDeps) {
   const { storage } = deps;
 
+  // Een reeks heeft geen kinderen: documentaties horen er niet bij, ze verwijzen
+  // ernaar. Dat verschil is precies wat B-35 en INV-20 bewaken.
+  const bak = maakPrullenbak(storage, deps.clock, "series");
+
   async function lijst(): Promise<Result<Series[]>> {
     const uitkomst = await storage.list("series");
     if (!uitkomst.ok) return uitkomst;
@@ -102,31 +109,40 @@ export function createSeriesService(deps: SeriesDeps) {
   }
 
   /**
-   * Verwijdert de reeks en laat de documentaties bestaan (INV-20, FR-INS-12).
+   * Verwijdert de reeks en laat de documentaties bestaan (INV-20, `FR-INS-12`, B-138).
    *
-   * De verwijzing wordt leeggemaakt vóór de grafsteen wordt gezet. Andersom zou er
-   * een moment bestaan waarop een documentatie naar een verwijderde reeks wijst, en
-   * dat is precies de toestand die het overzicht niet kan tekenen.
+   * **De verwijzing wordt niet leeggemaakt.** Dat gebeurde tot B-138 wel, en toen was
+   * er ook geen weg terug. Nu er een prullenbak is, zou wissen betekenen dat je de
+   * reeks terugzet en je documentaties er niet meer aan hangen — een halve
+   * herstelling, en dat is erger dan geen. §8.1.6 noemt dit als tweede reden om te
+   * markeren in plaats van te wissen: *verwijzingen blijven geldig*.
+   *
+   * Voor de gebruiker verandert er niets aan wat `FR-INS-12` belooft: `list()` laat
+   * verwijderde reeksen weg, dus de documentatie toont de reeks niet meer, het
+   * reeksfilter kent hem niet meer, en de zoekindex vindt zijn naam niet meer.
    */
   async function verwijder(id: Uuid): Promise<Result<number>> {
-    const documentaties = await storage.list("documentations");
-    if (!documentaties.ok) return documentaties;
+    const gekoppeld = await aantalDocumentaties(id);
+    if (!gekoppeld.ok) return gekoppeld;
 
-    const gekoppeld = documentaties.value.filter((doc) => doc.seriesId === id);
-    for (const doc of gekoppeld) {
-      const losgemaakt = await storage.update("documentations", doc.id, { seriesId: null });
-      if (!losgemaakt.ok) return losgemaakt;
-    }
-
-    const weg = await storage.softDelete("series", id);
+    const weg = await bak.verwijder(id);
     if (!weg.ok) return weg;
 
-    return { ok: true, value: gekoppeld.length };
+    return { ok: true, value: gekoppeld.value };
   }
 
   // Geen `wijzig`: §6.5.3 kent alleen aanmaken en verwijderen. Een methode die
   // geen enkel scherm aanroept is een functie die er "even bij" kwam (DR-03).
-  return { lijst, maak, aantalDocumentaties, verwijder };
+  return {
+    lijst,
+    maak,
+    aantalDocumentaties,
+    verwijder,
+    herstel: bak.herstel,
+    prullenbak: bak.inhoud,
+    leegPrullenbak: bak.leeg,
+    ruimOp: bak.ruimOp,
+  };
 }
 
 export type SeriesService = ReturnType<typeof createSeriesService>;

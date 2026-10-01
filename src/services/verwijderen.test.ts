@@ -19,8 +19,14 @@ import {
   createDocumentationService,
   type DocumentationService,
 } from "./documentation/DocumentationService";
-import { BEWAARTERMIJN_DAGEN, dagenResterend, prullenbak, verlopen } from "./documentation/prullenbak";
+import {
+  BEWAARTERMIJN_DAGEN,
+  dagenResterend,
+  sorteerPrullenbak,
+  verlopen,
+} from "./prullenbak";
 import { createGroupService, type GroupService } from "./groups/GroupService";
+import { createSeriesService, type SeriesService } from "./series/SeriesService";
 import { maakDatabase } from "./storage/db";
 import { createStorageService, type StorageService } from "./storage/StorageService";
 import { createStudentService, type StudentService } from "./students/StudentService";
@@ -31,6 +37,7 @@ const NU = "2026-09-29T10:00:00.000Z";
 let storage: StorageService;
 let documentation: DocumentationService;
 let groups: GroupService;
+let series: SeriesService;
 let students: StudentService;
 let klok: { now: () => Date; verzet: (naar: string) => void };
 
@@ -44,7 +51,8 @@ beforeEach(() => {
   klok = stilstaandeKlok(NU);
   storage = createStorageService({ db, clock: klok, origin: APPARAAT });
   documentation = createDocumentationService({ storage, clock: klok });
-  groups = createGroupService({ storage });
+  groups = createGroupService({ storage, clock: klok });
+  series = createSeriesService({ storage, clock: klok });
   students = createStudentService({ storage });
 });
 
@@ -127,7 +135,7 @@ describe("de prullenbak loopt na dertig dagen leeg — FR-DOC-122, §8.8", () =>
     klok.verzet("2026-10-28T10:00:00.000Z");
     const uitkomst = waarde(await documentation.ruimOp());
 
-    expect(uitkomst.documentaties).toBe(0);
+    expect(uitkomst.records).toBe(0);
     expect(waarde(await documentation.prullenbak())).toHaveLength(1);
   });
 
@@ -138,8 +146,8 @@ describe("de prullenbak loopt na dertig dagen leeg — FR-DOC-122, §8.8", () =>
     klok.verzet("2026-11-01T10:00:00.000Z");
     const uitkomst = waarde(await documentation.ruimOp());
 
-    expect(uitkomst.documentaties).toBe(1);
-    expect(uitkomst.paginas).toBeGreaterThan(0);
+    expect(uitkomst.records).toBe(1);
+    expect(uitkomst.kinderen).toBeGreaterThan(0);
     // Niet alleen uit de prullenbak: het record bestaat niet meer.
     expect(waarde(await storage.listDeleted("documentations"))).toHaveLength(0);
     expect(waarde(await storage.read("documentations", gemaakt.id))).toBeNull();
@@ -162,7 +170,7 @@ describe("de prullenbak loopt na dertig dagen leeg — FR-DOC-122, §8.8", () =>
       { deletedAt: null },
     ];
 
-    expect(prullenbak(rijen, nu)).toHaveLength(2);
+    expect(sorteerPrullenbak(rijen, nu)).toHaveLength(2);
     expect(verlopen(rijen, nu)).toHaveLength(1);
   });
 });
@@ -176,7 +184,7 @@ describe("de prullenbak in één handeling legen — FR-DOC-123", () => {
 
     const uitkomst = waarde(await documentation.leegPrullenbak());
 
-    expect(uitkomst.documentaties).toBe(2);
+    expect(uitkomst.records).toBe(2);
     expect(waarde(await documentation.prullenbak())).toHaveLength(0);
   });
 
@@ -242,7 +250,7 @@ describe("een groep verwijderen — FR-INS-46, B-136", () => {
     expect(waarde(await groups.zitIn(leerling.id))).toHaveLength(0);
   });
 
-  it("laat een documentatie bestaan en haalt alleen de verwijzing weg (FR-INS-46, INV-20)", async () => {
+  it("laat een documentatie bestaan en toont de groep niet meer (FR-INS-46, INV-20)", async () => {
     const { groep } = await opzet();
 
     const doc = waarde(
@@ -259,6 +267,113 @@ describe("een groep verwijderen — FR-INS-46, B-136", () => {
 
     const na = waarde(await documentation.open(doc.id));
     expect(na).not.toBeNull();
-    expect(na!.documentatie.groupIds).toEqual([]);
+    expect(na!.documentatie.title).toBe("Techniek op dinsdag");
+    // De groep bestaat voor de gebruiker niet meer: geen lijst kent hem nog.
+    expect(waarde(await groups.lijst())).toHaveLength(0);
+  });
+
+  it("brengt de groep én de lidmaatschappen terug (FR-INS-47, B-138)", async () => {
+    const { groep, leerling } = await opzet();
+
+    waarde(await groups.verwijder(groep.id));
+
+    const bak = waarde(await groups.prullenbak());
+    expect(bak).toHaveLength(1);
+    expect(bak[0]!.record.name).toBe("Techniekclub");
+    expect(bak[0]!.dagenResterend).toBe(BEWAARTERMIJN_DAGEN);
+
+    waarde(await groups.herstel(groep.id));
+
+    expect(waarde(await groups.lijst()).map((rij) => rij.id)).toEqual([groep.id]);
+    // Het lidmaatschap ging mee naar de prullenbak en komt dus mee terug.
+    expect(waarde(await groups.zitIn(leerling.id))).toHaveLength(1);
+  });
+
+  it("houdt de verwijzing in de documentatie vast, zodat terugzetten heel is (B-138)", async () => {
+    const { groep } = await opzet();
+
+    const doc = waarde(
+      await documentation.maak({
+        title: "Techniek op dinsdag",
+        date: "2026-09-28",
+        studentIds: [],
+        groupIds: [groep.id as Uuid],
+        text: "De klok liep.",
+      }),
+    ).documentatie;
+
+    waarde(await groups.verwijder(groep.id));
+    waarde(await groups.herstel(groep.id));
+
+    const na = waarde(await documentation.open(doc.id));
+    expect(na!.documentatie.groupIds).toEqual([groep.id]);
+  });
+
+  it("wist de groep en zijn lidmaatschappen na dertig dagen (FR-INS-47, §8.8)", async () => {
+    const { groep, leerling } = await opzet();
+    waarde(await groups.verwijder(groep.id));
+
+    klok.verzet("2026-11-01T10:00:00.000Z");
+    const uitkomst = waarde(await groups.ruimOp());
+
+    expect(uitkomst.records).toBe(1);
+    expect(uitkomst.kinderen).toBe(1);
+    expect(waarde(await storage.read("groups", groep.id))).toBeNull();
+    // De leerling zelf blijft, ook na het definitief wissen.
+    expect(waarde(await students.lijst()).map((rij) => rij.id)).toEqual([leerling.id]);
+  });
+});
+
+describe("een reeks in de prullenbak — FR-INS-47, B-138", () => {
+  async function nieuweReeks() {
+    return waarde(await series.maak({ name: "Kunstwerk Dok", colour: "series-3" }));
+  }
+
+  it("staat na het verwijderen in de prullenbak (FR-INS-47)", async () => {
+    const reeks = await nieuweReeks();
+    waarde(await series.verwijder(reeks.id));
+
+    const bak = waarde(await series.prullenbak());
+    expect(bak).toHaveLength(1);
+    expect(bak[0]!.dagenResterend).toBe(BEWAARTERMIJN_DAGEN);
+    expect(waarde(await series.lijst())).toHaveLength(0);
+  });
+
+  it("komt terug zoals hij was (FR-INS-47)", async () => {
+    const reeks = await nieuweReeks();
+    waarde(await series.verwijder(reeks.id));
+    waarde(await series.herstel(reeks.id));
+
+    expect(waarde(await series.lijst()).map((rij) => rij.name)).toEqual(["Kunstwerk Dok"]);
+  });
+
+  it("wordt na dertig dagen definitief gewist (FR-INS-47, §8.8)", async () => {
+    const reeks = await nieuweReeks();
+    waarde(await series.verwijder(reeks.id));
+
+    klok.verzet("2026-11-01T10:00:00.000Z");
+    expect(waarde(await series.ruimOp()).records).toBe(1);
+    expect(waarde(await storage.read("series", reeks.id))).toBeNull();
+  });
+
+  it("laat de documentatie bestaan als de reeks definitief verdwijnt (INV-20)", async () => {
+    const reeks = await nieuweReeks();
+    const doc = waarde(
+      await documentation.maak({
+        title: "Deel 1",
+        date: "2026-09-28",
+        studentIds: [],
+        seriesId: reeks.id,
+        text: "De eerste laag.",
+      }),
+    ).documentatie;
+
+    waarde(await series.verwijder(reeks.id));
+    klok.verzet("2026-11-01T10:00:00.000Z");
+    waarde(await series.ruimOp());
+
+    const na = waarde(await documentation.open(doc.id));
+    expect(na).not.toBeNull();
+    expect(na!.documentatie.title).toBe("Deel 1");
   });
 });
