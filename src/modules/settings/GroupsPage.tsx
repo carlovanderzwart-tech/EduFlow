@@ -18,6 +18,7 @@ import { GROEPSOORTEN } from "@/services/groups/GroupService";
 import { volgendeKleur } from "@/services/series/SeriesService";
 
 import { GroupMembers } from "./GroupMembers";
+import { Prullenbak } from "./Prullenbak";
 
 /**
  * Groepen en lidmaatschappen (§6.5.2).
@@ -34,6 +35,7 @@ export function GroupsPage() {
   const [soort, setSoort] = useState<GroupKind>("stamgroep");
   const [fout, setFout] = useState<string | null>(null);
   const [teVerwijderen, setTeVerwijderen] = useState<{ id: string; naam: string; aantal: number } | null>(null);
+  const [ronde, setRonde] = useState(0);
 
   const laad = useCallback(async ({ groups, students, storage }: Diensten) => {
     const groepen = await groups.lijst();
@@ -77,6 +79,9 @@ export function GroupsPage() {
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
     setFout(null);
     herlaad();
+    // De prullenbak eronder haalt zijn lijst op bij het ophangen; dit scherm blijft
+    // staan, dus zonder dit signaal blijft hij leeg terwijl er net iets in ging.
+    setRonde((nu) => nu + 1);
   }
 
   async function maakGroep() {
@@ -200,6 +205,10 @@ export function GroupsPage() {
         />
       ) : null}
 
+      {/* Onderaan, en niet als eerste: je komt hier om een groep te maken, niet
+          om te kijken wat je hebt weggegooid (`FR-INS-47`, B-138). */}
+      <Prullenbak soort="groepen" ronde={ronde} onHersteld={herlaad} />
+
       <ConfirmDialog
         open={teVerwijderen !== null}
         onOpenChange={(aan) => {
@@ -207,8 +216,7 @@ export function GroupsPage() {
         }}
         title={`${teVerwijderen?.naam ?? ""} verwijderen?`}
         description={beschrijfGevolg(teVerwijderen?.aantal ?? 0)}
-        confirmLabel="Verwijderen"
-        destructive
+        confirmLabel="Naar de prullenbak"
         onConfirm={() => void verwijderGroep()}
       />
     </div>
@@ -217,10 +225,12 @@ export function GroupsPage() {
 
 /** Wat er met de leerlingen gebeurt (`FR-INS-46`, B-136). De app zegt het vooraf. */
 function beschrijfGevolg(aantal: number): string {
-  if (aantal === 0) return "Er zit niemand in deze groep. Er gaat niets verloren.";
+  const terug = "De groep gaat naar de prullenbak en is daar dertig dagen terug te zetten, met de lidmaatschappen erbij.";
+  if (aantal === 0) return `Er zit niemand in deze groep. ${terug}`;
+
   const wat = aantal === 1 ? "Eén leerling zit" : `${aantal} leerlingen zitten`;
   return (
     `${wat} in deze groep. Zij blijven bestaan en raken alleen hun lidmaatschap kwijt. ` +
-    "Documentaties die naar deze groep verwijzen blijven ook bestaan."
+    `Documentaties die naar deze groep verwijzen blijven ook bestaan. ${terug}`
   );
 }
