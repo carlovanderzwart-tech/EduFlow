@@ -51,6 +51,7 @@ function inhoud(deel: Partial<Exportinhoud> = {}): Exportinhoud {
       { photoId: TWEE, bijschrift: "" },
     ],
     groep: "Groep 4 — De Regenboog",
+    leerlingen: [],
     legenda: "",
     ...deel,
   };

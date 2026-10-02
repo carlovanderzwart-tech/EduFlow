@@ -30,6 +30,7 @@ function inhoud(deel: Partial<Exportinhoud> = {}): Exportinhoud {
     tekst: "De kinderen gingen in de berm op zoek naar hun eigen kleur.",
     fotos: [],
     groep: "Groep 4 — De Regenboog",
+    leerlingen: [],
     legenda: "",
     ...deel,
   };
@@ -63,8 +64,40 @@ describe("het canvas staat vast — §5.10, T-13", () => {
     }
   });
 
-  it("kent de vier andere layouts nog geen sloten toe (D08)", () => {
-    expect(() => layout.sloten("B-verhaal")).toThrow(/alleen A-fotoraster/u);
+  it("kent nu ook de vier andere layouts (B-140, §5.10.3 t/m §5.10.6)", () => {
+    // Deze toets stond tot B-140 op "werpt een fout". Dat is niet versoepeld maar
+    // ingelost: de slottabellen stonden al in het handboek en zijn nu gebouwd.
+    expect(layout.sloten("B-verhaal").map((slot) => slot.naam)).toEqual([
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+    ]);
+    expect(layout.sloten("C-groot-beeld")).toHaveLength(5);
+    expect(layout.sloten("D-alleen-beeld")).toHaveLength(6);
+    expect(layout.sloten("E-vervolg")).toHaveLength(4);
+  });
+
+  it("geeft B twee tekstkolommen en D geen enkele (§5.10.3, §5.10.5)", () => {
+    const tekstvakken = (id: Parameters<typeof layout.sloten>[0]) =>
+      layout.sloten(id).filter((slot) => slot.soort === "tekst").length;
+
+    expect(tekstvakken("B-verhaal")).toBe(2);
+    expect(tekstvakken("C-groot-beeld")).toBe(1);
+    expect(tekstvakken("D-alleen-beeld")).toBe(0);
+  });
+
+  it("houdt elke slottabel binnen het blad van 297 bij 210 (T-13)", () => {
+    for (const id of ["A-fotoraster", "B-verhaal", "C-groot-beeld", "D-alleen-beeld", "E-vervolg"] as const) {
+      for (const slot of layout.sloten(id)) {
+        expect(slot.x).toBeGreaterThanOrEqual(PAGINA.marge);
+        expect(slot.y).toBeGreaterThanOrEqual(PAGINA.marge);
+        expect(slot.x + slot.breedte).toBeLessThanOrEqual(PAGINA.breedte - PAGINA.marge);
+        expect(slot.y + slot.hoogte).toBeLessThanOrEqual(PAGINA.hoogte);
+      }
+    }
   });
 });
 
@@ -137,11 +170,23 @@ describe("de tekst blijft op pagina 1 — B-122", () => {
     expect(plan.paginas[0]!.vlakken.some((vlak) => vlak.soort === "tekst")).toBe(false);
   });
 
-  it("meldt wat er niet past in plaats van het weg te laten (§5.10.7 regel 3)", () => {
+  it("meldt wat er niet past in plaats van het weg te laten (§5.10.7 regel 4)", () => {
     const plan = layout.plan(inhoud({ tekst: "woord ".repeat(600) }));
 
     expect(plan.opmerkingen).toHaveLength(1);
-    expect(plan.opmerkingen[0]).toMatch(/past niet alle tekst/u);
+    expect(plan.opmerkingen[0]).toMatch(/vervolgpagina/u);
+  });
+
+  it("zet de rest op een vervolgpagina in E-vervolg (§5.10.7 regel 4, B-142)", () => {
+    const plan = layout.plan(inhoud({ tekst: "woord ".repeat(600) }));
+
+    const laatste = plan.paginas[plan.paginas.length - 1]!;
+    expect(laatste.layoutId).toBe("E-vervolg");
+    expect(laatste.vlakken.some((vlak) => vlak.soort === "tekst")).toBe(true);
+
+    // §5.10.6: de herhaalde titel draagt "(vervolg)".
+    const kop = laatste.vlakken.find((vlak) => vlak.soort === "kop")!;
+    expect(kop.titel.map((regel) => regel.tekst).join(" ")).toMatch(/vervolg/u);
   });
 
   it("zwijgt zolang alles erop past", () => {
@@ -193,5 +238,95 @@ describe("de legenda bij initialen — B-40", () => {
     const plan = layout.plan(inhoud({ legenda: "" }));
 
     expect(plan.paginas[0]!.vlakken.some((vlak) => vlak.soort === "legenda")).toBe(false);
+  });
+});
+
+describe("waar de tekst komt — FR-DOC-128, B-141", () => {
+  function tekstkader(opties: Parameters<typeof layout.plan>[1]) {
+    const plan = layout.plan(inhoud({ fotos: fotos(2) }), opties);
+    const vlak = plan.paginas[0]!.vlakken.find((v) => v.soort === "tekst")!;
+    return vlak.kader;
+  }
+
+  it("zet de tekst standaard rechtsonder, zoals §5.10.2 (FR-DOC-128)", () => {
+    expect(tekstkader({})).toMatchObject({ x: 199, y: 110 });
+  });
+
+  it("verhuist de tekst naar het gekozen vak (FR-DOC-128)", () => {
+    expect(tekstkader({ tekstslot: "A1" })).toMatchObject({ x: 10, y: 40 });
+  });
+
+  it("maakt van het oude tekstvak een fotovak, zodat het raster vol blijft (B-141)", () => {
+    const plan = layout.plan(inhoud({ fotos: fotos(6) }), { tekstslot: "A1" });
+    const fotovakken = plan.paginas[0]!.vlakken.filter((vlak) => vlak.soort === "foto");
+
+    // Zes foto's, vijf vakken: A6 is er nu een. Het zesde gaat naar pagina 2.
+    expect(fotovakken).toHaveLength(5);
+    expect(fotovakken.some((vlak) => vlak.kader.x === 199 && vlak.kader.y === 110)).toBe(true);
+  });
+
+  it("negeert een vak dat in deze layout niet bestaat (FR-DOC-128)", () => {
+    // Een slotnaam uit een andere layout verandert niets; de stand blijft die van §5.10.
+    expect(tekstkader({ tekstslot: "B3" })).toMatchObject({ x: 199, y: 110 });
+  });
+
+  it("noemt de plekken waar de tekst heen kan (FR-DOC-128)", () => {
+    expect(layout.tekstplekken("A-fotoraster")).toEqual(["A1", "A2", "A3", "A4", "A5", "A6"]);
+    expect(layout.tekstplekken("D-alleen-beeld")).toEqual(["D1", "D2", "D3", "D4"]);
+  });
+});
+
+describe("de andere layouts — B-140, §5.10.3 t/m §5.10.5", () => {
+  it("laat de tekst in layout B van de linker naar de rechter kolom lopen (§5.10.3)", () => {
+    const plan = layout.plan(inhoud({ tekst: "woord ".repeat(120) }), { layoutId: "B-verhaal" });
+    const tekstvlakken = plan.paginas[0]!.vlakken.filter((vlak) => vlak.soort === "tekst");
+
+    expect(tekstvlakken).toHaveLength(2);
+    expect(tekstvlakken[0]!.kader.x).toBe(10);
+    expect(tekstvlakken[1]!.kader.x).toBe(154);
+  });
+
+  it("geeft layout C één grote foto over de volle breedte (§5.10.4)", () => {
+    const plan = layout.plan(inhoud({ fotos: fotos(1) }), { layoutId: "C-groot-beeld" });
+    const foto = plan.paginas[0]!.vlakken.find((vlak) => vlak.soort === "foto")!;
+
+    expect(foto.kader).toMatchObject({ x: 10, y: 40, breedte: 277, hoogte: 122 });
+  });
+
+  it("meldt bij layout D dat de tekst naar een vervolgpagina gaat (B-28)", () => {
+    const plan = layout.plan(inhoud(), { layoutId: "D-alleen-beeld" });
+
+    expect(plan.opmerkingen[0]).toMatch(/geen lopende tekst/u);
+    expect(plan.paginas[plan.paginas.length - 1]!.layoutId).toBe("E-vervolg");
+  });
+
+  it("laat de tekst weg als je daarvoor kiest (B-28)", () => {
+    const plan = layout.plan(inhoud(), { layoutId: "D-alleen-beeld", laatTekstWeg: true });
+
+    expect(plan.opmerkingen).toEqual([]);
+    expect(plan.paginas).toHaveLength(1);
+    expect(plan.paginas[0]!.vlakken.some((vlak) => vlak.soort === "tekst")).toBe(false);
+  });
+});
+
+describe("de leeftijd staat in de voettekst — FR-DOC-127, B-139", () => {
+  function voettekst(leerlingen: string[]) {
+    const plan = layout.plan(inhoud({ leerlingen }));
+    const vlak = plan.paginas[0]!.vlakken.find((v) => v.soort === "voettekst")!;
+    return vlak.links;
+  }
+
+  it("zet de kinderen met hun leeftijd tussen de groep en de datum (FR-DOC-127)", () => {
+    expect(voettekst(["Kjeld 6,1", "Aya 5,11"])).toContain("Kjeld 6,1, Aya 5,11");
+  });
+
+  it("laat de regel ongemoeid als er geen leerlingen aan hangen", () => {
+    expect(voettekst([])).not.toContain(",,");
+  });
+
+  it("kapt af bij meer dan zes, want twintig namen passen niet op één regel", () => {
+    const twintig = Array.from({ length: 20 }, (_, n) => `Kind${n} 6,1`);
+
+    expect(voettekst(twintig)).toContain("en nog 14");
   });
 });

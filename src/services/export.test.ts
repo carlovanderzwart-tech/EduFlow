@@ -218,6 +218,7 @@ describe("de hele keten van documentatie naar afbeelding — D08", () => {
         { photoId: TWEE as Uuid, bijschrift: "" },
       ],
       groep: "Groep 4 — De Regenboog",
+      leerlingen: [],
       legenda: "",
       ...deel,
     };

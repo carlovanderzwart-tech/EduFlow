@@ -33,8 +33,10 @@ import { StudentPasteForm } from "./StudentPasteForm";
  * zegt hij waarom; dit scherm toont die tekst en vertaalt hem niet (§10.3). Een
  * botsing op de **voornaam** alleen is geen fout maar een melding (FR-INS-02).
  *
- * Wat er nog niet is: geboortedatum, notitie, samenvoegen (FR-INS-05) en de
- * CSV-import (FR-INS-03).
+ * De geboortedatum staat op het scherm van de leerling zelf (B-139): daar hoort
+ * hij, want hij geldt voor dat ene kind en niet voor de lijst.
+ *
+ * Wat er nog niet is: notitie, samenvoegen (FR-INS-05) en de CSV-import (FR-INS-03).
  */
 export function StudentsPage() {
   const [voornaam, setVoornaam] = useState("");

@@ -7,6 +7,7 @@ import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/ui
 import { Label } from "@/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import type { Group, Series, Student } from "@/domain/types";
+import { metLeeftijd } from "@/services/students/leeftijd";
 import { weergavenaam } from "@/services/students/StudentService";
 
 import { NieuweReeks } from "./NieuweReeks";
@@ -78,7 +79,12 @@ export function Koppelingen({
                     onWijzig({ studentIds: wissel(formulier.studentIds, leerling.id, aan === true) })
                   }
                 />
-                <Label htmlFor={`leerling-${leerling.id}`}>{weergavenaam(leerling)}</Label>
+                {/* `FR-DOC-127`: de leeftijd staat achter de naam, zoals hij ook
+                    in de documentatie komt te staan. Zonder geboortejaar blijft
+                    het bij de naam (`FR-AGE-24`). */}
+                <Label htmlFor={`leerling-${leerling.id}`}>
+                  {metLeeftijd(weergavenaam(leerling), leerling, new Date())}
+                </Label>
               </div>
             ))}
           </div>

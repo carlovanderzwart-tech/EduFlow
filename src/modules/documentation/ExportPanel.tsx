@@ -7,11 +7,16 @@ import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { ErrorMessage } from "@/ui/ErrorMessage";
 import { Button } from "@/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/ui/sheet";
 import { Skeleton } from "@/ui/skeleton";
 import { Switch } from "@/ui/switch";
 import { diensten } from "@/services/diensten";
-import { LAYOUTS } from "@/services/documentation/LayoutService";
+import {
+  LAYOUTS,
+  tekstplekken,
+  type Planopties,
+} from "@/services/documentation/LayoutService";
 import { vraagtToestemming } from "@/services/documentation/toestemming";
 
 import { useExport, type Exportpagina, type Exportstand } from "./hooks/useExport";
@@ -47,8 +52,9 @@ interface ExportPanelProps {
  */
 export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps) {
   const [initialen, setInitialen] = useState(false);
+  const [opmaak, setOpmaak] = useState<Planopties>({ layoutId: "A-fotoraster" });
   const [vraagToestemming, setVraagToestemming] = useState<Uitvoer | null>(null);
-  const { stand, setStand } = useExport(documentId, initialen, open);
+  const { stand, setStand } = useExport(documentId, initialen, open, opmaak);
   const { melding, fout, bezig, setFout, verstuur, bevestig, kopieer } = useVersturen(
     documentId,
     stand,
@@ -70,7 +76,7 @@ export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps
         </SheetHeader>
 
         <div className="space-y-6 px-4 pb-6">
-          <Layoutkiezer />
+          <Layoutkiezer opmaak={opmaak} onWijzig={setOpmaak} />
 
           {fout ? <ErrorMessage message={fout} nextStep="Probeer het opnieuw." /> : null}
           {stand.fout ? <ErrorMessage message={stand.fout} nextStep="Ga terug naar het overzicht." /> : null}
@@ -98,21 +104,45 @@ export function ExportPanel({ documentId, open, onOpenChange }: ExportPanelProps
         </div>
       </SheetContent>
 
-      <ConfirmDialog
-        open={vraagToestemming !== null}
-        onOpenChange={(aan) => {
-          if (!aan) setVraagToestemming(null);
-        }}
-        title="Toestemming beeldgebruik"
-        description={TOESTEMMINGSVRAAG}
-        confirmLabel="Ja, ik heb toestemming"
-        onConfirm={() => {
-          const soort = vraagToestemming;
-          setVraagToestemming(null);
-          if (soort) void bevestig(soort);
-        }}
+      <Toestemmingsvraag
+        soort={vraagToestemming}
+        onSluit={() => setVraagToestemming(null)}
+        onBevestig={bevestig}
       />
     </Sheet>
+  );
+}
+
+/**
+ * De vraag van B-08, met onthouden waarvoor hij werd gesteld (`FR-DOC-115`).
+ *
+ * De soort wordt vastgehouden omdat de vraag tussen de klik en het versturen in
+ * staat: druk je op Print-PDF, dan hoort er na "ja" een PDF te komen en geen
+ * afbeelding.
+ */
+function Toestemmingsvraag({
+  soort,
+  onSluit,
+  onBevestig,
+}: {
+  soort: Uitvoer | null;
+  onSluit: () => void;
+  onBevestig: (soort: Uitvoer) => Promise<unknown>;
+}) {
+  return (
+    <ConfirmDialog
+      open={soort !== null}
+      onOpenChange={(aan) => {
+        if (!aan) onSluit();
+      }}
+      title="Toestemming beeldgebruik"
+      description={TOESTEMMINGSVRAAG}
+      confirmLabel="Ja, ik heb toestemming"
+      onConfirm={() => {
+        onSluit();
+        if (soort) void onBevestig(soort);
+      }}
+    />
   );
 }
 
@@ -292,35 +322,138 @@ async function maakPdf(stand: Exportstand): Promise<File> {
 }
 
 /**
- * De vijf miniaturen (FR-DOC-111).
+ * De layoutkeuze, de tekstplek en de schakelaar van B-28 (`FR-DOC-111`,
+ * `FR-DOC-128`, B-140, B-141).
  *
- * Vier ervan staan uit. Ze staan er wél, zodat het paneel in sprint 2 een slottabel
- * krijgt in plaats van een verbouwing, en zodat je nu al ziet dat de keuze bestaat.
+ * De vier layouts uit §5.10 staan er allemaal; `E-vervolg` niet, want die kies je
+ * niet — hij komt eraan omdat je tekst niet paste (§5.10.6).
+ *
+ * De tekstplek verschijnt alleen waar de keuze iets betekent: in het raster van
+ * layout A zijn de zes vakken onderling verwisselbaar, en daar kun je de tekst dus
+ * ergens anders neerzetten. In B liggen de twee kolommen vast, in C is er één vak
+ * en in D geen.
  */
-function Layoutkiezer() {
+function Layoutkiezer({
+  opmaak,
+  onWijzig,
+}: {
+  opmaak: Planopties;
+  onWijzig: (opmaak: Planopties) => void;
+}) {
+  const gekozen = opmaak.layoutId ?? "A-fotoraster";
+  const plekken = tekstplekken(gekozen);
+  const heeftTekstvak = LAYOUT_MET_TEKST.has(gekozen);
+
   return (
-    <fieldset>
+    <fieldset className="space-y-3">
       <legend className="pb-2 text-sm font-medium">Layout</legend>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {LAYOUTS.map((keuze) => (
           <button
             key={keuze.id}
             type="button"
             disabled={!keuze.beschikbaar}
-            aria-pressed={keuze.beschikbaar}
+            aria-pressed={keuze.id === gekozen}
             title={keuze.omschrijving}
+            // De tekstplek hoort bij de layout; hem meenemen naar een andere zou
+            // een slotnaam opleveren die daar niet bestaat.
+            onClick={() => onWijzig({ layoutId: keuze.id })}
             className="aria-pressed:border-(--color-accent) rounded-md border p-2 text-xs aria-pressed:bg-(--color-accent-quiet) disabled:opacity-50"
           >
             {keuze.naam}
           </button>
         ))}
       </div>
-      <FieldDescription className="pt-2">
-        In deze versie is alleen Fotoraster gevuld. De andere vier komen later.
+      <FieldDescription>
+        {LAYOUTS.find((keuze) => keuze.id === gekozen)?.omschrijving}
       </FieldDescription>
+
+      {heeftTekstvak && plekken.length > 1 ? (
+        <Tekstplek plekken={plekken} opmaak={opmaak} onWijzig={onWijzig} />
+      ) : null}
+
+      {!heeftTekstvak ? <Tekstweglaten opmaak={opmaak} onWijzig={onWijzig} /> : null}
     </fieldset>
   );
 }
+
+/** Waar de tekst komt te staan (`FR-DOC-128`, B-141). */
+function Tekstplek({
+  plekken,
+  opmaak,
+  onWijzig,
+}: {
+  plekken: string[];
+  opmaak: Planopties;
+  onWijzig: (opmaak: Planopties) => void;
+}) {
+  return (
+    <Field>
+      <FieldLabel htmlFor="tekstplek">Waar komt de tekst?</FieldLabel>
+      <NativeSelect
+        id="tekstplek"
+        value={opmaak.tekstslot ?? ""}
+        onChange={(gebeurtenis) =>
+          onWijzig({ ...opmaak, tekstslot: gebeurtenis.target.value || undefined })
+        }
+      >
+        <NativeSelectOption value="">Standaard</NativeSelectOption>
+        {plekken.map((naam, plaats) => (
+          <NativeSelectOption key={naam} value={naam}>
+            {PLEKNAMEN[plaats] ?? naam}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+      <FieldDescription>
+        Het vak dat je kiest wordt het tekstvak; waar de tekst stond komt een foto.
+      </FieldDescription>
+    </Field>
+  );
+}
+
+/** B-28: bij een layout zonder tekstvak laat je de tekst bewust weg, of niet. */
+function Tekstweglaten({
+  opmaak,
+  onWijzig,
+}: {
+  opmaak: Planopties;
+  onWijzig: (opmaak: Planopties) => void;
+}) {
+  return (
+    <div>
+      <Field orientation="horizontal">
+        <FieldLabel htmlFor="tekst-weg">Laat de tekst weg</FieldLabel>
+        <Switch
+          id="tekst-weg"
+          checked={opmaak.laatTekstWeg === true}
+          onCheckedChange={(aan) => onWijzig({ ...opmaak, laatTekstWeg: aan })}
+        />
+      </Field>
+      <FieldDescription className="pt-1">
+        Deze layout toont geen lopende tekst. Laat je hem staan, dan komt hij op een
+        vervolgpagina (B-28).
+      </FieldDescription>
+    </div>
+  );
+}
+
+/** Welke layouts een tekstvak hebben; D heeft er geen (§5.10.5). */
+const LAYOUT_MET_TEKST = new Set(["A-fotoraster", "B-verhaal", "C-groot-beeld"]);
+
+/**
+ * De zes vakken van het raster in gewone taal (`FR-DOC-128`).
+ *
+ * "A4" zegt niets tegen een leerkracht; "linksonder" wel. De volgorde volgt de
+ * slottabel van §5.10.2: drie boven, drie onder.
+ */
+const PLEKNAMEN = [
+  "Linksboven",
+  "Midden boven",
+  "Rechtsboven",
+  "Linksonder",
+  "Midden onder",
+  "Rechtsonder",
+];
 
 /** Het voorbeeld: de bestanden zelf, kleiner getoond (FR-DOC-113, FR-DOC-112). */
 function Voorbeeld({ bezig, paginas }: { bezig: boolean; paginas: Exportpagina[] }) {
