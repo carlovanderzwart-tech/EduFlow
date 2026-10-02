@@ -173,6 +173,18 @@ export function createStudentService(deps: StudentDeps) {
     });
   }
 
+  /**
+   * Zet of wist de geboortedatum (`FR-AGE-24`, B-139).
+   *
+   * **Dag en maand zonder jaar mag**, en dat is geen slordigheid maar de eis: *"dan
+   * wordt dat opgeslagen zonder jaar en verschijnt de verjaardag zonder leeftijd.
+   * Dat is dataminimalisatie in de praktijk."* Een jaar zonder dag en maand mag
+   * niet — daar is geen verjaardag uit te halen en geen leeftijd, dus het levert
+   * alleen een geboortejaar op dat nergens voor dient (§15).
+   *
+   * `null` op alle drie wist de datum. Dat is de weg terug voor wie hem per ongeluk
+   * invulde, en §15.4 vraagt die weg uitdrukkelijk.
+   */
   /** Verwijderen is markeren (§8.1.6); de leerling blijft dertig dagen herstelbaar (T-11). */
   function verwijder(id: Uuid): Promise<Result<Student>> {
     return deps.storage.softDelete("students", id);
@@ -181,11 +193,68 @@ export function createStudentService(deps: StudentDeps) {
   return {
     lijst,
     voegToe,
+    zetGeboortedatum: (id: Uuid, datum: Geboortedatum) =>
+      zetGeboortedatum(deps.storage, id, datum),
     voegLijstToe: (regels: readonly Geplaktenaam[]) =>
       voegLijstToe(deps.storage, voegToe, regels),
     dubbeleVoornamen: () => dubbeleVoornamen(deps.storage),
     verwijder,
   };
+}
+
+/** Wat het scherm aanlevert; alle drie leeg wist de datum. */
+export interface Geboortedatum {
+  dag: number | null;
+  maand: number | null;
+  jaar: number | null;
+}
+
+/**
+ * Zet of wist de geboortedatum (`FR-AGE-24`, B-139).
+ *
+ * **Dag en maand zonder jaar mag**, en dat is geen slordigheid maar de eis: *"dan
+ * wordt dat opgeslagen zonder jaar en verschijnt de verjaardag zonder leeftijd. Dat
+ * is dataminimalisatie in de praktijk."* Een jaar zonder dag en maand mag niet —
+ * daar is geen verjaardag uit te halen en geen leeftijd, dus het levert alleen een
+ * geboortejaar op dat nergens voor dient (§15).
+ *
+ * Alle drie leeg wist de datum. Dat is de weg terug voor wie hem per ongeluk
+ * invulde, en §15.4 vraagt die weg uitdrukkelijk.
+ */
+async function zetGeboortedatum(
+  storage: StorageService,
+  id: Uuid,
+  datum: Geboortedatum,
+): Promise<Result<Student>> {
+  const leeg = datum.dag === null && datum.maand === null && datum.jaar === null;
+  if (!leeg && (datum.dag === null || datum.maand === null)) {
+    return ongeldig(
+      "Vul een dag én een maand in. Het jaar mag je weglaten; dan is er geen leeftijd.",
+    );
+  }
+
+  if (!leeg && !bestaatDatum(datum.dag!, datum.maand!)) {
+    return ongeldig("Deze dag bestaat niet in deze maand. Pas hem aan.");
+  }
+
+  return storage.update("students", id, {
+    birthDay: leeg ? null : datum.dag,
+    birthMonth: leeg ? null : datum.maand,
+    birthYear: leeg ? null : datum.jaar,
+  });
+}
+
+/**
+ * Bestaat deze dag in deze maand? (`FR-AGE-24`)
+ *
+ * Zonder jaar, want het jaar mag ontbreken. 29 februari telt daarom als een
+ * bestaande dag: in een schrikkeljaar is hij er, en een kind dat dan jarig is
+ * bestaat ook in de jaren waarin de dag niet valt.
+ */
+function bestaatDatum(dag: number, maand: number): boolean {
+  if (maand < 1 || maand > 12 || dag < 1) return false;
+  const LANGSTE_MAAND = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return dag <= LANGSTE_MAAND[maand - 1]!;
 }
 
 /**

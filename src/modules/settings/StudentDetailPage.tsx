@@ -15,7 +15,10 @@ import { useDienst } from "@/app/providers/useDienst";
 import { datumKort, vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
 import { GROEPSOORTEN } from "@/services/groups/GroupService";
+import { metLeeftijd } from "@/services/students/leeftijd";
 import { weergavenaam } from "@/services/students/StudentService";
+
+import { Geboortedatum } from "./Geboortedatum";
 
 /**
  * Het scherm van één leerling (FR-INS-06, FR-INS-04).
@@ -118,8 +121,12 @@ export function StudentDetailPage({ studentId }: { studentId: string }) {
         <Link href="/settings/students" className="text-sm underline">
           Terug naar Leerlingen
         </Link>
+        {/* De leeftijd staat achter de naam, net als in de documentatie zelf
+            (`FR-DOC-127`, B-139). Zonder geboortejaar staat er alleen de naam. */}
         <h2 className="mt-2 text-xl font-semibold">
-          {waarde?.leerling ? weergavenaam(waarde.leerling) : ""}
+          {waarde?.leerling
+            ? metLeeftijd(weergavenaam(waarde.leerling), waarde.leerling, new Date())
+            : ""}
         </h2>
       </div>
 
@@ -151,6 +158,10 @@ export function StudentDetailPage({ studentId }: { studentId: string }) {
           })}
         </ul>
       </section>
+
+      {waarde?.leerling ? (
+        <Geboortedatum leerling={waarde.leerling} onOpgeslagen={herlaad} />
+      ) : null}
 
       <section className="space-y-3 border-t border-border pt-6">
         <Field className="max-w-xs">

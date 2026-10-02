@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-138** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-126** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-142** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,145 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 2 oktober 2026 — derde feedbackronde
+
+Drie punten: de leeftijd achter de naam, kiezen waar de tekst komt, en de andere
+layouts kunnen gebruiken.
+
+## B-139 — De leeftijd achter de naam, als jaar en maanden
+
+**Probleem.** *"Leeftijd van de kinderen achter de naam in de documentatie genoteerd
+als jaar en datum. Dus iemand geboren op 2-9-2020 zou genoteerd moeten worden als 6,1
+(jaar, aantal maanden)."*
+
+**En het kon nog nergens vandaan komen.** `Student` heeft sinds het begin
+`birthDay`, `birthMonth` en `birthYear`, maar het leerlingscherm had geen veld om ze
+in te vullen — het stond er zelfs bij: *"Wat er nog niet is: geboortedatum, notitie,
+samenvoegen."* Er is dus eerst een geboortedatum te geven voordat er een leeftijd te
+tonen valt.
+
+**Besluit.** Drie dingen:
+
+1. **Een geboortedatum op het leerlingscherm**, als drie losse velden. Geen
+   `<input type="date">`, want die eist een heel jaar en `FR-AGE-24` laat juist toe
+   dat het jaar ontbreekt: *"dan wordt dat opgeslagen zonder jaar en verschijnt de
+   verjaardag zonder leeftijd. Dat is dataminimalisatie in de praktijk."* De leeftijd
+   staat er meteen naast, want dát is waarvoor je het jaar invult.
+2. **`jaren,maanden`**, met een komma. In het Nederlands is de punt een duizendtal en
+   leest `6.1` als zes komma één jaar — iets anders dan zes jaar en één maand.
+3. **Achter de naam, op drie plekken**: de kop van het leerlingscherm, de
+   leerlingenlijst in het schrijfscherm, en de voettekst van de export.
+
+**De maand telt pas als de dag voorbij is.** Wie op 2 september jarig is, is op
+1 oktober nog geen maand ouder en op 2 oktober wel. Zonder die regel springt de
+leeftijd op de eerste van de maand, en dat klopt voor niemand.
+
+**Geen leeftijd bij een datum in de toekomst.** Dat is geen randgeval maar een
+typefout in het jaartal, en die hoort als "geen leeftijd" te verschijnen en niet als
+een negatief getal.
+
+### De peildatum is de datum van de documentatie
+
+Niet vandaag. Je legt vast hoe oud het kind **wás** toen dit gebeurde, en die
+leeftijd hoort niet te veranderen omdat je de documentatie in maart nog eens
+exporteert. In het schrijfscherm en op het leerlingscherm staat wél de leeftijd van
+vandaag: daar kies je wie erbij hoort, en dan is de leeftijd van nu het antwoord op
+"wie is dit".
+
+### De initialenschakelaar werkt er overheen
+
+`FR-DOC-114` vervangt namen door initialen. Die vervanging gaat over deze namen
+net zo goed: `Kjeld 6,1` wordt `K. 6,1`. De leeftijd blijft staan, want hij is niet
+herleidbaar tot één kind en hij is juist wat de documentatie leesbaar maakt.
+
+### Nieuwe eis
+
+**FR-DOC-127 — De leeftijd staat achter de naam.** *Gegeven* een leerling met een
+volledige geboortedatum, *wanneer* hij aan een documentatie hangt, *dan* staat zijn
+naam met de leeftijd erachter in de voettekst van de export, als `jaren,maanden` op
+de datum van de documentatie. Zonder geboortejaar staat er alleen de naam
+(`FR-AGE-24`). Volgt uit B-139.
+
+## B-140 — De vier layouts uit §5.10 bestaan nu echt
+
+**Probleem.** *"Ook wil ik de andere layouts kunnen gebruiken."* Het exportpaneel
+toonde ze alle vijf, vier ervan uit, met eronder: *"In deze versie is alleen
+Fotoraster gevuld."*
+
+**En de tabellen stonden er al.** §5.10.3 tot en met §5.10.6 geven voor B, C, D en E
+de slotmaten tot op de halve millimeter. D08 heeft ze niet gebouwd en dat ook zo
+opgeschreven. Dit besluit lost dat in; er is niets nieuws bedacht.
+
+**Besluit.** Alle vier de slottabellen zijn overgenomen zoals ze er staan. Wat
+daarvoor aan de planner moest veranderen:
+
+- **Meer dan één tekstvak.** B en E hebben twee kolommen; de tekst loopt van de ene
+  naar de andere. De oude planner pakte met `.find` alleen de eerste.
+- **Geen tekstvak.** D heeft er geen, en dat liet de oude planner struikelen.
+- **De vervolgpagina.** §5.10.7 regel 4 vraagt er een in `E-vervolg`; die bestond
+  niet, dus B-122 hield de tekst noodgedwongen op pagina 1. Dat is nu niet meer nodig.
+- **De herhaalde titel is 14 pt.** §5.10.6 zegt het met zoveel woorden. Met de 24 pt
+  van de eerste pagina past hij niet in de 14 mm van `E0`, en dan komt de
+  vervolgpagina zonder kop uit de machine — precies het losse blad dat B-07 wil
+  voorkomen. Gevonden doordat de toets erop viel.
+
+`E-vervolg` staat niet in de kiezer. Dat is §5.10.6: *"Hij bestaat niet in de
+miniaturenkiezer."* Je kiest hem niet; hij komt eraan omdat je tekst niet paste.
+
+## B-141 — Waar de tekst komt te staan
+
+**Probleem.** *"Ook wil ik kunnen kiezen waar de tekst komt in de layout van de
+documentatie."*
+
+**Besluit.** In layout A zijn de zes vakken van het raster onderling verwisselbaar:
+de tekst staat standaard rechtsonder (§5.10.2) en kan naar elk ander vak. Het vak dat
+je kiest wordt het tekstvak; waar de tekst stond komt een foto. Zo blijft het raster
+vol en veranderen de maten uit §5.10.2 niet.
+
+**Alleen waar de keuze iets betekent.** In B liggen de twee kolommen vast, in C is er
+één tekstvak en in D geen. Daar verschijnt de keuze niet, want een keuzelijst met één
+optie is geen keuze.
+
+**In gewone taal.** De lijst zegt "Linksboven" en niet "A1". `A1` is de naam van een
+slot in een tabel in hoofdstuk 5; een leerkracht leest "linksboven".
+
+### Nieuwe eis
+
+**FR-DOC-128 — De tekst staat waar je hem zet.** *Gegeven* layout A, *wanneer* je in
+het exportpaneel een ander vak kiest, *dan* staat de tekst daar en wordt het vak waar
+hij stond een fotovak. De standaard is het vak uit §5.10.2. Volgt uit B-141.
+
+## B-142 — De tekst van layout D gaat naar `E-vervolg`, niet naar `B-verhaal`
+
+**De tegenspraak.** B-28 zegt over layout D: *"dan verdwijnt die tekst niet. Het
+exportpaneel meldt: «Layout D toont geen lopende tekst. Je tekst komt op een tweede
+pagina.» en voegt automatisch een pagina in layout `B-verhaal` toe met de titel
+herhaald."* §5.10.7 regel 4 zegt over overloop iets anders: *"Blijft er tekst over,
+dan komt er een vervolgpagina in `E-vervolg`."*
+
+**Besluit: `E-vervolg`.** Drie redenen. `E` ís de vervolglayout — §5.10.6 noemt hem zo
+en geeft hem twee tekstkolommen en niets anders. Hij herhaalt de titel met
+"(vervolg)", en dat is precies de reden die B-28 zelf geeft. En `B-verhaal` heeft twee
+fotovakken die op een pagina met alleen tekst leeg zouden blijven staan.
+
+Wat van B-28 overeind blijft, blijft overeind: de melding staat er woordelijk, en de
+schakelaar **"Laat de tekst weg"** is er, want B-28 noemt die uitdrukkelijk *"een
+bewuste handeling met een zichtbaar gevolg, geen stille weglating"*.
+
+> **Dit raakt B-122 niet.** Die hield de tekst op pagina 1 omdat `E-vervolg` niet
+> bestond. Nu hij er is, doet §5.10.7 regel 4 zijn werk en is de uitwijk van B-122
+> niet meer nodig.
+
+### Vijf functies opgesplitst
+
+Deze ronde maakte er vijf die over de zestig regels van DR-53 gingen. B-131 stelde
+vast dat die grens blijft staan en dat de 28 bestaande overschrijdingen eigen werk
+zijn; er vijf bij maken zou dat besluit niet serieus nemen. Ze zijn uit elkaar
+gehaald, en de teller staat onveranderd op 33 waarschuwingen.
+
 
 ---
 

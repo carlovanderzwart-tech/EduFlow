@@ -33,6 +33,8 @@ export const PRINTLETTER = {
   titel: { punt: 24, regelhoogte: 28, gewicht: 600 },
   reeks: { punt: 10, regelhoogte: 12, gewicht: 500 },
   datum: { punt: 10, regelhoogte: 12, gewicht: 400 },
+  /** §5.10.6: de herhaalde titel op een vervolgpagina is 14 pt, niet 24. */
+  vervolgtitel: { punt: 14, regelhoogte: 17, gewicht: 600 },
   tekst: { punt: 11, regelhoogte: 16.5, gewicht: 400 },
   bijschrift: { punt: 8.5, regelhoogte: 11, gewicht: 400 },
   voettekst: { punt: 7.5, regelhoogte: 9, gewicht: 400 },
@@ -90,6 +92,15 @@ export interface Exportinhoud {
   fotos: Exportfoto[];
   /** De voettekst draagt de groepsnaam, de datum en de paginaaanduiding (§5.10.1). */
   groep: string;
+  /**
+   * De kinderen waar deze documentatie over gaat, met hun leeftijd (`FR-DOC-127`).
+   *
+   * Al samengesteld door de aanroeper: naam plus `6,1`, of alleen de naam als er
+   * geen geboortejaar is (`FR-AGE-24`). De initialenschakelaar is er al overheen
+   * geweest, want deze laag weet niet wie er afgeschermd moet worden (DR-31 is
+   * daar; hier staat alleen waar iets op het blad komt).
+   */
+  leerlingen: string[];
   /** De legenda bij initialen; leeg als er geen botsing is (B-40). */
   legenda: string;
 }
@@ -112,6 +123,66 @@ const A_FOTORASTER: Slot[] = [
   { naam: "A7", soort: "voettekst", x: 10, y: 192, breedte: 277, hoogte: 8 },
 ];
 
+/**
+ * Layout B — verhaal (§5.10.3).
+ *
+ * Twee tekstkolommen, want 277 mm in één kolom levert regels van ver boven de 90
+ * tekens. De tekst loopt van B3 naar B4.
+ */
+const B_VERHAAL: Slot[] = [
+  { naam: "B0", soort: "kop", x: 10, y: 10, breedte: 277, hoogte: 26 },
+  { naam: "B1", soort: "foto", x: 10, y: 40, breedte: 133, hoogte: 90 },
+  { naam: "B2", soort: "foto", x: 154, y: 40, breedte: 133, hoogte: 90 },
+  { naam: "B3", soort: "tekst", x: 10, y: 136, breedte: 133, hoogte: 54 },
+  { naam: "B4", soort: "tekst", x: 154, y: 136, breedte: 133, hoogte: 54 },
+  { naam: "B5", soort: "voettekst", x: 10, y: 192, breedte: 277, hoogte: 8 },
+];
+
+/** Layout C — groot beeld (§5.10.4). Eén dominante foto, een kort onderschrift. */
+const C_GROOT_BEELD: Slot[] = [
+  { naam: "C0", soort: "kop", x: 10, y: 10, breedte: 277, hoogte: 26 },
+  { naam: "C1", soort: "foto", x: 10, y: 40, breedte: 277, hoogte: 122 },
+  { naam: "C2", soort: "tekst", x: 10, y: 168, breedte: 190, hoogte: 22 },
+  { naam: "C3", soort: "foto", x: 206, y: 168, breedte: 81, hoogte: 22 },
+  { naam: "C4", soort: "voettekst", x: 10, y: 192, breedte: 277, hoogte: 8 },
+];
+
+/**
+ * Layout D — alleen beeld (§5.10.5). Geen tekstslot, en dat is de bedoeling.
+ *
+ * De kop is compacter dan bij de andere: 16 mm in plaats van 26, want er staat
+ * alleen een titel en een datum.
+ */
+const D_ALLEEN_BEELD: Slot[] = [
+  { naam: "D0", soort: "kop", x: 10, y: 10, breedte: 277, hoogte: 16 },
+  { naam: "D1", soort: "foto", x: 10, y: 30, breedte: 136.5, hoogte: 78 },
+  { naam: "D2", soort: "foto", x: 150.5, y: 30, breedte: 136.5, hoogte: 78 },
+  { naam: "D3", soort: "foto", x: 10, y: 112, breedte: 136.5, hoogte: 78 },
+  { naam: "D4", soort: "foto", x: 150.5, y: 112, breedte: 136.5, hoogte: 78 },
+  { naam: "D5", soort: "voettekst", x: 10, y: 192, breedte: 277, hoogte: 8 },
+];
+
+/**
+ * Layout E — vervolg (§5.10.6).
+ *
+ * De layout die de overloop opvangt. Hij staat niet in de miniaturenkiezer: je
+ * kiest hem niet, hij komt eraan omdat je tekst niet paste.
+ */
+const E_VERVOLG: Slot[] = [
+  { naam: "E0", soort: "kop", x: 10, y: 10, breedte: 277, hoogte: 14 },
+  { naam: "E1", soort: "tekst", x: 10, y: 30, breedte: 133, hoogte: 160 },
+  { naam: "E2", soort: "tekst", x: 154, y: 30, breedte: 133, hoogte: 160 },
+  { naam: "E3", soort: "voettekst", x: 10, y: 192, breedte: 277, hoogte: 8 },
+];
+
+const SLOTTABELLEN: Record<LayoutId, Slot[]> = {
+  "A-fotoraster": A_FOTORASTER,
+  "B-verhaal": B_VERHAAL,
+  "C-groot-beeld": C_GROOT_BEELD,
+  "D-alleen-beeld": D_ALLEEN_BEELD,
+  "E-vervolg": E_VERVOLG,
+};
+
 export interface Layoutkeuze {
   id: LayoutId;
   naam: string;
@@ -120,23 +191,25 @@ export interface Layoutkeuze {
   beschikbaar: boolean;
 }
 
-/** De vijf layouts voor de miniaturenkiezer (FR-DOC-111). Alleen A werkt. */
+/**
+ * De layouts voor de miniaturenkiezer (`FR-DOC-111`, B-140).
+ *
+ * Vier om uit te kiezen. `E-vervolg` staat er niet bij en dat is §5.10.6: *"Hij
+ * bestaat niet in de miniaturenkiezer"* — je kiest hem niet, hij komt eraan omdat
+ * je tekst niet paste.
+ */
 export const LAYOUTS: readonly Layoutkeuze[] = [
   { id: "A-fotoraster", naam: "Fotoraster", omschrijving: "Vier tot zes foto's met een korte tekst", beschikbaar: true },
-  { id: "B-verhaal", naam: "Verhaal", omschrijving: "Veel tekst, één of twee foto's", beschikbaar: false },
-  { id: "C-groot-beeld", naam: "Groot beeld", omschrijving: "Eén foto over de volle breedte", beschikbaar: false },
-  { id: "D-alleen-beeld", naam: "Alleen beeld", omschrijving: "Twee tot vier foto's, geen tekst", beschikbaar: false },
-  { id: "E-vervolg", naam: "Vervolg", omschrijving: "Wordt automatisch ingezet bij overloop", beschikbaar: false },
+  { id: "B-verhaal", naam: "Verhaal", omschrijving: "Veel tekst, één of twee foto's", beschikbaar: true },
+  { id: "C-groot-beeld", naam: "Groot beeld", omschrijving: "Eén foto over de volle breedte", beschikbaar: true },
+  { id: "D-alleen-beeld", naam: "Alleen beeld", omschrijving: "Twee tot vier foto's, geen tekst", beschikbaar: true },
 ];
 
 /** De legenda staat onder de inhoud en boven de voettekst (B-40). */
 const LEGENDAVLAK: Kader = { x: 10, y: 180, breedte: 277, hoogte: 8 };
 
 function slotenVan(layoutId: LayoutId): Slot[] {
-  if (layoutId !== "A-fotoraster") {
-    throw new Error(`Layout ${layoutId} heeft nog geen slottabel; alleen A-fotoraster bestaat (D08).`);
-  }
-  return A_FOTORASTER;
+  return SLOTTABELLEN[layoutId];
 }
 
 /** De datum zoals hij op papier staat: 13 oktober 2026. */
@@ -146,14 +219,22 @@ function datumOpPapier(datum: IsoDate): string {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(moment);
 }
 
-/** De kop: reeksnaam en datum op één regel, daaronder de titel (§5.10.1). */
-function kopvlak(slot: Slot, inhoud: Exportinhoud, meet: Tekstmeter): Vlak {
-  const kopregel = PRINTLETTER.reeks.regelhoogte * (25.4 / 72);
+/**
+ * De kop: reeksnaam en datum op één regel, daaronder de titel (§5.10.1).
+ *
+ * Op een vervolgpagina is hij kleiner en zonder reeksregel: §5.10.6 vraagt 14 pt in
+ * plaats van 24, en er is daar geen reeks te herhalen. Zonder dat onderscheid past
+ * de titel niet in de 14 mm van `E0` en komt de pagina zonder kop uit de machine —
+ * precies het losse blad dat B-07 wil voorkomen.
+ */
+function kopvlak(slot: Slot, inhoud: Exportinhoud, meet: Tekstmeter, vervolg = false): Vlak {
+  const letter = vervolg ? PRINTLETTER.vervolgtitel : PRINTLETTER.titel;
+  const kopregel = vervolg ? 0 : PRINTLETTER.reeks.regelhoogte * (25.4 / 72);
   const titel = zet({
     tekst: inhoud.titel,
     breedte: slot.breedte,
     hoogte: slot.hoogte - kopregel,
-    ...PRINTLETTER.titel,
+    ...letter,
     meet,
   });
 
@@ -164,86 +245,233 @@ function kopvlak(slot: Slot, inhoud: Exportinhoud, meet: Tekstmeter): Vlak {
     laatste.tekst = `${laatste.tekst.replace(/\s+\S*$/u, "")}…`;
   }
 
-  return { soort: "kop", kader: slot, reeks: inhoud.reeks, titel: regels, datum: datumOpPapier(inhoud.datum) };
+  return {
+    soort: "kop",
+    kader: slot,
+    reeks: vervolg ? "" : inhoud.reeks,
+    titel: regels,
+    datum: vervolg ? "" : datumOpPapier(inhoud.datum),
+  };
 }
 
+/**
+ * De voettekst: wie, waar en wanneer (§5.10.1, `FR-DOC-127`).
+ *
+ * De kinderen staan vóór de datum en ná de groep, want dat is de volgorde waarin
+ * je ze leest: eerst waar het speelde, dan over wie het gaat, dan wanneer.
+ *
+ * Er zit een grens op. Een documentatie over de hele groep krijgt soms twintig
+ * vinkjes, en twintig namen passen niet op 277 mm bij 7,5 pt. Daarboven staat er
+ * "en nog 14" — korter dan de namen, en eerlijker dan een afgekapte regel.
+ */
 function voetvlak(slot: Slot, inhoud: Exportinhoud, nummer: number, vanAantal: number): Vlak {
-  const links = [inhoud.groep, datumOpPapier(inhoud.datum)].filter(Boolean).join(" · ");
+  const links = [inhoud.groep, kinderen(inhoud.leerlingen), datumOpPapier(inhoud.datum)]
+    .filter(Boolean)
+    .join(" · ");
   return { soort: "voettekst", kader: slot, links, rechts: `${nummer} van ${vanAantal}` };
+}
+
+/** §5.10.1: de voettekst is één regel van 7,5 pt. Zes namen is wat daar redelijk op past. */
+const MAX_NAMEN_IN_VOET = 6;
+
+function kinderen(namen: readonly string[]): string {
+  if (namen.length === 0) return "";
+  if (namen.length <= MAX_NAMEN_IN_VOET) return namen.join(", ");
+
+  const eerste = namen.slice(0, MAX_NAMEN_IN_VOET).join(", ");
+  return `${eerste} en nog ${namen.length - MAX_NAMEN_IN_VOET}`;
+}
+
+/**
+ * Waar de tekst komt te staan (`FR-DOC-128`, B-141).
+ *
+ * In layout A zijn de zes vakken van het raster onderling verwisselbaar: de tekst
+ * staat standaard rechtsonder, maar linksboven kan net zo goed. Dat is wat de
+ * opdrachtgever vroeg — *"kiezen waar de tekst komt"* — en het is in dit raster de
+ * enige plek waar die keuze iets betekent. In B en E liggen de twee kolommen vast,
+ * in C is er één vak en in D geen.
+ *
+ * Omruilen en niet verplaatsen: het gekozen vak wordt tekst, en het vak waar de
+ * tekst stond wordt foto. Zo blijft het raster vol en verandert er niets aan de
+ * maten uit §5.10.2.
+ */
+function metTekstOp(sloten: Slot[], gekozen: string | undefined): Slot[] {
+  const doel = sloten.find((slot) => slot.naam === gekozen);
+  const huidig = sloten.find((slot) => slot.soort === "tekst");
+  if (!doel || !huidig || doel.naam === huidig.naam || doel.soort !== "foto") return sloten;
+
+  return sloten.map((slot) => {
+    if (slot.naam === doel.naam) return { ...slot, soort: "tekst" as const };
+    if (slot.naam === huidig.naam) return { ...slot, soort: "foto" as const };
+    return slot;
+  });
+}
+
+/** De vakken waar de tekst in deze layout terecht kán komen (`FR-DOC-128`). */
+export function tekstplekken(layoutId: LayoutId): string[] {
+  const sloten = SLOTTABELLEN[layoutId];
+  return sloten.filter((slot) => slot.soort === "tekst" || slot.soort === "foto").map((s) => s.naam);
+}
+
+export interface Planopties {
+  layoutId?: LayoutId;
+  /** De naam van het slot dat de tekst krijgt; leeg is de stand uit §5.10. */
+  tekstslot?: string;
+  /** B-28: bij een layout zonder tekstvak kun je de tekst bewust weglaten. */
+  laatTekstWeg?: boolean;
 }
 
 export interface LayoutDeps {
   meet: Tekstmeter;
 }
 
-export function createLayoutService(deps: LayoutDeps) {
-  /**
-   * Verdeelt de inhoud over pagina's (§5.10.7).
-   *
-   * Regel 1: foto's gaan in de fotosloten, in de volgorde waarin ze staan. Regel 2:
-   * zijn het er meer dan er sloten zijn, dan komt er een pagina bij in dezelfde
-   * layout. Regel 3: de tekst wordt gezet op de werkelijke regelhoogte. Wat dan nog
-   * overblijft komt in `opmerkingen` — zichtbaar, niet stilgehouden.
-   */
-  function plan(inhoud: Exportinhoud, layoutId: LayoutId = "A-fotoraster"): Exportplan {
-    const sloten = slotenVan(layoutId);
-    const fotosloten = sloten.filter((slot) => slot.soort === "foto");
-    const tekstslot = sloten.find((slot) => slot.soort === "tekst")!;
-    const kopslot = sloten.find((slot) => slot.soort === "kop")!;
-    const voetslot = sloten.find((slot) => slot.soort === "voettekst")!;
+/**
+ * Zet de tekst in de tekstvakken, het ene na het andere.
+ *
+ * Levert per vak de regels op en wat er daarna nog over is. Bij layout B zijn dat er
+ * twee naast elkaar; bij E ook. Wat na het laatste vak overblijft gaat naar een
+ * vervolgpagina (§5.10.7 regel 4).
+ */
+function vulTekstvakken(tekst: string, vakken: Slot[], meet: Tekstmeter) {
+  const gevuld: { slot: Slot; regels: Tekstregel[] }[] = [];
+  let rest = tekst;
 
-    const perPagina = fotosloten.length;
-    const aantalPaginas = Math.max(1, Math.ceil(inhoud.fotos.length / perPagina));
-    const opmerkingen: string[] = [];
-
+  for (const vak of vakken) {
+    if (!rest) break;
     const zetsel = zet({
-      tekst: inhoud.tekst,
-      breedte: tekstslot.breedte,
-      hoogte: tekstslot.hoogte,
+      tekst: rest,
+      breedte: vak.breedte,
+      hoogte: vak.hoogte,
       ...PRINTLETTER.tekst,
-      meet: deps.meet,
+      meet,
     });
-    if (zetsel.rest) {
-      opmerkingen.push(
-        `Er past niet alle tekst op deze layout; ${zetsel.rest.length} tekens blijven over. Kies een kortere tekst of wacht op layout B (sprint 2).`,
-      );
-    }
-
-    const paginas: Paginaplan[] = [];
-    for (let nummer = 1; nummer <= aantalPaginas; nummer += 1) {
-      const eersteFoto = (nummer - 1) * perPagina;
-      const vlakken: Vlak[] = [
-        kopvlak(kopslot, nummer === 1 ? inhoud : { ...inhoud, titel: `${inhoud.titel} (vervolg)` }, deps.meet),
-        ...inhoud.fotos.slice(eersteFoto, eersteFoto + perPagina).map((foto, plaats) => ({
-          soort: "foto" as const,
-          kader: fotosloten[plaats]!,
-          photoId: foto.photoId,
-          bijschrift: foto.bijschrift,
-        })),
-        voetvlak(voetslot, inhoud, nummer, aantalPaginas),
-      ];
-
-      // De tekst staat op pagina 1 en verhuist niet mee (B-122).
-      if (nummer === 1 && zetsel.regels.length > 0) {
-        vlakken.push({ soort: "tekst", kader: tekstslot, regels: zetsel.regels });
-      }
-      // De legenda staat onderaan de laatste pagina (B-40).
-      if (nummer === aantalPaginas && inhoud.legenda) {
-        vlakken.push({ soort: "legenda", kader: LEGENDAVLAK, tekst: inhoud.legenda });
-      }
-
-      paginas.push({ nummer, layoutId, vlakken });
-    }
-
-    return { paginas, opmerkingen };
+    if (zetsel.regels.length > 0) gevuld.push({ slot: vak, regels: zetsel.regels });
+    rest = zetsel.rest;
   }
 
-  /** Het aantal pagina's vóór de export, voor `FR-DOC-112` en B-07. */
-  function aantalPaginas(inhoud: Exportinhoud, layoutId: LayoutId = "A-fotoraster"): number {
-    return plan(inhoud, layoutId).paginas.length;
+  return { gevuld, rest };
+}
+
+/** De vervolgpagina van §5.10.6: herhaalde titel, twee tekstkolommen. */
+function vervolgpagina(
+  tekst: string,
+  inhoud: Exportinhoud,
+  nummer: number,
+  meet: Tekstmeter,
+): Paginaplan {
+  const sloten = slotenVan("E-vervolg");
+  const tekstvakken = sloten.filter((slot) => slot.soort === "tekst");
+  const { gevuld } = vulTekstvakken(tekst, tekstvakken, meet);
+
+  return {
+    nummer,
+    layoutId: "E-vervolg",
+    vlakken: [
+      kopvlak(sloten.find((slot) => slot.soort === "kop")!, vervolgvan(inhoud), meet, true),
+      ...gevuld.map((vak) => ({ soort: "tekst" as const, kader: vak.slot, regels: vak.regels })),
+    ],
+  };
+}
+
+/** Wat er niet vanzelf past, in schermtaal (§4.6: zichtbaar, niet stilgehouden). */
+function opmerkingenOver(tekst: string, tekstvakken: number, rest: string): string[] {
+  const uit: string[] = [];
+
+  // Layout D heeft geen tekstvak (§5.10.5). Dat is geen fout: de tekst gaat naar een
+  // vervolgpagina, tenzij je hem bewust weglaat (B-28).
+  if (tekst && tekstvakken === 0) {
+    uit.push(
+      'Deze layout toont geen lopende tekst. Je tekst komt op een vervolgpagina. Wil je dat niet, zet dan "Laat de tekst weg" aan.',
+    );
   }
 
-  return { plan, aantalPaginas, sloten: slotenVan };
+  if (rest) {
+    uit.push(
+      `Niet alle tekst past op deze layout; de rest komt op een vervolgpagina (${rest.length} tekens).`,
+    );
+  }
+
+  return uit;
+}
+
+/**
+ * Verdeelt de inhoud over pagina's (§5.10.7).
+ *
+ * Regel 1: foto's gaan in de fotosloten, in de volgorde waarin ze staan. Regel 2:
+ * zijn het er meer dan er sloten zijn, dan komt er een pagina bij in dezelfde
+ * layout. Regel 3: de tekst wordt gezet op de werkelijke regelhoogte. Regel 4: wat
+ * dan nog overblijft krijgt een vervolgpagina in `E-vervolg`.
+ */
+function maakPlan(inhoud: Exportinhoud, opties: Planopties, meet: Tekstmeter): Exportplan {
+  const layoutId = opties.layoutId ?? "A-fotoraster";
+  const sloten = metTekstOp(slotenVan(layoutId), opties.tekstslot);
+
+  const fotosloten = sloten.filter((slot) => slot.soort === "foto");
+  const tekstsloten = sloten.filter((slot) => slot.soort === "tekst");
+  const kopslot = sloten.find((slot) => slot.soort === "kop")!;
+  const voetslot = sloten.find((slot) => slot.soort === "voettekst")!;
+
+  const tekst = opties.laatTekstWeg ? "" : inhoud.tekst;
+  const { gevuld, rest } = vulTekstvakken(tekst, tekstsloten, meet);
+
+  const perPagina = Math.max(1, fotosloten.length);
+  const fotopaginas = Math.max(1, Math.ceil(inhoud.fotos.length / perPagina));
+  const paginas: Paginaplan[] = [];
+
+  for (let nummer = 1; nummer <= fotopaginas; nummer += 1) {
+    const eersteFoto = (nummer - 1) * perPagina;
+    const vlakken: Vlak[] = [
+      kopvlak(kopslot, nummer === 1 ? inhoud : vervolgvan(inhoud), meet),
+      ...inhoud.fotos.slice(eersteFoto, eersteFoto + perPagina).map((foto, plaats) => ({
+        soort: "foto" as const,
+        kader: fotosloten[plaats]!,
+        photoId: foto.photoId,
+        bijschrift: foto.bijschrift,
+      })),
+    ];
+
+    // De tekst staat op pagina 1 en verhuist niet mee (B-122).
+    if (nummer === 1) {
+      for (const vak of gevuld) {
+        vlakken.push({ soort: "tekst", kader: vak.slot, regels: vak.regels });
+      }
+    }
+
+    paginas.push({ nummer, layoutId, vlakken });
+  }
+
+  // §5.10.7 regel 4: wat niet paste krijgt een pagina in `E-vervolg`. Ook de tekst
+  // van layout D komt hier terecht — E is de vervolglayout en herhaalt de titel, en
+  // dat is precies waar B-28 om vroeg (B-142).
+  if (rest) paginas.push(vervolgpagina(rest, inhoud, paginas.length + 1, meet));
+
+  // De voettekst en de legenda kennen pas hun paginanummer als alle pagina's er zijn.
+  for (const pagina of paginas) {
+    pagina.vlakken.push(voetvlak(voetslot, inhoud, pagina.nummer, paginas.length));
+    if (pagina.nummer === paginas.length && inhoud.legenda) {
+      pagina.vlakken.push({ soort: "legenda", kader: LEGENDAVLAK, tekst: inhoud.legenda });
+    }
+  }
+
+  return { paginas, opmerkingen: opmerkingenOver(tekst, tekstsloten.length, rest) };
+}
+
+export function createLayoutService(deps: LayoutDeps) {
+  return {
+    plan: (inhoud: Exportinhoud, opties: Planopties = {}) => maakPlan(inhoud, opties, deps.meet),
+
+    /** Het aantal pagina's vóór de export, voor `FR-DOC-112` en B-07. */
+    aantalPaginas: (inhoud: Exportinhoud, opties: Planopties = {}) =>
+      maakPlan(inhoud, opties, deps.meet).paginas.length,
+
+    sloten: slotenVan,
+    tekstplekken,
+  };
+}
+
+/** §5.10.6: de herhaalde titel draagt "(vervolg)", anders is het blad niet thuis te brengen. */
+function vervolgvan(inhoud: Exportinhoud): Exportinhoud {
+  return { ...inhoud, titel: `${inhoud.titel} (vervolg)` };
 }
 
 export type LayoutService = ReturnType<typeof createLayoutService>;

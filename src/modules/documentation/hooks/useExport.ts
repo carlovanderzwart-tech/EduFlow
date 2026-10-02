@@ -5,9 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { leesBeeld } from "@/lib/doek";
 import type { Uuid } from "@/lib/uuid";
 import { diensten, type Diensten } from "@/services/diensten";
-import type { Exportinhoud, Exportplan } from "@/services/documentation/LayoutService";
+import type {
+  Exportinhoud,
+  Exportplan,
+  Planopties,
+} from "@/services/documentation/LayoutService";
 import type { Beeld } from "@/services/render/doek";
 import { initialenkaart, vervangNamen } from "@/services/render/initialen";
+import { metLeeftijd } from "@/services/students/leeftijd";
 import { bestandsnaam, pdfBestandsnaam } from "@/services/render/RenderService";
 
 /** Eén klaargemaakte pagina: het bestand zoals het verstuurd wordt (§5.12). */
@@ -55,9 +60,19 @@ const LEEG: Exportstand = {
  * die anders niet te bewijzen is, en bij twintig foto's is het een paar honderd
  * milliseconden — merkbaar, maar niet in de weg.
  */
-export function useExport(documentId: string, initialen: boolean, open: boolean) {
+export function useExport(
+  documentId: string,
+  initialen: boolean,
+  open: boolean,
+  opmaak: Planopties = {},
+) {
   const [stand, setStand] = useState<Exportstand>(LEEG);
   const [ronde, setRonde] = useState(0);
+
+  // `opmaak` komt als nieuw object binnen bij elke render van het paneel. De drie
+  // velden eruit halen houdt de afhankelijkheden stabiel: er wordt alleen opnieuw
+  // gerenderd als de keuze écht verandert, en niet bij elke toetsaanslag ernaast.
+  const { layoutId, tekstslot, laatTekstWeg } = opmaak;
 
   /** De adressen van de vorige ronde, zodat het geheugen niet volloopt. */
   const vorigeUrls = useRef<string[]>([]);
@@ -87,7 +102,7 @@ export function useExport(documentId: string, initialen: boolean, open: boolean)
         return;
       }
 
-      const plan = alles.layout.plan(verzameld.inhoud);
+      const plan = alles.layout.plan(verzameld.inhoud, { layoutId, tekstslot, laatTekstWeg });
       const paginas = await maakPaginas(alles, plan, verzameld);
       if (!actief) {
         for (const pagina of paginas) URL.revokeObjectURL(pagina.url);
@@ -112,7 +127,7 @@ export function useExport(documentId: string, initialen: boolean, open: boolean)
     return () => {
       actief = false;
     };
-  }, [documentId, initialen, ronde, open]);
+  }, [documentId, initialen, ronde, open, layoutId, tekstslot, laatTekstWeg]);
 
   // De laatste ronde opruimen bij het sluiten van het paneel.
   useEffect(
@@ -160,15 +175,22 @@ async function verzamel(
   const namen = documentatie.studentIds
     .map((id) => leerlingen.value.find((leerling) => leerling.id === id))
     .filter((leerling) => leerling !== undefined)
-    .map((leerling) =>
-      [leerling.firstName, leerling.lastNameInitial ? `${leerling.lastNameInitial}.` : ""]
-        .filter(Boolean)
-        .join(" "),
-    );
+    .map(naamVan);
 
   const kaart = initialenkaart(namen);
   const vervang = (tekst: string) => (initialen ? vervangNamen(tekst, kaart) : tekst);
   const photoIds = documentation.fotosVan(geopend.value);
+
+  // `FR-DOC-127`: de naam met de leeftijd erachter, zoals de opdrachtgever hem
+  // opschrijft — `Kjeld 6,1`. De peildatum is de **datum van de documentatie** en
+  // niet vandaag: je legt vast hoe oud het kind wás toen dit gebeurde, en die
+  // leeftijd hoort niet te veranderen omdat je de documentatie later opnieuw
+  // exporteert.
+  const peildatum = new Date(`${documentatie.date}T12:00:00.000Z`);
+  const leerlingenMetLeeftijd = documentatie.studentIds
+    .map((id) => leerlingen.value.find((leerling) => leerling.id === id))
+    .filter((leerling) => leerling !== undefined)
+    .map((leerling) => metLeeftijd(vervang(naamVan(leerling)), leerling, peildatum));
 
   return {
     inhoud: {
@@ -181,6 +203,7 @@ async function verzamel(
         .map((id) => groepen.value.find((groep) => groep.id === id)?.name)
         .filter(Boolean)
         .join(", "),
+      leerlingen: leerlingenMetLeeftijd,
       legenda: initialen ? kaart.legenda : "",
     },
     beelden: await leesBeelden(photoIds, photos.blobVan),
@@ -225,4 +248,16 @@ async function leesBeelden(
     beelden.set(photoId, await leesBeeld(blob.value));
   }
   return beelden;
+}
+
+/**
+ * De roepnaam met de achternaamletter erachter, zoals hij ook in de tekst staat.
+ *
+ * "Noa B." — zonder die letter zijn twee Noa's niet uit elkaar te houden, en dan
+ * klopt ook de initialenkaart niet meer.
+ */
+function naamVan(leerling: { firstName: string; lastNameInitial: string }): string {
+  return [leerling.firstName, leerling.lastNameInitial ? `${leerling.lastNameInitial}.` : ""]
+    .filter(Boolean)
+    .join(" ");
 }
