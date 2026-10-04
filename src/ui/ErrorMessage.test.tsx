@@ -11,12 +11,12 @@ describe("ErrorMessage", () => {
   it("toont zowel de melding als de vervolgstap", () => {
     render(
       <ErrorMessage
-        message="Het lukte niet om AI te bereiken."
+        message="Het lukte niet om deze documentatie op te slaan."
         nextStep="Je tekst is bewaard. Probeer het zo nog eens."
       />,
     );
 
-    expect(screen.getByText("Het lukte niet om AI te bereiken.")).toBeInTheDocument();
+    expect(screen.getByText("Het lukte niet om deze documentatie op te slaan.")).toBeInTheDocument();
     expect(screen.getByText("Je tekst is bewaard. Probeer het zo nog eens.")).toBeInTheDocument();
   });
 

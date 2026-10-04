@@ -316,7 +316,7 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
           <Field>
             <FieldLabel htmlFor="notitie">Notitie voor jezelf</FieldLabel>
             <FieldDescription>
-              Blijft binnen: staat niet in een export en gaat nooit mee naar de AI.
+              Blijft binnen: staat niet in een export en wordt niet doorzocht (FR-DOC-22).
             </FieldDescription>
             <Textarea
               id="notitie"

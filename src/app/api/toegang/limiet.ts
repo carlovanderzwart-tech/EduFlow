@@ -1,24 +1,23 @@
 /**
- * De snelheidslimiet van T-17 (§12.6).
+ * De snelheidslimiet van T-17 (§12.6), nu als slot op de toegangscode.
  *
  * | Venster | Grens |
  * |---|---|
- * | 10 seconden | 3 aanroepen |
- * | 1 uur | 60 aanroepen |
- * | 1 dag | 300 aanroepen |
+ * | 10 seconden | 3 pogingen |
+ * | 1 uur | 60 pogingen |
+ * | 1 dag | 300 pogingen |
  *
- * De reden is niet dat de kosten hoog zijn: het is dat een open `/api/ai` zonder
- * slot een gratis AI-dienst is op rekening van de maker (§12.12, C7 uit de review).
+ * **Deze teller stond bij `/api/ai` en hoorde daar nooit alleen thuis.** T-17 gaf
+ * hem als rem op de kosten van een open AI-route; met B-145 is die route weg en
+ * blijft de andere reden over, die altijd de zwaarste was: zonder slot is een
+ * toegangscode te raden door hem vaak genoeg te proberen. Daarom staat hij nu bij
+ * de route die hem gebruikt.
  *
  * **Dit telt in het geheugen van één serverproces**, en dat is een bewuste grens
  * van de doorloop. Draaien er straks meer processen naast elkaar, dan telt elk zijn
  * eigen deel en ligt de echte grens hoger. Voor één school met één leerkracht is
  * dat ruim genoeg; een gedeelde teller vraagt om opslag buiten het proces, en dat
- * is een besluit met een nummer en geen bijvangst van D04.
- *
- * Het dagbudget in tekens uit T-17 zit er niet in: dat vraagt om de lengte van de
- * opdracht, en die telt `AIService` al lokaal voor het verbruiksoverzicht
- * (FR-INS-24, §12.12).
+ * is een besluit met een nummer.
  */
 
 /** De drie vensters uit T-17, van kort naar lang. */

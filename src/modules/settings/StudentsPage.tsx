@@ -153,7 +153,7 @@ export function StudentsPage() {
         <EmptyState
           icon={UserPlus}
           title="Nog geen leerlingen"
-          description="Voeg de kinderen van je groep toe. EduFlow gebruikt hun namen om ze af te schermen voordat er tekst naar AI gaat."
+          description="Voeg de kinderen van je groep toe. Daarna kun je ze aan een documentatie koppelen en erop filteren."
         />
       ) : null}
 

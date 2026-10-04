@@ -102,7 +102,7 @@ jobs:
       - name: Kwetsbaarheden
         run: pnpm gates afhankelijkheden
 
-      # Poort 11 wacht op implementatiestap 16. Hij staat hier al zodat de
-      # wekelijkse ronde compleet is zodra hij actief wordt.
-      - name: Gouden testset met netwerk
-        run: pnpm gates golden-online
+      # Hier stond poort 11, de gouden testset met netwerk. Die is vervallen per
+      # B-145: er is geen provider meer om langs de drempels te leggen. Daarmee is
+      # poort 6 de enige die wekelijks iets toevoegt — een kwetsbaarheid die pas na
+      # de laatste wijziging bekend werd.

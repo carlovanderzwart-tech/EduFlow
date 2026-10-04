@@ -11,6 +11,9 @@
  * De vergelijking gebeurt in constante tijd. Een gewone `===` op een handtekening
  * lekt via de duur waar de eerste byte afwijkt; dat is een bekende manier om een
  * handtekening teken voor teken te raden.
+ *
+ * Stond bij `/api/ai` omdat die route het kaartje las; sinds B-145 is dit de enige
+ * plek die het maakt, en dus staat het hier.
  */
 
 /** B-120: negentig dagen. §8.2.3 geeft de reden, FR-INS-37 is erop gewijzigd. */

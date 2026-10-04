@@ -71,12 +71,15 @@ geraden — dat is nu drie keer misgegaan.
 ## Commando's
 
 ```
-pnpm dev · pnpm test · pnpm test:golden · pnpm lint · pnpm typecheck · pnpm e2e
+pnpm dev · pnpm test · pnpm lint · pnpm typecheck · pnpm e2e · pnpm gates
 ```
 
-Vóór opleveren draaien: typecontrole, lint, eenheidstoetsen, de gouden testset zonder
-netwerk, en de schermtoetsen van de gebieden die je hebt geraakt. Een falende toets is
-informatie — los hem nooit op door de toets te versoepelen (DR-45).
+Vóór opleveren draaien: typecontrole, lint, eenheidstoetsen, en de schermtoetsen van de
+gebieden die je hebt geraakt. Een falende toets is informatie — los hem nooit op door de
+toets te versoepelen (DR-45).
+
+`pnpm test:golden` bestaat nog en meldt alleen dat poort 10 vervallen is (B-145);
+`docs/20-ontwikkelregels.md` noemt hem nog in zijn lijst.
 
 ## Commit-boodschap
 

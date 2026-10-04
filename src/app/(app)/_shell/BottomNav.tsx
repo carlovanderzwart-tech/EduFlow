@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { isNavItemActive, NAV_ITEMS } from "./nav-items";
 
 /**
- * Telefoon-navigatie: balk onderaan met vijf iconen, geen hamburgermenu.
+ * Telefoon-navigatie: balk onderaan met vier iconen, geen hamburgermenu.
  * Zie `docs/04 - Product Blueprint.md`, *Navigatie*.
  */
 export function BottomNav() {

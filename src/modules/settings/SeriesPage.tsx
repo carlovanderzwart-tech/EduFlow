@@ -102,7 +102,7 @@ export function SeriesPage() {
         />
         <Textarea
           aria-label="Beschrijving van de reeks"
-          placeholder="Waar gaat deze reeks over? Deze zin helpt de AI bij een vervolgdeel."
+          placeholder="Waar gaat deze reeks over? Deze zin is voor jezelf."
           rows={2}
           value={beschrijving}
           onChange={(gebeurtenis) => setBeschrijving(gebeurtenis.target.value)}

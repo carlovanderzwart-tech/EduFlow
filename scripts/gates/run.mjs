@@ -2,11 +2,14 @@
 /**
  * De elf poorten van de bouwstraat (§16.9 van de Product Bible).
  *
- * Elke poort heeft precies één van twee standen:
+ * Elke poort heeft precies één van drie standen:
  *
- *   ACTIEF  — de controle draait nu en kan de bouw laten falen.
- *   WACHT   — de controle kan nog niet draaien omdat het onderdeel dat hij
- *             bewaakt pas bij een latere implementatiestap ontstaat.
+ *   ACTIEF    — de controle draait nu en kan de bouw laten falen.
+ *   WACHT     — de controle kan nog niet draaien omdat het onderdeel dat hij
+ *               bewaakt pas bij een latere implementatiestap ontstaat.
+ *   VERVALLEN — het onderwerp dat hij bewaakte wordt niet gebouwd. De poort
+ *               houdt zijn nummer en zijn reden, zoals §6.0 dat met een
+ *               vervallen eis doet; een nummer wordt nooit hergebruikt.
  *
  * Een wachtende poort is geen belofte maar een grendel. Elke wachtende poort
  * heeft een `voorwaarde()`: zodra het onderdeel dat hij bewaakt bestaat, faalt
@@ -307,41 +310,14 @@ const POORTEN = [
     naam: "Gouden testset zonder netwerk",
     bron: "§12.9",
     wanneer: "elke wijziging",
-    status: "actief",
-    uitgevoerdDoor: "pnpm test",
-    run: () => {
-      const pad = "src/services/ai/gouden.test.ts";
-      if (!bestaat(pad)) {
-        return mislukt(`De gouden testset zonder netwerk ontbreekt: ${pad}.`);
-      }
-
-      const set = lees(pad);
-      if (!set.includes("GOUDEN_GEVALLEN")) {
-        return mislukt(`${pad} bevat geen GOUDEN_GEVALLEN.`);
-      }
-
-      // §12.9 noemt vijf dingen die de samengestelde opdracht moet dragen. Een
-      // testset die er maar drie nakijkt, geeft een groen vinkje voor half werk.
-      const blokken = ["systeeminstructie", "schrijfstijl", "voorbeelden", "context", "invoer"];
-      const ontbreekt = blokken.filter((blok) => !set.includes(blok));
-      if (ontbreekt.length > 0) {
-        return mislukt(`De set toetst niet op: ${ontbreekt.join(", ")}.`);
-      }
-
-      // Elke taak die een opdracht kan opleveren, heeft een gouden geval. De
-      // toets zelf bewaakt dat ook; hier staat het zodat de poort niet groen
-      // wordt door een set die per ongeluk leeg raakt.
-      const taken = lees("src/services/ai/PromptService.ts").match(/^ {2}"([a-z]+\.[a-z]+)":/gmu);
-      const aantal = taken?.length ?? 0;
-      if (aantal === 0) {
-        return mislukt("PromptService kent geen enkele taak; dan toetst de set niets.");
-      }
-
-      return ok(
-        `Gouden testset zonder netwerk draait mee in pnpm test, over ${aantal} taak/taken. ` +
-          "De stand mét netwerk wacht op de stijlvoorbeelden uit O-01.",
-      );
-    },
+    status: "vervallen",
+    vervallenPer: "B-145",
+    waarom:
+      "Deze poort toetste of de samengestelde opdracht klopte: systeeminstructie, profiel, " +
+      "voorbeelden, context en gepseudonimiseerde invoer. Sinds B-145 wordt er geen opdracht " +
+      "meer samengesteld — PromptService en de gouden testset zijn weg. Een poort die een " +
+      "bestand bewaakt dat niet bestaat is geen poort maar een foutmelding die iedereen leert " +
+      "negeren.",
   },
 
   {
@@ -350,21 +326,12 @@ const POORTEN = [
     naam: "Gouden testset met netwerk",
     bron: "§12.9",
     wanneer: "wekelijks en vóór elke release",
-    status: "wacht",
-    activeertBij: "een bereikbare provider — `EDUFLOW_GOLDEN_ONLINE`",
+    status: "vervallen",
+    vervallenPer: "B-145",
     waarom:
-      "Deze toets legt de uitvoer van de **provider** langs de drempels uit §12.9. De " +
-      "stijlvoorbeelden uit O-01 zijn er inmiddels wel — die voorwaarde is dus vervuld — maar ze " +
-      "waren nooit het enige dat ontbrak. Wat ontbreekt is de provider zelf: `eu.api.openai.com` " +
-      "weigert zolang het project geen geografische beperking aan heeft staan, en uitwijken naar " +
-      "het wereldwijde eindpunt is uitgesloten door T-06. Sinds B-119 staat bovendien alle " +
-      "AI in blok 2. §12.9 laat deze poort wekelijks en vóór een release draaien en niet bij elke " +
-      "wijziging; hij gaat aan zodra `EDUFLOW_GOLDEN_ONLINE` gezet wordt, en dat kan alleen met " +
-      "een provider die antwoordt. De stand zónder netwerk draait wel, als poort 10.",
-    voorwaarde: () =>
-      process.env.EDUFLOW_GOLDEN_ONLINE
-        ? "EDUFLOW_GOLDEN_ONLINE staat aan: de gouden testset met netwerk moet nu draaien."
-        : null,
+      "Deze poort wachtte op een provider die nooit komt. Hij stond op wachten met een " +
+      "voorwaarde() die hem zou laten falen zodra EDUFLOW_GOLDEN_ONLINE gezet werd — een " +
+      "grendel die nu niets meer bewaakt. Zie poort 10 voor de rest van het verhaal.",
   },
 ];
 
@@ -383,9 +350,18 @@ console.log(`\nBouwstraat — ${teDraaien.length} van de 11 poorten uit §16.9\n
 
 let gefaald = 0;
 let wachtend = 0;
+let vervallen = 0;
 
 for (const poort of teDraaien) {
   const kop = `[${String(poort.nummer).padStart(2, "0")}] ${poort.naam}`;
+
+  if (poort.status === "vervallen") {
+    vervallen += 1;
+    console.log(`VERVALLEN ${kop}`);
+    console.log(`        Vervallen per ${poort.vervallenPer}.`);
+    console.log(`        ${poort.waarom}\n`);
+    continue;
+  }
 
   if (poort.status === "wacht") {
     const nuMogelijk = poort.voorwaarde();
@@ -420,7 +396,8 @@ for (const poort of teDraaien) {
 
 const actief = teDraaien.filter((p) => p.status === "actief").length;
 console.log(
-  `Samenvatting: ${actief} actief, ${wachtend} wachtend, ${gefaald} gefaald.` +
+  `Samenvatting: ${actief} actief, ${wachtend} wachtend, ${vervallen} vervallen, ` +
+    `${gefaald} gefaald.` +
     (isCI ? "" : "  (lokaal; CI draait dezelfde poorten)"),
 );
 

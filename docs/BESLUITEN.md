@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-144** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-145** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,150 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 4 oktober 2026 — geen AI
+
+## B-145 — Blok 2 wordt niet gebouwd
+
+**Besluit van de opdrachtgever**, niet van de bouw: *"het AI-deel gaan we NIET meer
+maken, dit betekent dat we blok 2 helemaal niet gaan uitvoeren."* Dat raakt `D04`
+(`/api/ai`, `AIService`, `PromptService`), `D06` (laat AI meeschrijven en het
+controlescherm) en `D10` (mail), plus het kwartier dashboardwerk dat op `D10` wachtte.
+
+Dit besluit legt niet vast waaróm — dat is niet aan de bouw. Het legt vast wat het
+kost en wat er daarom is weggehaald.
+
+### Wat de app de gebruiker vertelde en niet waar kon maken
+
+Dit was het dringendste, want het stond op het scherm. Zeven plekken beloofden AI:
+
+| Waar | Stond er | Staat er nu |
+|---|---|---|
+| Instellingen → Leerlingen | "om ze af te schermen voordat er tekst naar AI gaat" | wat de namen echt doen: koppelen, filteren, en de initiaal bij export |
+| Instellingen → Reeksen | "De beschrijving helpt de AI bij een vervolgdeel" | wat een reeks echt doet: bundelen en filteren |
+| Leerlingen, lege staat | idem als boven | idem |
+| Nieuwe reeks (2×) | "Deze zin helpt de AI bij een vervolgdeel" | "Deze zin is voor jezelf" — want de beschrijving wordt niet eens doorzocht |
+| Schrijfscherm, notitie | "gaat nooit mee naar de AI" | "wordt niet doorzocht (FR-DOC-22)" — dezelfde belofte, en deze is getoetst |
+| Instellingen | schakelaar "Laat zien wat er naar AI gaat" | weg |
+
+De laatste twee zijn de leerzaamste. De notitie voor jezelf had **twee** beloftes en
+de app noemde alleen de AI-belofte — terwijl de andere, dat zoeken hem overslaat, de
+enige van de twee is die een toets heeft (`FR-DOC-22`). En de schakelaar liet iets
+zien wat nooit zou vertrekken.
+
+### Mail uit de navigatie
+
+`/mail` toonde een lege staat met *"wordt in een volgende sprint gebouwd"*. Die
+sprint komt niet. De herschreven §6.3 is volledig AI; zonder AI blijft er geen module
+over — dat stond al zo in de opdrachtenlijst, als reden om mail naar blok 2 te
+verplaatsen.
+
+Vier tabbladen in plaats van vijf. Een tabblad dat een ingetrokken belofte doet is
+erger dan geen tabblad, en je ziet het elke dag.
+
+### Wat er weg is: ongeveer 1.600 regels
+
+| Wat | Regels |
+|---|---|
+| `src/services/ai/` — `AIService`, `PromptService`, de provider-adapter | 670 |
+| dezelfde map: 594 regels toetsen | 594 |
+| `src/app/api/ai/route.ts` | 132 |
+| `src/domain/schemas/aiRequest.ts` — de vorm van een uitgaande aanroep | 87 |
+| `MailPage.tsx` en `app/mail/page.tsx` | 24 |
+
+**Die 594 regels toetsen zijn de reden om dit nú te doen en niet te laten staan.**
+Ze zouden eeuwig groen blijven terwijl ze iets toetsen wat niemand ooit draait. Een
+toets die niets kan betrappen is geen toets maar ruis in het signaal, en bij elke
+volgende wijziging zou iemand zich afvragen of hij hem stuk heeft gemaakt.
+
+### Wat er blijft, en waarom dat geen inconsequentie is
+
+**`PrivacyService` blijft** (315 regels, 477 regels toetsen), en daarmee poort 9.
+Na het weghalen van `AIService` heeft hij geen enkele aanroeper meer — precies het
+argument dat hierboven de AI-code weghaalt. Het verschil is echt: `AIService` roept
+een HTTP-route aan die er niet meer is, en dat is een val waar iemand over een jaar
+in trapt. `PrivacyService` is een zuivere functiebibliotheek met een volledige
+toetsset die een eigenschap bewijst; die kost niets zolang niemand hem aanroept, hij
+is wat hoofdstuk 15 als bewijs gebruikt, en hij maakt een eventuele ommezwaai een
+week werk in plaats van een maand.
+
+**Het hele domein blijft.** `src/domain/` spiegelt het handboek, en het handboek
+beschrijft de AI nog steeds. De schema's van `aiInteractions`, `styleExamples`,
+`mailDrafts` en de rest dragen bovendien tabellen die bestaan; die weghalen kost een
+database-migratie en levert niets op. `src/domain/events/` is de catalogus van de
+negenendertig gebeurtenissen uit §9.6 en heeft geen enkele gebruiker — half
+leeghalen zou hem laten afwijken van het hoofdstuk dat hij beschrijft.
+
+`aiProvider`, `showOutgoingRequest` en `disabledDetectors` blijven om dezelfde reden
+in de opslag staan. `showOutgoingRequest` is wel uit het instellingenformulier
+gehaald: dat blok zegt in zijn eigen toelichting dat elk veld dat een scherm heeft er
+staat, en dit veld heeft er geen meer.
+
+### De toegangspoort hoort niet bij de AI
+
+`/api/toegang` (T-05, `FR-INS-37`, §8.2.3) leunde op `limiet.ts` en `toegang.ts` uit
+de AI-map, omdat beide uit `D04` kwamen. Ze zijn verhuisd naar `src/app/api/toegang/`
+(de tweede als `ticket.ts`).
+
+De snelheidslimiet van T-17 had altijd twee redenen. §12.6 noemt de eerste: een open
+`/api/ai` is een gratis AI-dienst op rekening van de maker. De tweede stond er niet
+en was altijd de zwaarste: **zonder slot is een toegangscode te raden door hem vaak
+genoeg te proberen.** Die reden blijft staan, en daarmee de teller.
+
+### Twee poorten vervallen, zeven blijven er negen
+
+Poort 10 (gouden testset zonder netwerk) bewaakte of de samengestelde opdracht de
+vijf dingen uit §12.9 droeg. Er wordt geen opdracht meer samengesteld.
+
+Poort 11 (gouden testset met netwerk) stond op `wacht` met een `voorwaarde()` die hem
+zou laten falen zodra er een provider kwam. Die komt niet.
+
+**Ze zijn niet verwijderd maar op `vervallen` gezet**, met hun nummer en hun reden.
+Dat is dezelfde afspraak die §6.0 voor een vervallen eis maakt: het nummer blijft
+leegstaan met de aantekening, en wordt nooit hergebruikt. De bouwstraat heeft daarmee
+een derde stand gekregen naast `actief` en `wacht`, en meldt negen actief en twee
+vervallen.
+
+De wekelijkse ronde in CI houdt alleen poort 6 over.
+
+### Wat hiermee ook vervalt
+
+- **`O-01` — de stijlvoorbeelden.** Dat was de enige openstaande post die alleen de
+  opdrachtgever kon invullen. Hij was nodig om te kunnen meten of de AI goed
+  schreef; er valt niets meer te meten.
+- **Het verbruiksoverzicht** (`FR-INS-24`, §12.12) telde tekens per maand tegen een
+  budget. Er is geen verbruik.
+
+### De gunstige kant
+
+Zonder AI én zonder mail **verlaat er geen enkel persoonsgegeven het apparaat.** Geen
+verwerker, geen subverwerker, geen verwerkersovereenkomst met het bestuur. Hoofdstuk
+15 kent drie uitgaande stromen en alle drie waren ze AI of mail.
+
+Daarmee wordt `O-03` — het gesprek met de functionaris gegevensbescherming, dat
+volgens B-104 de zwaarste niet-technische blokkade was vóór het eerste echte kind —
+een heel ander en veel korter gesprek. Er is geen gegevensstroom om te bespreken.
+
+### Nog niet gedaan: het handboek
+
+§12 volledig, §6.3 volledig, §6.1.8 t/m §6.1.10 en §15.4 beschrijven nu iets wat niet
+gebouwd wordt — samen ongeveer 65 van de 233 `FR`-nummers. Die horen de aantekening
+*vervallen per B-145* te krijgen, bovenaan het hoofdstuk en niet door ze weg te
+gooien, zoals §6.0 dat voorschrijft.
+
+**Dat is hier bewust niet gedaan.** Buiten `BESLUITEN.md` wordt er niet in `docs/`
+geschreven zonder toestemming per geval, en die is voor deze hoofdstukken niet
+gegeven. Tot die tijd staat de tegenstrijdigheid hier opgetekend in plaats van dat ze
+stilzwijgend blijft bestaan.
+
+Twee kleine gevolgen daarvan: `docs/20-ontwikkelregels.md` noemt `pnpm test:golden`
+in de lijst met commando's, en die poort is vervallen. Het commando blijft daarom
+bestaan en meldt nu waaróm hij vervallen is — dat is beter dan een ontbrekend script
+onder een regel die zegt dat je het moet draaien. En de twee spookverwijzingen naar
+§6.3.10 in `docs/07` en `docs/12` lossen zichzelf op zodra die hoofdstukken de
+aantekening krijgen.
 
 ---
 
