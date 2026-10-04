@@ -1,12 +1,10 @@
 /**
  * De toegangscode inwisselen voor een cookie (T-05, FR-INS-37, §8.2.3).
  *
- * **Dit eindpunt staat niet in de bestandenlijst van werkopdracht D04**, en het is
- * er toch. D04 vraagt om een route die de toegangscode uit een cookie leest, maar
- * geen enkele stap zet die cookie ooit. Zonder dit eindpunt kan `/api/ai` dus
- * niets anders dan weigeren, en is het doel van D04 — een testtekst die heen en
- * terug gaat — niet te halen. Dat is de kleinste toevoeging die de opdracht
- * uitvoerbaar maakt; zie het besluit dat hierbij hoort.
+ * **Dit eindpunt kwam uit werkopdracht D04 en overleeft het schrappen ervan**
+ * (B-145). Het hoort bij T-05: wie de app op een eigen adres zet, zet er een code
+ * voor. Dat het ooit is gebouwd omdat `/api/ai` anders niets anders kon dan
+ * weigeren, maakt het geen AI-functie — het is de enige poort die de app heeft.
  *
  * De code gaat één keer over de lijn en komt nooit terug: wat de browser bewaart
  * is een ondertekend kaartje met de **afdruk** van de code (§8.2.3).
@@ -15,8 +13,8 @@
  * broncode. Hij verschijnt ook nooit in een foutmelding of een logregel (§16.4).
  */
 
-import { binnenLimiet } from "../ai/limiet";
-import { COOKIE_MAX_AGE_S, COOKIE_NAAM, maakTicket } from "../ai/toegang";
+import { binnenLimiet } from "./limiet";
+import { COOKIE_MAX_AGE_S, COOKIE_NAAM, maakTicket } from "./ticket";
 
 export const dynamic = "force-dynamic";
 

@@ -22,7 +22,6 @@ export interface Instellingenformulier {
   attentionThresholdDays: number;
   /** `FR-DAS-07`, B-125: uit betekent ook: niet berekenen. */
   showAttention: boolean;
-  showOutgoingRequest: boolean;
   region: Region;
 }
 
@@ -58,7 +57,9 @@ export function SettingsForm({ begin }: { begin: Instellingenformulier }) {
       pupilNoun: bijgewerkt.pupilNoun,
       attentionThresholdDays: bijgewerkt.attentionThresholdDays,
       showAttention: bijgewerkt.showAttention,
-      showOutgoingRequest: bijgewerkt.showOutgoingRequest,
+      // `showOutgoingRequest` staat hier bewust niet meer. Het veld blijft in het
+      // record — een veld weghalen kost een migratie en levert niets op — maar het
+      // heeft sinds B-145 geen scherm, en dit blok gaat over wat een scherm heeft.
     });
 
     if (!uitkomst.ok) {
@@ -143,15 +144,6 @@ export function SettingsForm({ begin }: { begin: Instellingenformulier }) {
           />
         </Field>
       ) : null}
-
-      <Field orientation="horizontal">
-        <Switch
-          id="show-outgoing"
-          checked={formulier.showOutgoingRequest}
-          onCheckedChange={(aan) => void wijzig({ showOutgoingRequest: aan })}
-        />
-        <Label htmlFor="show-outgoing">Laat zien wat er naar AI gaat</Label>
-      </Field>
 
       {fout ? <ErrorMessage message={fout} nextStep="Probeer het opnieuw." /> : null}
 

@@ -53,7 +53,7 @@ export function SettingsPage() {
           href="/settings/students"
           icon={Users}
           titel="Leerlingen"
-          uitleg="Wie er in je groep zitten. EduFlow gebruikt deze namen om ze af te schermen voordat er tekst naar AI gaat."
+          uitleg="Wie er in je groep zitten. Je koppelt ze aan een documentatie, en bij het exporteren kan hun naam door een initiaal worden vervangen."
         />
         <Deur
           href="/settings/groups"
@@ -65,7 +65,7 @@ export function SettingsPage() {
           href="/settings/series"
           icon={Layers}
           titel="Reeksen"
-          uitleg="Bundelt documentaties die bij elkaar horen. De beschrijving helpt de AI bij een vervolgdeel."
+          uitleg="Bundelt documentaties die bij elkaar horen: één project, één thema, één periode. Je kunt er in het overzicht op filteren."
         />
       </ul>
 
@@ -122,7 +122,6 @@ async function haalOp({ settings, agenda, notifications, documentation }: Dienst
         pupilNoun: record.value.pupilNoun,
         attentionThresholdDays: record.value.attentionThresholdDays,
         showAttention: record.value.showAttention,
-        showOutgoingRequest: record.value.showOutgoingRequest,
         region: settings.voorkeur("region"),
       },
       schooljaar: {

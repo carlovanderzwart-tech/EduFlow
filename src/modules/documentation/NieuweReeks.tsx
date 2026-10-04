@@ -75,7 +75,7 @@ export function NieuweReeks({
       />
       <Textarea
         aria-label="Beschrijving van de nieuwe reeks"
-        placeholder="Waar gaat deze reeks over? Deze zin helpt de AI bij een vervolgdeel."
+        placeholder="Waar gaat deze reeks over? Deze zin is voor jezelf."
         rows={2}
         value={beschrijving}
         onChange={(gebeurtenis) => setBeschrijving(gebeurtenis.target.value)}

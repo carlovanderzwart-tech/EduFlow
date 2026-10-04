@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { isNavItemActive, NAV_ITEMS } from "./nav-items";
 
 /**
- * Laptop-navigatie: vaste zijbalk links met vijf items en een naamlabel.
+ * Laptop-navigatie: vaste zijbalk links met vier items en een naamlabel.
  * Zie `docs/04 - Product Blueprint.md`, *Navigatie*.
  */
 export function Sidebar() {

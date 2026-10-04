@@ -40,6 +40,13 @@ export interface Voorkeurenopslag {
 /** Drie tonen, niet de vier van een mailconcept (§8.2.2 tegenover §8.3.11). */
 const zStandaardtoon = z.enum(["warm", "zakelijk", "kort"]);
 
+/**
+ * Sinds B-145 leest niemand deze keuze meer.
+ *
+ * De sleutel blijft staan en niet uit nostalgie: hij staat in `localStorage` van
+ * ieder die de app al gebruikt, en §8.2.2 noemt hem. Weghalen betekent opruimen bij
+ * het opstarten, en dat is werk met een risico voor een waarde die niemand hindert.
+ */
 const zProviderkeuze = z.enum(["openai-eu", "vertex-eu", "bedrock-eu"]);
 
 /** De laatst gekozen weergave per module, inclusief de jaar-of-weekkeuze uit B-31. */

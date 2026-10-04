@@ -33,7 +33,6 @@ const SCHERMEN = [
   { naam: "overzicht documentaties", pad: "/documentation" },
   { naam: "schrijfscherm", pad: "/documentation/nieuw" },
   { naam: "agenda", pad: "/agenda" },
-  { naam: "mail", pad: "/mail" },
   { naam: "instellingen", pad: "/settings" },
   { naam: "leerlingen", pad: "/settings/students" },
 ];
