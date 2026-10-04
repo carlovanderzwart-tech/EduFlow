@@ -325,6 +325,35 @@ export function createStorageService(deps: StorageDeps) {
   }
 
   /**
+   * Zet een record terug zoals het was (`FR-INS-30`, B-143).
+   *
+   * De enige schrijfweg die de zes basisvelden **niet** invult of bijwerkt. Bij het
+   * terugzetten van een back-up is dat precies wat moet: `id`, `createdAt`,
+   * `updatedAt`, `rev` en `origin` komen uit het bestand, want anders is de
+   * botsingsregel van `FR-INS-31` — de hoogste `updatedAt` wint — niet uit te voeren
+   * en lijkt elk teruggezet record het nieuwste.
+   *
+   * Het schema controleert nog steeds (DR-23): een back-up van een oudere versie met
+   * een veld dat niet meer bestaat komt er niet doorheen, en dat hoort zo.
+   */
+  async function zetTerug<Naam extends TabelNaam>(
+    tabel: Naam,
+    record: unknown,
+  ): Promise<Result<RecordVan<Naam>>> {
+    try {
+      const gecheckt = gecontroleerd(tabel, record);
+      const geschreven = await db.transaction("rw", db[tabel], db.changeLog, async () => {
+        await db[tabel].put(gecheckt as never);
+        await journaal(tabel, gecheckt as BaseRecord, "update");
+        return gecheckt;
+      });
+      return { ok: true, value: geschreven };
+    } catch (fout) {
+      return mislukt(fout);
+    }
+  }
+
+  /**
    * Terug uit de prullenbak (`FR-DOC-121`, B-135).
    *
    * De tegenhanger van `softDelete`, en om dezelfde reden een gewone wijziging met
@@ -452,6 +481,7 @@ export function createStorageService(deps: StorageDeps) {
     update,
     softDelete,
     herstel,
+    zetTerug,
     schrijfAggregaat,
     purge,
     usage,

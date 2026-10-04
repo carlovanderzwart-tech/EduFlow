@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-142** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-143** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,101 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 4 oktober 2026 — de back-up
+
+## B-143 — Je werk kan het apparaat uit
+
+**Probleem.** Alles staat in IndexedDB van één browser op één apparaat. Er was geen
+enkele manier om het eruit te krijgen. Het dashboard toonde wél een blok "Back-up
+maken" (`FR-DAS-03`, B-02) met een knop die naar Instellingen stuurde, en daar stond
+niets — `SettingsPage` zei het zelf in zijn kop: *"de back-up en wissen staan in §6.5
+en komen later."*
+
+**Hoe stil dat gat was.** Tijdens deze doorloop is de opslag twee keer spontaan leeg
+geweest tussen twee sessies door. Beide keren opnieuw ingericht en doorgewerkt, want
+het waren verzonnen namen. Met een schooljaar echt werk erin was dat het einde
+geweest.
+
+§6.5.9 beschrijft het al sinds het handboek, met vijf eisen, en §8.7 geeft het
+bestandsformaat tot op het aantal PBKDF2-rondes. Dit besluit lost dat in; er is
+weinig nieuws bedacht.
+
+### Wat er gebouwd is
+
+- **Back-up maken** (`FR-INS-28`): één zip met `manifest.json`, `data/<tabel>.json`
+  per tabel en `blobs/<hash>.<variant>.jpg` voor het beeld.
+- **Versleutelen** (`FR-INS-29`): PBKDF2-SHA256 met 600.000 rondes en AES-GCM per
+  bestand, precies de getallen uit §8.7. Zonder wachtwoord mag ook; dan staat
+  `onversleuteld` in de bestandsnaam.
+- **Terugzetten** (`FR-INS-30`): eerst tonen wat erin zit, dan pas kiezen tussen
+  samenvoegen en alles vervangen, met een tweede bevestiging waarin het huidige
+  aantal documentaties staat.
+- **Samenvoegen** (`FR-INS-31`): per record wint de hoogste `updatedAt`.
+- **De herinnering** (`FR-INS-32`): `lastBackupAt` werd alleen gelézen en nooit
+  geschreven. Nu wel, dus het dashboardblok klopt.
+
+### Geen pakket voor de zip, en waarom dat hier verdedigbaar is
+
+§16 vraagt bij elke afhankelijkheid een reden die niet "handig" is. Een **opgeslagen**
+zip is een kop per bestand, de bytes, en een inhoudsopgave achteraan — te overzien in
+één bestand, en de enige rekenkunde is CRC-32.
+
+Niet ingepakt, want het leeuwendeel van een back-up is JPEG; die nog eens door
+deflate halen levert procenten op en kost seconden per foto. Twee methodes in één
+schrijver is twee keer zoveel dat stuk kan.
+
+**En het is nagelopen met iets anders dan de eigen lezer.** Een zip die alleen de
+eigen code begrijpt is geen zip. De schrijver heeft een bestand gemaakt dat Windows
+met `Expand-Archive` uitpakt, met de mappen `data/` en `blobs/` erin en de inhoud
+ongeschonden.
+
+**De grens van 4 GB wordt geweigerd en niet overschreden.** §8.7 rekent bij 212
+documentaties op circa 4 GB, en daarboven is zip64 nodig — een tweede formaat met
+eigen velden. Een zip die over de rand gaat is geen foutmelding maar een bestand dat
+niemand meer open krijgt, en dat merk je pas als je het nodig hebt. Er komt dus een
+melding met wat je kunt doen.
+
+### Het manifest blijft leesbaar, ook bij een versleutelde back-up
+
+`FR-INS-30` eist dat de app vóór het terugzetten toont wat erin zit. Dat kan alleen
+als het manifest buiten de versleuteling blijft. Dat is geen lek: een aantal en een
+apparaatnaam zeggen niets over een kind; de namen, de teksten en de foto's zitten in
+de versleutelde bestanden ernaast. Zou het manifest ook dicht zijn, dan moest je je
+wachtwoord intypen voordat de app je kon vertellen wélk bestand je in handen hebt —
+en dat is precies de situatie waarin mensen hun laatste goede back-up overschrijven.
+
+### De verwijderde records gaan mee
+
+Ze staan dertig dagen in de prullenbak (§8.8, B-138). Wie zijn apparaat kwijtraakt op
+dag negenentwintig hoort ze terug te kunnen halen.
+
+### Eén nieuwe schrijfweg in de opslaglaag
+
+`storage.zetTerug(tabel, record)` schrijft een record precies zoals het was, zonder de
+zes basisvelden in te vullen of bij te werken. Dat is de enige plek waar dat mag, en
+het is nodig: zou `updatedAt` bij het terugzetten op "nu" komen te staan, dan is de
+botsingsregel van `FR-INS-31` niet uit te voeren en lijkt elk teruggezet record het
+nieuwste. Het schema controleert nog steeds (DR-23).
+
+### Wat lint vond en ik zelf niet
+
+Het terugzetscherm had **geen eigen wachtwoordveld**. De uitleg wees naar "hierboven",
+maar dat veld hoort bij het *maken* van een back-up. Een versleutelde back-up was dus
+onmogelijk terug te zetten. Lint zag het aan een ongebruikte `setWachtwoord`; zonder
+die waarschuwing was het pas opgevallen bij iemand die zijn gegevens kwijt was.
+
+### Nog niet gedaan
+
+§8.7 geeft zeven tabelspecifieke botsingsregels. Gebouwd is de algemene — hoogste
+`updatedAt` wint — plus het uitzonderen van `settings` bij samenvoegen. **Niet**
+gebouwd: de kopie met de aantekening *"uit back-up van 3 juli"*, het samenvoegen van
+lidmaatschappen op de langste periode, en de melding bij een gelijke naam met een
+ander id. Die drie komen pas in beeld bij twee apparaten, en tot die tijd zou het
+gedrag zijn zonder dat iemand het kan narekenen.
+
 
 ---
 

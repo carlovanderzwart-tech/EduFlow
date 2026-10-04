@@ -18,6 +18,7 @@ import { browserMelder } from "@/lib/melder";
 import vakantiebestand from "@/data/schoolvakanties.json";
 
 import { createAgendaService, type AgendaService } from "./agenda/AgendaService";
+import { createBackupService, type BackupService } from "./backup/BackupService";
 import {
   createHolidayService,
   type HolidayService,
@@ -43,11 +44,21 @@ import { createSampleDataService, type SampleDataService } from "./sampledata/Sa
 import { createSeriesService, type SeriesService } from "./series/SeriesService";
 import { createSettingsService, type SettingsService } from "./settings/SettingsService";
 import type { Voorkeurenopslag } from "./settings/voorkeuren";
+import { DB_VERSIE } from "./storage/db";
 import { opslag } from "./storage/start";
 import type { Clock, StorageService } from "./storage/StorageService";
 import { createStudentService, type StudentService } from "./students/StudentService";
 
 const SYSTEEMKLOK: Clock = { now: () => new Date() };
+
+/**
+ * De versie die in het manifest van een back-up komt (§8.7).
+ *
+ * Als tekenreeks en niet uit `package.json` gelezen: dat bestand is geen module die
+ * in de browser hoort te belanden, en een versienummer dat afwijkt van wat er in de
+ * bundel zit is erger dan een versienummer dat je met de hand bijwerkt.
+ */
+const APPVERSIE = "0.1.0";
 
 /**
  * `localStorage` als het bestaat, en anders een opslag die niets bewaart.
@@ -84,6 +95,8 @@ export interface Diensten {
   notifications: NotificationService;
   /** De enige aanroeper van `/api/ai` (DR-16). */
   ai: AIService;
+  /** Eén bestand met al je werk erin (`FR-INS-28`, B-143). */
+  backup: BackupService;
   /** Doorloopgereedschap; gaat eruit vóór v1.0 (werkopdracht D02). */
   sampleData: SampleDataService;
 }
@@ -149,6 +162,12 @@ async function bouw(): Promise<Diensten> {
       clock: SYSTEEMKLOK,
       fetch: (...argumenten) => globalThis.fetch(...argumenten),
       provider: settings.voorkeur("aiProvider"),
+    }),
+    backup: createBackupService({
+      storage,
+      clock: SYSTEEMKLOK,
+      appVersion: APPVERSIE,
+      dbVersion: DB_VERSIE,
     }),
     sampleData: createSampleDataService({
       storage,
