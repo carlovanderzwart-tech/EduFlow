@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-143** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-144** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -104,6 +104,89 @@ lidmaatschappen op de langste periode, en de melding bij een gelijke naam met ee
 ander id. Die drie komen pas in beeld bij twee apparaten, en tot die tijd zou het
 gedrag zijn zonder dat iemand het kan narekenen.
 
+
+
+## B-144 — Archiveren is geen derde status
+
+**Probleem.** `FR-DOC-120` staat sinds het handboek in §6.1.13 en was niet gebouwd.
+Het was het laatste gat in dat hoofdstuk: `FR-DOC-121` t/m `FR-DOC-123` — de
+prullenbak — kwamen bij B-135, archiveren bleef liggen.
+
+Het verschil met verwijderen is niet technisch maar menselijk. **Verwijderen zegt:
+dit had er niet moeten staan.** Dat gaat naar de prullenbak en is na dertig dagen
+weg. **Archiveren zegt: dit is af.** Het project is klaar, de reeks is afgerond, en
+het hoeft niet meer tussen je lopende werk te staan — maar het blijft bestaan en het
+blijft vindbaar. Zonder die tweede knop is de enige manier om je overzicht
+overzichtelijk te houden het weggooien van werk dat je wilt houden.
+
+### Het veld stond er al
+
+`archivedAt` staat in §8.3.5, in `Documentation` en in het schema, en werd nergens
+gezet of gelezen. Dit besluit lost dat in; er is geen veld bij gekomen.
+
+### Geen status erbij, en dat is de kern
+
+De verleiding is `status: "gearchiveerd"`. Dat kan niet: **B-13 zegt dat de statussen
+concept en gedeeld heten**, en meer zijn het er niet. Een gearchiveerde documentatie
+is nog steeds een concept of nog steeds gedeeld — hij is alleen uit beeld. Zou
+archiveren een status zijn, dan verliest de app bij het archiveren van een gedeelde
+documentatie de informatie dát hij gedeeld is, en dan klopt `FR-DOC-118` niet meer.
+
+Daarom draagt `archivedAt` het, net zoals `deletedAt` het verwijderen draagt
+(§8.1.6). Twee velden die los van elkaar staan, en één `status` die blijft zeggen wat
+hij zei.
+
+### Waar het verschil zit: bladeren tegenover zoeken
+
+`FR-DOC-120` maakt dat onderscheid zelf, in één zin: *"wanneer je het overzicht
+bekijkt, dan staat hij er niet bij tenzij je het filter aanzet"*, en meteen daarna
+*"wel in zoeken, met een aanduiding"*.
+
+Dat is geen slordigheid maar precies goed. **Bladeren is zien waar je mee bezig bent**
+— daar hoort afgesloten werk niet tussen. **Zoeken is iets terugvinden** — en dan is
+"ik heb het vorig jaar gearchiveerd" de slechtst denkbare reden om het niet te tonen.
+In beide gevallen draagt de treffer zijn aanduiding, zodat je niet hoeft te raden
+waarom iets niet in je overzicht stond.
+
+De regel staat in `SearchService` en niet in het scherm: of iets getoond wordt is een
+regel, en regels staan in services (DR-15).
+
+### Het dashboard telt het niet mee, de aandacht wél
+
+`FR-DOC-120` zegt dat gearchiveerd werk niet meetelt in het dashboard. Dat geldt voor
+het blok **Verder werken aan**: dat gaat over waar je gebleven was.
+
+Het geldt **niet** voor het blok **Aandacht**. Dat blok rekent uit hoeveel schooldagen
+geleden een kind voor het laatst in je documentatie voorkwam, en dat is gebeurd — of
+je het werk daarna hebt afgesloten verandert daar niets aan. Zou archiveren daar
+meetellen, dan zou het afsluiten van één afgerond project ineens vijf kinderen als
+verwaarloosd aanwijzen, en dat is het tegenovergestelde van wat §6.4.4 bedoelt.
+
+### Geen bevestiging
+
+Archiveren gooit niets weg en de knop ernaast draait het in één klik terug.
+Verwijderen vraagt die bevestiging wél, want dat heeft een termijn.
+
+### De keuze van het scherm
+
+`DocumentEditor` ging over de vierhonderd regels (DR-53). De balk erboven is er
+daarom uit gehaald als `Werkbalk`: het schrijfscherm gaat over de inhoud, die balk
+over wat er met het geheel gebeurt.
+
+In hetzelfde spoor is het blok Verder werken aan uit `useDashboard` getrokken als de
+zuivere functie `verderWerkenAan`. Niet om de regels, maar omdat de regel anders niet
+te toetsen was zonder het hele dashboard te laten tekenen.
+
+### Nog niet gedaan
+
+**Groepen en reeksen kun je niet archiveren.** Het handboek vraagt dat ook niet — er
+is geen `FR-` voor, en `archivedAt` staat alleen op `Documentation`. Een afgelopen
+groep hoort bij het schooljaar en niet bij het archief; dat is een ander gesprek
+(DR-01).
+
+**De prullenbak laat niet zien dat iets gearchiveerd wás.** Zet je een verwijderde
+documentatie terug, dan komt hij terug zoals hij was, archief en al. Dat klopt, maar
+het overzicht zegt het niet; wie hem daarna niet ziet staan moet het filter aanzetten.
 
 ---
 

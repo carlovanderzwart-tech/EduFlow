@@ -21,6 +21,7 @@
  */
 
 import { tokenize } from "@/lib/text";
+import { isGearchiveerd } from "../documentation/archiveren";
 import type { Uuid } from "@/lib/uuid";
 import type { Block, Documentation, Page, Series, Student } from "@/domain/types";
 import type { Result } from "@/lib/result";
@@ -69,6 +70,13 @@ export interface Filters {
   van?: string;
   tot?: string;
   status?: readonly Documentation["status"][];
+  /**
+   * Toon ook wat gearchiveerd is (`FR-DOC-120`, B-144).
+   *
+   * Alleen van belang bij bladeren. Wie een zoekterm typt krijgt het archief er
+   * altijd bij — zie de toelichting bij `zoek`.
+   */
+  toonGearchiveerd?: boolean;
 }
 
 export type Sortering = "datum" | "bewerkt";
@@ -77,6 +85,8 @@ export interface Treffer {
   documentatie: Documentation;
   /** Eén fragment rond de eerste treffer (FR-DOC-23). Leeg zonder zoekterm. */
   fragment: string;
+  /** Draagt de aanduiding die `FR-DOC-120` vraagt. */
+  gearchiveerd: boolean;
 }
 
 export interface SearchDeps {
@@ -158,17 +168,29 @@ export function createSearchService(deps: SearchDeps) {
   }
 
   /**
-   * Zoekt en filtert (FR-DOC-11 t/m FR-DOC-13, FR-DOC-21, FR-DOC-25).
+   * Zoekt en filtert (FR-DOC-11 t/m FR-DOC-13, FR-DOC-21, FR-DOC-25, `FR-DOC-120`).
    *
    * Tussen filters geldt *en*, binnen een filter *of*. Een reeks plus een periode
    * geeft dus de doorsnede; twee reeksen geven de som.
+   *
+   * **Het archief hangt aan de zoekterm** (`FR-DOC-120`, B-144). De eis maakt dat
+   * onderscheid zelf: *"wanneer je het overzicht bekijkt, dan staat hij er niet bij
+   * tenzij je het filter aanzet"*, en even verderop *"wel in zoeken"*. Bladeren is
+   * zien waar je mee bezig bent, en daar hoort afgesloten werk niet tussen. Zoeken is
+   * iets terugvinden, en dan is "ik heb het gearchiveerd" de slechtst denkbare reden
+   * om het niet te tonen.
+   *
+   * In beide gevallen draagt de treffer zijn aanduiding; het scherm toont die.
    */
   function zoek(term: string, filters: Filters = {}, sortering: Sortering = "datum"): Treffer[] {
     const gezocht = tokensVan(term);
+    const bladert = gezocht.length === 0;
 
     const gevonden = index.filter(({ documentatie, tokens }) => {
       // Elk woord uit de zoekterm moet voorkomen: twee woorden versmallen.
       if (gezocht.some((token) => !heeftToken(tokens, token))) return false;
+
+      if (bladert && !filters.toonGearchiveerd && isGearchiveerd(documentatie)) return false;
 
       if (!passtBinnen(filters.seriesIds, documentatie.seriesId ? [documentatie.seriesId] : [])) {
         return false;
@@ -185,6 +207,7 @@ export function createSearchService(deps: SearchDeps) {
     return gesorteerd(gevonden, sortering).map(({ documentatie, tekst }) => ({
       documentatie,
       fragment: term.trim() ? fragmentVan(tekst, term.trim()) : "",
+      gearchiveerd: isGearchiveerd(documentatie),
     }));
   }
 

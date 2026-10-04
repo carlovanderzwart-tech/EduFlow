@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 
 import { EmptyState } from "@/ui/EmptyState";
 import { ErrorMessage } from "@/ui/ErrorMessage";
+import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/ui/item";
 import { Skeleton } from "@/ui/skeleton";
@@ -179,17 +180,22 @@ export function DocumentationPage() {
           </p>
 
           <ul className="space-y-2">
-            {zichtbaar.map(({ documentatie, fragment }) => (
+            {zichtbaar.map(({ documentatie, fragment, gearchiveerd }) => (
               <li key={documentatie.id}>
                 <Item variant="outline" className="relative">
                   <ItemContent>
-                    <ItemTitle>
+                    <ItemTitle className="flex items-center gap-2">
                       <Link
                         href={`/documentation/${documentatie.id}`}
                         className="after:absolute after:inset-0 after:content-['']"
                       >
                         {documentatie.title || "Zonder titel"}
                       </Link>
+                      {/* `FR-DOC-120` vraagt letterlijk om "een aanduiding": wie dit
+                          in zoeken tegenkomt moet zien dat het afgesloten werk is,
+                          anders vraagt hij zich af waarom het niet in zijn
+                          overzicht stond. */}
+                      {gearchiveerd ? <Badge variant="secondary">Gearchiveerd</Badge> : null}
                     </ItemTitle>
                     <ItemDescription>
                       {datumKort(documentatie.date)}

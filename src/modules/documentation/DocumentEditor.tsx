@@ -1,12 +1,9 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ConfirmDialog } from "@/ui/ConfirmDialog";
 import { ErrorMessage } from "@/ui/ErrorMessage";
-import { SaveStatus } from "@/ui/SaveStatus";
 import { Button } from "@/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -16,11 +13,12 @@ import { useDienst } from "@/app/providers/useDienst";
 import { vandaag } from "@/lib/weergave";
 import { diensten, type Diensten } from "@/services/diensten";
 import { MAX_TEKST, WAARSCHUW_VANAF } from "@/services/documentation/DocumentationService";
+import { isGearchiveerd } from "@/services/documentation/archiveren";
 
-import { ExportPanel } from "./ExportPanel";
 import { useAutosave } from "./hooks/useAutosave";
 import { Koppelingen } from "./Koppelingen";
 import { PhotoStrip } from "./PhotoStrip";
+import { Werkbalk } from "./Werkbalk";
 
 /** De sleutel in de URL van een documentatie die nog niet bestaat. */
 export const NIEUW = "nieuw";
@@ -56,8 +54,8 @@ interface Formulier {
 export function DocumentEditor({ documentId }: { documentId: string }) {
   const router = useRouter();
   const [fout, setFout] = useState<string | null>(null);
-  const [exporteren, setExporteren] = useState(false);
-  const [vraagWeg, setVraagWeg] = useState(false);
+  /** `null` is "de gebruiker heeft hier nog niet aan gezeten"; dan geldt wat er staat. */
+  const [archiefkeuze, setArchiefkeuze] = useState<boolean | null>(null);
   /** De sleutel die het aanmaken opleverde; houdt een tweede opslag bij dezelfde. */
   const gemaakt = useRef<string | null>(null);
   /**
@@ -91,7 +89,16 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
       };
 
       if (documentId === NIEUW) {
-        return { ok: true as const, value: { leerlingen: leerlingen.value, groepen: groepen.value, reeksen: reeksen.value, formulier: leeg } };
+        return {
+          ok: true as const,
+          value: {
+            leerlingen: leerlingen.value,
+            groepen: groepen.value,
+            reeksen: reeksen.value,
+            formulier: leeg,
+            gearchiveerd: false,
+          },
+        };
       }
 
       const geopend = await documentation.open(documentId);
@@ -105,6 +112,7 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
           leerlingen: leerlingen.value,
           groepen: groepen.value,
           reeksen: reeksen.value,
+          gearchiveerd: isGearchiveerd(documentatie),
           formulier: {
             title: documentatie.title,
             date: documentatie.date,
@@ -216,56 +224,17 @@ export function DocumentEditor({ documentId }: { documentId: string }) {
     );
   }
 
-  /** FR-DOC-121: naar de prullenbak, en daarna terug naar het overzicht. */
-  async function verwijder() {
-    const id = gemaakt.current ?? documentId;
-    if (id === NIEUW) return;
-
-    const { documentation } = await diensten();
-    const uitkomst = await documentation.verwijder(id);
-    if (!uitkomst.ok) return setFout(uitkomst.error.message);
-
-    router.push("/documentation");
-  }
-
   const tekens = formulier.text.length;
+  const gearchiveerd = archiefkeuze ?? waarde.gearchiveerd;
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6">
-      <div className="flex items-center justify-between gap-4 pb-4">
-        <SaveStatus state={state} />
-        <div className="flex items-center gap-2">
-          {/* Exporteren kan pas als er iets bewaard is; een documentatie zonder
-              sleutel valt niet te openen in het paneel (FR-DOC-01). */}
-          <Button variant="outline" disabled={!sleutel} onClick={() => setExporteren(true)}>
-            Exporteren
-          </Button>
-          {/* `FR-DOC-121`, B-135: naar de prullenbak en niet weg. Daarom geen
-              `destructive`-knop — dit is omkeerbaar, en dertig dagen lang. */}
-          <Button variant="ghost" disabled={!sleutel} onClick={() => setVraagWeg(true)}>
-            <Trash2 aria-hidden="true" />
-            Verwijderen
-          </Button>
-          <Button variant="ghost" onClick={() => router.push("/documentation")}>
-            Naar het overzicht
-          </Button>
-        </div>
-      </div>
-
-      {/* Alleen in de boom zolang het paneel open staat. Daardoor begint elke keer
-          met een schone lei — geen melding van de vorige export die er nog staat —
-          en wordt er niet gerenderd voor een paneel dat niemand ziet. */}
-      {sleutel && exporteren ? (
-        <ExportPanel documentId={sleutel} open onOpenChange={setExporteren} />
-      ) : null}
-
-      <ConfirmDialog
-        open={vraagWeg}
-        onOpenChange={setVraagWeg}
-        title="Deze documentatie verwijderen?"
-        description="Hij gaat naar de prullenbak en staat daar dertig dagen. Tot die tijd kun je hem terugzetten met pagina's, foto's en koppelingen."
-        confirmLabel="Naar de prullenbak"
-        onConfirm={() => void verwijder()}
+      <Werkbalk
+        sleutel={sleutel}
+        state={state}
+        gearchiveerd={gearchiveerd}
+        onGearchiveerd={setArchiefkeuze}
+        onFout={setFout}
       />
 
       {fout ? <ErrorMessage message={fout} nextStep="Pas het aan; je tekst blijft staan." /> : null}
