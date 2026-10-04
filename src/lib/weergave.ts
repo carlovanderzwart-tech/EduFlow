@@ -120,3 +120,29 @@ export function opDag(dag: string, tijdstip: string): string {
   );
   return nieuw.toISOString();
 }
+
+/**
+ * Een wandkloktijd op een kalenderdag, als tijdstip in UTC (§8.1.4).
+ *
+ * De tegenhanger van `opDag`, maar vanuit `UU:MM` in plaats van vanuit een ander
+ * tijdstip. Nodig voor de basisweek (`FR-AGE-29`): je vult "dinsdag, 08:30" in
+ * zonder te weten op welke datum die dinsdag valt, en pas bij het maken van het
+ * agenda-item wordt daar een echt moment van.
+ *
+ * Lokaal omgerekend, om dezelfde reden als `opDag`: half negen blijft half negen,
+ * ook aan de andere kant van de zomertijdgrens.
+ */
+export function dagMetTijd(dag: string, tijd: string): string {
+  const dagdeel = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dag);
+  const tijddeel = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(tijd);
+  if (!dagdeel || !tijddeel) return "";
+
+  const moment = new Date(
+    Number(dagdeel[1]),
+    Number(dagdeel[2]) - 1,
+    Number(dagdeel[3]),
+    Number(tijddeel[1]),
+    Number(tijddeel[2]),
+  );
+  return moment.toISOString();
+}

@@ -35,7 +35,12 @@ export function ErrorMessage({ message, nextStep, action, className }: ErrorMess
         <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-destructive" />
         <div className="space-y-1">
           <p className="font-medium text-foreground">{message}</p>
-          <p className="text-muted-foreground">{nextStep}</p>
+          {/* `text-foreground` en niet `text-muted-foreground`: op het getinte vlak
+              van `bg-destructive/5` haalt de gedempte kleur de 4,5:1 van §5.3 niet,
+              en axe-core (poort 7) viel er terecht over. De vervolgstap is boven-
+              dien de helft van de melding die je moet kúnnen lezen — het rangschik
+              ken gebeurt met `font-medium` op de regel erboven, niet met kleur. */}
+          <p className="text-foreground">{nextStep}</p>
         </div>
       </div>
       {action ? (

@@ -35,6 +35,7 @@ const SCHERMEN = [
   { naam: "agenda", pad: "/agenda" },
   { naam: "instellingen", pad: "/settings" },
   { naam: "leerlingen", pad: "/settings/students" },
+  { naam: "basisweek", pad: "/settings/basisweek" },
 ];
 
 interface AxeOvertreding {

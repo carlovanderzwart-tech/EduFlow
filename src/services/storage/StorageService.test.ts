@@ -386,15 +386,26 @@ describe("een volle opslag is een waarde, geen uitzondering — §10.3, T-27", (
   });
 });
 
-describe("alle zesentwintig tabellen zijn bereikbaar — §8.2", () => {
+describe("alle vierentwintig tabellen zijn bereikbaar — §8.2", () => {
   it("opent elke store", async () => {
     await db.open();
     const namen = db.tables.map((t) => t.name).sort();
 
-    // Vijfentwintig tabellen met een `id`, plus changeLog met een sleutel buiten
-    // het record: samen de zesentwintig uit §8.3.
-    expect(namen).toHaveLength(26);
+    // Drieëntwintig tabellen met een `id`, plus changeLog met een sleutel buiten
+    // het record. §8.3 somt er zesentwintig op; de twee basisweek-tabellen zijn
+    // met B-146 vervallen.
+    expect(namen).toHaveLength(24);
     expect(namen).toContain("changeLog");
-    expect(namen).toContain("weekPatternOverrides");
+    expect(namen).toContain("calendarEvents");
+  });
+
+  it("ruimt de vervallen basisweek-tabellen op — B-146", async () => {
+    await db.open();
+    const namen = db.tables.map((t) => t.name);
+
+    // De `null` in versie 2 is het enige wat ze uit een bestaande browser haalt;
+    // ze uit `TABELLEN` schrappen laat ze daar gewoon staan.
+    expect(namen).not.toContain("weekPatterns");
+    expect(namen).not.toContain("weekPatternOverrides");
   });
 });

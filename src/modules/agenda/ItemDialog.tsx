@@ -33,6 +33,7 @@ import {
   type Reikwijdte,
 } from "@/services/agenda/RecurrenceService";
 import { diensten } from "@/services/diensten";
+import { uitBasisweek } from "@/services/agenda/basisweek";
 
 import { Herhaalvelden } from "./Herhaalvelden";
 import { Kleurveld } from "./Kleurveld";
@@ -174,7 +175,14 @@ export function ItemDialog({ open, onOpenChange, item, dag, leerlingen, onKlaar 
       <SheetContent side="right" className="w-(--size-panel) gap-0 overflow-y-auto sm:max-w-(--size-panel)">
         <SheetHeader>
           <SheetTitle>{item ? "Item wijzigen" : "Nieuw item"}</SheetTitle>
-          <SheetDescription>Wat er in je agenda staat, staat alleen op dit apparaat.</SheetDescription>
+          <SheetDescription>
+            {/* `FR-AGE-31`: herkomst, geen eigenaar. Het staat er zodat je weet waar
+                dit vandaan komt; wijzigen gaat precies zoals bij elk ander item
+                (`FR-AGE-30`). */}
+            {item && uitBasisweek(item)
+              ? "Uit je basisweek. Je kunt hem hier gewoon wijzigen of verplaatsen."
+              : "Wat er in je agenda staat, staat alleen op dit apparaat."}
+          </SheetDescription>
         </SheetHeader>
 
         <form

@@ -67,12 +67,3 @@ export type {
   TimedCalendarEvent,
 } from "./calendar";
 export type { DisableableDetector, PupilNoun, Settings } from "./settings";
-export type {
-  DayCancelled,
-  LineCancelled,
-  LineChanged,
-  WeekPattern,
-  WeekPatternLine,
-  WeekPatternOverride,
-  WeekPatternOverrideKind,
-} from "./weekPattern";

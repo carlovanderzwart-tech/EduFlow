@@ -22,6 +22,7 @@ import type { Uuid } from "@/lib/uuid";
 import type {
   CalendarEvent,
   CalendarEventKind,
+  CalendarEventSource,
   Colour,
   Recurrence,
   Region,
@@ -46,6 +47,13 @@ interface Gemeenschappelijk {
   recurrence?: Recurrence | null;
   /** Een eigen kleur uit §5.5, of niets voor de kleur van de soort (`FR-AGE-35`, B-133). */
   colour?: Colour | null;
+  /**
+   * De herkomst, of niets voor `own` (`FR-AGE-31`, B-115).
+   *
+   * Alleen de basisweek zet hier iets anders neer. Het is een aanduiding en geen
+   * eigendom: een `derived` item is verder een gewoon item (`FR-AGE-30`).
+   */
+  source?: CalendarEventSource;
 }
 
 /**
@@ -153,8 +161,9 @@ export function createAgendaService(deps: AgendaDeps) {
       documentationId: null,
       mailDraftId: null,
       // Zelf gemaakt, dus `own`. Een teruggezet vakantiebestand overschrijft het
-      // niet, want dat raakt alleen `holidayFile` (§8.7).
-      source: "own" as const,
+      // niet, want dat raakt alleen `holidayFile` (§8.7). De basisweek levert
+      // `derived` aan (`FR-AGE-31`).
+      source: invoer.source ?? ("own" as const),
       recurrence: invoer.recurrence ?? null,
       colour: invoer.colour ?? null,
     };
