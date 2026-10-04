@@ -1,6 +1,6 @@
 "use client";
 
-import { Layers, Sparkles, Users, UsersRound } from "lucide-react";
+import { CalendarClock, Layers, Sparkles, Users, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
@@ -31,6 +31,38 @@ import { SettingsForm } from "./SettingsForm";
  * later. Ze staan hier niet als lege knop: een knop die niets doet is erger dan een
  * knop die er nog niet is.
  */
+/** De vier doorklikken naar een eigen scherm (§6.5). Los, zodat DR-53 blijft kloppen. */
+function Deuren() {
+  return (
+    <ul className="space-y-2">
+      <Deur
+        href="/settings/students"
+        icon={Users}
+        titel="Leerlingen"
+        uitleg="Wie er in je groep zitten. Je koppelt ze aan een documentatie, en bij het exporteren kan hun naam door een initiaal worden vervangen."
+      />
+      <Deur
+        href="/settings/groups"
+        icon={UsersRound}
+        titel="Groepen"
+        uitleg="Een kind zit niet ín een groep maar heeft een lidmaatschap met een looptijd. Zo kan het tegelijk in twee groepen zitten."
+      />
+      <Deur
+        href="/settings/series"
+        icon={Layers}
+        titel="Reeksen"
+        uitleg="Bundelt documentaties die bij elkaar horen: één project, één thema, één periode. Je kunt er in het overzicht op filteren."
+      />
+      <Deur
+        href="/settings/basisweek"
+        icon={CalendarClock}
+        titel="Basisweek"
+        uitleg="Je vaste week: gym, muziek, de bouwvergadering. Eén keer invullen zet ze het hele schooljaar in je agenda."
+      />
+    </ul>
+  );
+}
+
 export function SettingsPage() {
   // Een inline functie, want de lintregel van React wil dat zien; het werk staat in
   // `haalOp` zodat dit bestand onder de zestig regels van DR-53 blijft.
@@ -48,26 +80,7 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
-      <ul className="space-y-2">
-        <Deur
-          href="/settings/students"
-          icon={Users}
-          titel="Leerlingen"
-          uitleg="Wie er in je groep zitten. Je koppelt ze aan een documentatie, en bij het exporteren kan hun naam door een initiaal worden vervangen."
-        />
-        <Deur
-          href="/settings/groups"
-          icon={UsersRound}
-          titel="Groepen"
-          uitleg="Een kind zit niet ín een groep maar heeft een lidmaatschap met een looptijd. Zo kan het tegelijk in twee groepen zitten."
-        />
-        <Deur
-          href="/settings/series"
-          icon={Layers}
-          titel="Reeksen"
-          uitleg="Bundelt documentaties die bij elkaar horen: één project, één thema, één periode. Je kunt er in het overzicht op filteren."
-        />
-      </ul>
+      <Deuren />
 
       {laden && !waarde ? (
         <div className="space-y-4">

@@ -44,9 +44,3 @@ export { zAiInteraction, zAiOutcome, zAiRejectReason, zAiTask, zFeedback, zFeedb
 export { zAuditEvent, zChangeLogEntry, zChangeOperation } from "./audit";
 export { zCalendarEvent, zCalendarEventKind, zCalendarEventSource } from "./calendar";
 export { zDisableableDetector, zPupilNoun, zSettings } from "./settings";
-export {
-  zWeekPattern,
-  zWeekPatternLine,
-  zWeekPatternOverride,
-  zWeekPatternOverrideKind,
-} from "./weekPattern";

@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-145** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-146** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,145 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 5 oktober 2026 — de basisweek
+
+## B-146 — De basisweek is gebouwd, en de twee tabellen zijn weg
+
+**Correctie vooraf.** Bij het opleveren van B-145 is gemeld dat blok 1 af was. Dat
+klopte niet. `FR-AGE-29` t/m `FR-AGE-31` — de basisweek — stonden niet gebouwd.
+
+Hoe dat kon: **B-115 gaf ze aan werkopdracht D09b, en de eisentabel van D09b is nooit
+bijgewerkt.** Het besluit is van 13 augustus, de opdracht is ouder, en niemand heeft
+de twee naast elkaar gelegd. De eisen staan ook niet in §6.2 — ze bestaan alleen in
+B-115 zelf. Daardoor kwamen ze in geen enkele controle voor: niet in de opdracht, niet
+in het hoofdstuk, niet in een toets.
+
+Dit is het soort gat dat een register hoort te vangen en hier niet ving. De
+tegenmaatregel staat onderaan dit besluit.
+
+### Wat er is gebouwd
+
+Je vult bij **Instellingen → Basisweek** je vaste week in — gym, muziek, de
+bouwvergadering — met dag, begintijd, eindtijd en naam. De app maakt er een wekelijks
+herhalend agenda-item van dat loopt tot de laatste schooldag.
+
+- `FR-AGE-29`: één onderdeel wordt één wekelijkse reeks, met `until` op de laatste
+  schooldag. `until` en niet `count`, want een schooljaar heeft een einddatum en geen
+  aantal weken, en B-123 staat er precies één van de twee toe.
+- `FR-AGE-30`: het resultaat is een gewoon agenda-item. Verplaatsen, wijzigen met
+  "alleen deze of alle volgende", ICS-export — alles werkt omdat er niets bijzonders
+  aan is.
+- `FR-AGE-31`: het detailvenster zegt *"Uit je basisweek"*.
+
+### Geen tweede gegevensmodel, ook niet een kleintje
+
+B-115 zegt: *"De basisweek is een invoerscherm, geen tweede gegevensmodel."* Dat is
+hier letterlijk genomen. **Er wordt niets opgeslagen wat de agenda niet al weet.** Wat
+het scherm toont is een vraag aan de agenda: de wekelijkse items met herkomst
+`derived`. Daarmee bestáát er geen tweede waarheid die uit de eerste kan lopen.
+
+De verleiding was een voorkeur in `settings` met de ingevulde week erin. Dat zou
+hetzelfde probleem terugbrengen in een kleinere verpakking: twee plekken die hetzelfde
+beweren, en één ervan heeft ongelijk zodra je in de agenda iets verschuift.
+
+### Herkomst, geen eigenaar — en wat dat in de praktijk betekent
+
+`source: "derived"` zegt waar een item vandaan komt en verder niets. Het veld stond al
+in §8.3.8 en werd nergens gebruikt; dit is de eerste schrijver.
+
+Twee gevolgen die het de moeite waard maken dit op te schrijven:
+
+**Een losgemaakte keer blijft staan.** Verplaats je één gymles met "alleen deze" en
+haal je daarna het hele onderdeel uit je basisweek, dan blijft die ene verzette les in
+je agenda. Dat is wat `FR-AGE-31` met *"raakt de reeds gewijzigde items niet"* bedoelt,
+en er is een toets die precies dat doet.
+
+**"Alle volgende" geeft het item aan jou terug.** De agenda maakt dan een nieuwe reeks
+met `source: "own"`, en die staat niet meer in het basisweekscherm. Dat is geen
+verlies: vanaf het moment dat je hem zelf hebt bijgesteld is hij van jou.
+
+### De fout die de toets eerst niet ving
+
+`uitBasisweek` keek eerst óók naar de herhaling: `source === "derived" && recurrence`.
+In de opslag klopt dat, en de toetsen waren groen.
+
+In de agenda niet. `RecurrenceService` haalt `recurrence` bewust van een verschijning
+af — *"dit ís een verschijning"* — dus alleen de állereerste gymles van het jaar zei
+waar hij vandaan kwam, en de veertig daarna niet. **Dat kwam niet uit een toets maar
+uit het scherm zelf**, bij het nalopen in de browser.
+
+De controle is gesplitst: `uitBasisweek` kijkt alleen naar de herkomst, en
+`isBasisweekreeks` kijkt daarnaast naar de herhaling voor het scherm dat de reeksen
+beheert. Er is een toets bij die op een verschijning verderop in het jaar kijkt en niet
+alleen op de eerste.
+
+### De twee tabellen zijn weg — `DB_VERSIE` gaat naar 2
+
+B-131 vond `weekPatterns` en `weekPatternOverrides` nog in de database staan, met hun
+typen, schema's en toetsgegevens, en zonder dat één service of scherm ze aanraakte. Het
+besluit was toen: ze gaan eruit, maar in een eigen wijziging met een eigen controle.
+
+Dit is die wijziging, en dit is het juiste moment: de tabellen zijn het oude model van
+precies datgene wat hierboven is gebouwd.
+
+**Uit de lijst halen is niet genoeg.** Een tabel die uit `TABELLEN` verdwijnt blijft in
+een bestaande browser gewoon staan; Dexie ruimt hem pas op als je hem bij een hogere
+versie op `null` zet. Dat staat daarom uitgeschreven in `db.ts`, met de twee namen in
+een eigen constante — zodat de volgende die zoiets doet ziet hoe het hoort.
+
+**Het risico is nagelopen en niet aangenomen.** In de database van de opdrachtgever
+stonden nul records in beide tabellen, gemeten en niet geschat. De andere tweeëntwintig
+tabellen blijven ongemoeid.
+
+§8.3 somt zesentwintig tabellen op; het zijn er nu vierentwintig. Twee toetsen die dat
+aantal vastpinden zijn bijgewerkt, en er is een derde bij: dat de twee namen ná het
+openen van de database ook werkelijk weg zijn.
+
+### Eén vondst onderweg: de vervolgstap van een foutmelding was te licht
+
+Poort 7 (axe-core) viel over het nieuwe scherm. Het bleek niet aan het scherm te liggen
+maar aan `ErrorMessage`: de regel met de vervolgstap stond in `text-muted-foreground`
+op het getinte vlak van `bg-destructive/5`, en haalde de 4,5:1 van §5.3 niet.
+
+Die fout stond er al, en kwam pas nu boven water omdat dit het eerste scherm in de
+toegankelijkheidsronde is dat bij een schone database een foutmelding tóónt — de andere
+laten er alleen een zien als er iets misgaat, en in een schone proefrit gaat er niets
+mis.
+
+De vervolgstap is nu `text-foreground`. Dat is geen kleurkeuze maar een inhoudelijke:
+het is de helft van de melding die zegt wat je moet dóén, en die hoort niet de
+lichtste tekst op het scherm te zijn. De rangorde komt van `font-medium` op de regel
+erboven.
+
+### Tegenmaatregel tegen hoe dit gat ontstond
+
+`FR-AGE-29` t/m `FR-AGE-31` bestonden alleen in B-115 en in geen enkele eisentabel.
+Elke eis die in een besluit wordt geboren, hoort dezelfde dag in het hoofdstuk te
+komen waar hij thuishoort — hier §6.2 — of in de eisentabel van de werkopdracht die
+hem bouwt.
+
+**Dat is hier niet gedaan**, want buiten `BESLUITEN.md` wordt er niet in `docs/`
+geschreven zonder toestemming per geval. Het staat daarom hier, bij de andere twee
+dingen die op diezelfde toestemming wachten: de hoofdstukken die van B-145 de
+aantekening *vervallen* horen te krijgen, en deze drie eisen die juist in §6.2 horen te
+stáán.
+
+### Nog niet gedaan
+
+**Wijzigen kan alleen in de agenda.** Het basisweekscherm voegt toe en haalt weg; een
+typefout in "Gym" verbeter je door het item in de agenda aan te klikken. Dat is een
+bewuste keuze — een wijzigknop hier zou het scherm een eigenaar maken, en dat is
+precies wat B-115 verbiedt — maar het is wel een extra klik, en het is het soort ding
+waarvan pas bij het gebruik blijkt of het stoort.
+
+**Vakanties zitten er gewoon in.** Een wekelijkse reeks loopt door de herfstvakantie
+heen; er staat dan een gymles in een week waarin je vrij bent. §6.2.5 kent daar geen
+regel voor en B-115 noemt het niet, dus er is niets gebouwd (DR-01). Wie het stoort kan
+die ene keer verwijderen met "alleen deze". Dit is een kandidaat voor een besluit, geen
+vergeten werk.
 
 ---
 

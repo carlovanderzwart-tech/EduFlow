@@ -37,8 +37,6 @@ import {
   zStudent,
   zStyleExample,
   zStyleProfile,
-  zWeekPattern,
-  zWeekPatternOverride,
 } from "@/domain/schemas";
 
 /**
@@ -87,11 +85,6 @@ export const TABELLEN = {
   feedback: { schema: zFeedback, indexen: "aiInteractionId, deletedAt" },
   auditEvents: { schema: zAuditEvent, indexen: "kind, at, deletedAt" },
   settings: { schema: zSettings, indexen: "deletedAt" },
-  weekPatterns: { schema: zWeekPattern, indexen: "[schoolYearId+validFrom], deletedAt" },
-  weekPatternOverrides: {
-    schema: zWeekPatternOverride,
-    indexen: "date, [date+lineId], deletedAt",
-  },
 } as const;
 
 export type TabelNaam = keyof typeof TABELLEN;

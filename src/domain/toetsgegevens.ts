@@ -26,8 +26,6 @@ import type {
   HolidayPeriod,
   Settings,
   TimedCalendarEvent,
-  WeekPattern,
-  WeekPatternOverride,
   Feedback,
   Group,
   GroupMembership,
@@ -386,28 +384,6 @@ export function instellingen(): Settings {
     pupilNoun: "leerling",
     disabledDetectors: [],
     showOutgoingRequest: true,
-  };
-}
-
-export function basisweek(): WeekPattern {
-  return {
-    ...basisRecord(),
-    schoolYearId: newId(),
-    validFrom: "2026-08-24",
-    validTo: null,
-    lines: [
-      { id: newId(), weekday: 1, startTime: "08:30", endTime: "09:15", title: "rekenen", groupId: null },
-      { id: newId(), weekday: 1, startTime: "09:15", endTime: "10:00", title: "taal", groupId: null },
-    ],
-  };
-}
-
-export function aangepasteDag(): WeekPatternOverride {
-  return {
-    ...basisRecord(),
-    date: "2026-09-14",
-    kind: "onderdeel-vervalt",
-    lineId: newId(),
   };
 }
 

@@ -42,8 +42,6 @@ import type {
   Student,
   StyleExample,
   StyleProfile,
-  WeekPattern,
-  WeekPatternOverride,
 } from "../types";
 import { zAiInteraction, zFeedback } from "./ai";
 import { zAuditEvent, zChangeLogEntry } from "./audit";
@@ -60,7 +58,6 @@ import { zSeries } from "./series";
 import { zStudent } from "./student";
 import { zSettings } from "./settings";
 import { zStyleExample, zStyleProfile } from "./style";
-import { zWeekPattern, zWeekPatternOverride } from "./weekPattern";
 
 type Dekt<A, B> = [A] extends [B] ? true : false;
 type Gelijk<A, B> = Dekt<A, B> extends true ? (Dekt<B, A> extends true ? true : false) : false;
@@ -92,14 +89,15 @@ const OVEREENKOMSTEN: boolean[] = [
   true satisfies Gelijk<z.infer<typeof zCalendarEvent>, CalendarEvent>,
   true satisfies Gelijk<z.infer<typeof zHolidayPeriod>, HolidayPeriod>,
   true satisfies Gelijk<z.infer<typeof zSettings>, Settings>,
-  true satisfies Gelijk<z.infer<typeof zWeekPattern>, WeekPattern>,
-  true satisfies Gelijk<z.infer<typeof zWeekPatternOverride>, WeekPatternOverride>,
 ];
 
 describe("types en schemas beschrijven hetzelfde", () => {
   it("dekt elke geïmplementeerde tabel", () => {
-    // Alle zesentwintig tabellen uit §8.3, plus het basisrecord en de blokunie.
-    expect(OVEREENKOMSTEN).toHaveLength(28);
+    // Alle vierentwintig tabellen die er zijn, plus het basisrecord en de blokunie.
+    //
+    // §8.3 somt er zesentwintig op; `weekPatterns` en `weekPatternOverrides` zijn
+    // met B-146 vervallen omdat de basisweek geen eigen gegevensmodel meer heeft.
+    expect(OVEREENKOMSTEN).toHaveLength(26);
     expect(OVEREENKOMSTEN.every(Boolean)).toBe(true);
   });
 });
