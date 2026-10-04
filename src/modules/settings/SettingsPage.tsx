@@ -11,6 +11,7 @@ import { Skeleton } from "@/ui/skeleton";
 import { useDienst } from "@/app/providers/useDienst";
 import { diensten, type Diensten } from "@/services/diensten";
 
+import { BackUp } from "./BackUp";
 import { Meldingen } from "./Meldingen";
 import { SchoolYearForm } from "./SchoolYearForm";
 import { SettingsForm } from "./SettingsForm";
@@ -23,64 +24,19 @@ import { SettingsForm } from "./SettingsForm";
  * app niets: zonder leerlingenlijst doet de afscherming stilzwijgend niets, en dat
  * is het scenario waar dit product tegen beschermt (A7 uit de review, FR-INS-18).
  *
- * De AI-provider, de detectoren, het stijlprofiel, het logboek, de back-up en
- * wissen staan in §6.5 en komen later. Ze staan hier niet als lege knop: een knop
- * die niets doet is erger dan een knop die er nog niet is.
+ * De back-up staat er sinds B-143 (§6.5.9): alles staat in deze browser, en zonder
+ * back-up is een geleegd profiel het werk van een schooljaar.
+ *
+ * De detectoren, het stijlprofiel, het logboek en wissen staan in §6.5 en komen
+ * later. Ze staan hier niet als lege knop: een knop die niets doet is erger dan een
+ * knop die er nog niet is.
  */
 export function SettingsPage() {
-  const [melding, setMelding] = useState<string | null>(null);
-  const [fout, setFout] = useState<string | null>(null);
-  const [bezig, setBezig] = useState(false);
-
-  const laad = useCallback(async ({ settings, agenda, notifications }: Diensten) => {
-    const record = await settings.lees();
-    if (!record.ok) return record;
-
-    const jaar = await agenda.huidigSchooljaar();
-    if (!jaar.ok) return jaar;
-
-    return {
-      ok: true as const,
-      value: {
-        instellingen: {
-          pupilNoun: record.value.pupilNoun,
-          attentionThresholdDays: record.value.attentionThresholdDays,
-          showAttention: record.value.showAttention,
-          showOutgoingRequest: record.value.showOutgoingRequest,
-          region: settings.voorkeur("region"),
-        },
-        schooljaar: {
-          name: jaar.value?.name ?? "",
-          firstSchoolDay: jaar.value?.firstSchoolDay ?? "",
-          lastSchoolDay: jaar.value?.lastSchoolDay ?? "",
-        },
-        // FR-AGE-28: alleen uitlezen. Vragen gebeurt pas na een klik.
-        meldingen: notifications.toestemming(),
-      },
-    };
-  }, []);
+  // Een inline functie, want de lintregel van React wil dat zien; het werk staat in
+  // `haalOp` zodat dit bestand onder de zestig regels van DR-53 blijft.
+  const laad = useCallback((alles: Diensten) => haalOp(alles), []);
 
   const { waarde, fout: laadfout, bezig: laden, herlaad } = useDienst(laad);
-
-  async function vulVerzonnenGroep() {
-    setBezig(true);
-    setFout(null);
-
-    const { sampleData } = await diensten();
-    const uitkomst = await sampleData.vulVerzonnenGroep();
-    setBezig(false);
-
-    if (!uitkomst.ok) {
-      setMelding(null);
-      setFout(uitkomst.error.message);
-      return;
-    }
-
-    const { leerlingen, groepen, lidmaatschappen, reeksen } = uitkomst.value;
-    setMelding(
-      `Klaar: ${leerlingen} leerlingen, ${groepen} groepen met ${lidmaatschappen} lidmaatschappen en ${reeksen} reeksen.`,
-    );
-  }
 
   if (laadfout) {
     return (
@@ -134,22 +90,96 @@ export function SettingsPage() {
       {/* §6.2.9: de uitleg hoort bij de functie, niet als voetnoot eronder. */}
       {waarde ? <Meldingen toestemming={waarde.meldingen} /> : null}
 
-      <div className="space-y-3 border-t border-border pt-6">
-        <p className="text-sm text-muted-foreground">
-          Twintig verzonnen namen, drie groepen en drie reeksen om de app mee uit te proberen. Er
-          komt nooit de naam van een echt kind in.
+      {/* §6.5.9: het dashboard verwees hier al naar met `FR-DAS-03`. */}
+      {waarde ? <BackUp documentaties={waarde.documentaties} /> : null}
+
+      <VerzonnenGroep />
+    </div>
+  );
+}
+
+/**
+ * Alles wat dit scherm toont, in één keer opgehaald (§10.10).
+ *
+ * Buiten de component, zodat `useCallback` er een stabiele verwijzing naar heeft en
+ * dit bestand niet opnieuw over de zestig regels van DR-53 gaat.
+ */
+async function haalOp({ settings, agenda, notifications, documentation }: Diensten) {
+  const record = await settings.lees();
+  if (!record.ok) return record;
+
+  const jaar = await agenda.huidigSchooljaar();
+  if (!jaar.ok) return jaar;
+
+  // `FR-INS-30`: de tweede bevestiging bij "alles vervangen" noemt dit getal.
+  const documentaties = await documentation.lijst();
+  if (!documentaties.ok) return documentaties;
+
+  return {
+    ok: true as const,
+    value: {
+      instellingen: {
+        pupilNoun: record.value.pupilNoun,
+        attentionThresholdDays: record.value.attentionThresholdDays,
+        showAttention: record.value.showAttention,
+        showOutgoingRequest: record.value.showOutgoingRequest,
+        region: settings.voorkeur("region"),
+      },
+      schooljaar: {
+        name: jaar.value?.name ?? "",
+        firstSchoolDay: jaar.value?.firstSchoolDay ?? "",
+        lastSchoolDay: jaar.value?.lastSchoolDay ?? "",
+      },
+      // FR-AGE-28: alleen uitlezen. Vragen gebeurt pas na een klik.
+      meldingen: notifications.toestemming(),
+      documentaties: documentaties.value.length,
+    },
+  };
+}
+
+/** Doorloopgereedschap (werkopdracht D02); gaat eruit vóór v1.0. */
+function VerzonnenGroep() {
+  const [melding, setMelding] = useState<string | null>(null);
+  const [fout, setFout] = useState<string | null>(null);
+  const [bezig, setBezig] = useState(false);
+
+  async function vul() {
+    setBezig(true);
+    setFout(null);
+
+    const { sampleData } = await diensten();
+    const uitkomst = await sampleData.vulVerzonnenGroep();
+    setBezig(false);
+
+    if (!uitkomst.ok) {
+      setMelding(null);
+      return setFout(uitkomst.error.message);
+    }
+
+    const { leerlingen, groepen, lidmaatschappen, reeksen } = uitkomst.value;
+    setMelding(
+      `Klaar: ${leerlingen} leerlingen, ${groepen} groepen met ${lidmaatschappen} lidmaatschappen en ${reeksen} reeksen.`,
+    );
+  }
+
+  return (
+    <div className="border-border space-y-3 border-t pt-6">
+      <p className="text-muted-foreground text-sm">
+        Twintig verzonnen namen, drie groepen en drie reeksen om de app mee uit te proberen. Er
+        komt nooit de naam van een echt kind in.
+      </p>
+      <Button variant="outline" disabled={bezig} onClick={() => void vul()}>
+        <Sparkles aria-hidden="true" />
+        Vul de verzonnen groep
+      </Button>
+      {melding ? (
+        <p role="status" className="text-sm">
+          {melding}
         </p>
-        <Button variant="outline" disabled={bezig} onClick={() => void vulVerzonnenGroep()}>
-          <Sparkles aria-hidden="true" />
-          Vul de verzonnen groep
-        </Button>
-        {melding ? (
-          <p role="status" className="text-sm">
-            {melding}
-          </p>
-        ) : null}
-        {fout ? <ErrorMessage message={fout} nextStep="Verwijder eerst de bestaande leerlingen." /> : null}
-      </div>
+      ) : null}
+      {fout ? (
+        <ErrorMessage message={fout} nextStep="Verwijder eerst de bestaande leerlingen." />
+      ) : null}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import type { Block, Documentation, Page, PhotoBlock, TextBlock } from "@/domain
 
 import { MAX_FOTOS } from "../photo/PhotoService";
 import type { Clock, StorageService } from "../storage/StorageService";
+import { archiveer, haalUitArchief } from "./archiveren";
 import { maakDocumentatieprullenbak } from "./verwijderen";
 
 export interface DocumentationDeps {
@@ -400,6 +401,10 @@ export function createDocumentationService(deps: DocumentationDeps) {
     // B-138): dit bestand zat al tegen de 400 regels van DR-53, en een groep en
     // een reeks gebruiken hetzelfde werk. Een scherm hoeft maar één plek te kennen.
     ...maakDocumentatieprullenbak(storage, deps.clock),
+    // Archiveren staat in `archiveren.ts` (B-144): het is geen status maar een
+    // datum, en het hoort bij hetzelfde onderwerp als de prullenbak — uit beeld.
+    archiveer: (id: Uuid) => archiveer(storage, deps.clock, id),
+    haalUitArchief: (id: Uuid) => haalUitArchief(storage, id),
   };
 }
 

@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-142** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-144** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,184 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 4 oktober 2026 — de back-up
+
+## B-143 — Je werk kan het apparaat uit
+
+**Probleem.** Alles staat in IndexedDB van één browser op één apparaat. Er was geen
+enkele manier om het eruit te krijgen. Het dashboard toonde wél een blok "Back-up
+maken" (`FR-DAS-03`, B-02) met een knop die naar Instellingen stuurde, en daar stond
+niets — `SettingsPage` zei het zelf in zijn kop: *"de back-up en wissen staan in §6.5
+en komen later."*
+
+**Hoe stil dat gat was.** Tijdens deze doorloop is de opslag twee keer spontaan leeg
+geweest tussen twee sessies door. Beide keren opnieuw ingericht en doorgewerkt, want
+het waren verzonnen namen. Met een schooljaar echt werk erin was dat het einde
+geweest.
+
+§6.5.9 beschrijft het al sinds het handboek, met vijf eisen, en §8.7 geeft het
+bestandsformaat tot op het aantal PBKDF2-rondes. Dit besluit lost dat in; er is
+weinig nieuws bedacht.
+
+### Wat er gebouwd is
+
+- **Back-up maken** (`FR-INS-28`): één zip met `manifest.json`, `data/<tabel>.json`
+  per tabel en `blobs/<hash>.<variant>.jpg` voor het beeld.
+- **Versleutelen** (`FR-INS-29`): PBKDF2-SHA256 met 600.000 rondes en AES-GCM per
+  bestand, precies de getallen uit §8.7. Zonder wachtwoord mag ook; dan staat
+  `onversleuteld` in de bestandsnaam.
+- **Terugzetten** (`FR-INS-30`): eerst tonen wat erin zit, dan pas kiezen tussen
+  samenvoegen en alles vervangen, met een tweede bevestiging waarin het huidige
+  aantal documentaties staat.
+- **Samenvoegen** (`FR-INS-31`): per record wint de hoogste `updatedAt`.
+- **De herinnering** (`FR-INS-32`): `lastBackupAt` werd alleen gelézen en nooit
+  geschreven. Nu wel, dus het dashboardblok klopt.
+
+### Geen pakket voor de zip, en waarom dat hier verdedigbaar is
+
+§16 vraagt bij elke afhankelijkheid een reden die niet "handig" is. Een **opgeslagen**
+zip is een kop per bestand, de bytes, en een inhoudsopgave achteraan — te overzien in
+één bestand, en de enige rekenkunde is CRC-32.
+
+Niet ingepakt, want het leeuwendeel van een back-up is JPEG; die nog eens door
+deflate halen levert procenten op en kost seconden per foto. Twee methodes in één
+schrijver is twee keer zoveel dat stuk kan.
+
+**En het is nagelopen met iets anders dan de eigen lezer.** Een zip die alleen de
+eigen code begrijpt is geen zip. De schrijver heeft een bestand gemaakt dat Windows
+met `Expand-Archive` uitpakt, met de mappen `data/` en `blobs/` erin en de inhoud
+ongeschonden.
+
+**De grens van 4 GB wordt geweigerd en niet overschreden.** §8.7 rekent bij 212
+documentaties op circa 4 GB, en daarboven is zip64 nodig — een tweede formaat met
+eigen velden. Een zip die over de rand gaat is geen foutmelding maar een bestand dat
+niemand meer open krijgt, en dat merk je pas als je het nodig hebt. Er komt dus een
+melding met wat je kunt doen.
+
+### Het manifest blijft leesbaar, ook bij een versleutelde back-up
+
+`FR-INS-30` eist dat de app vóór het terugzetten toont wat erin zit. Dat kan alleen
+als het manifest buiten de versleuteling blijft. Dat is geen lek: een aantal en een
+apparaatnaam zeggen niets over een kind; de namen, de teksten en de foto's zitten in
+de versleutelde bestanden ernaast. Zou het manifest ook dicht zijn, dan moest je je
+wachtwoord intypen voordat de app je kon vertellen wélk bestand je in handen hebt —
+en dat is precies de situatie waarin mensen hun laatste goede back-up overschrijven.
+
+### De verwijderde records gaan mee
+
+Ze staan dertig dagen in de prullenbak (§8.8, B-138). Wie zijn apparaat kwijtraakt op
+dag negenentwintig hoort ze terug te kunnen halen.
+
+### Eén nieuwe schrijfweg in de opslaglaag
+
+`storage.zetTerug(tabel, record)` schrijft een record precies zoals het was, zonder de
+zes basisvelden in te vullen of bij te werken. Dat is de enige plek waar dat mag, en
+het is nodig: zou `updatedAt` bij het terugzetten op "nu" komen te staan, dan is de
+botsingsregel van `FR-INS-31` niet uit te voeren en lijkt elk teruggezet record het
+nieuwste. Het schema controleert nog steeds (DR-23).
+
+### Wat lint vond en ik zelf niet
+
+Het terugzetscherm had **geen eigen wachtwoordveld**. De uitleg wees naar "hierboven",
+maar dat veld hoort bij het *maken* van een back-up. Een versleutelde back-up was dus
+onmogelijk terug te zetten. Lint zag het aan een ongebruikte `setWachtwoord`; zonder
+die waarschuwing was het pas opgevallen bij iemand die zijn gegevens kwijt was.
+
+### Nog niet gedaan
+
+§8.7 geeft zeven tabelspecifieke botsingsregels. Gebouwd is de algemene — hoogste
+`updatedAt` wint — plus het uitzonderen van `settings` bij samenvoegen. **Niet**
+gebouwd: de kopie met de aantekening *"uit back-up van 3 juli"*, het samenvoegen van
+lidmaatschappen op de langste periode, en de melding bij een gelijke naam met een
+ander id. Die drie komen pas in beeld bij twee apparaten, en tot die tijd zou het
+gedrag zijn zonder dat iemand het kan narekenen.
+
+
+
+## B-144 — Archiveren is geen derde status
+
+**Probleem.** `FR-DOC-120` staat sinds het handboek in §6.1.13 en was niet gebouwd.
+Het was het laatste gat in dat hoofdstuk: `FR-DOC-121` t/m `FR-DOC-123` — de
+prullenbak — kwamen bij B-135, archiveren bleef liggen.
+
+Het verschil met verwijderen is niet technisch maar menselijk. **Verwijderen zegt:
+dit had er niet moeten staan.** Dat gaat naar de prullenbak en is na dertig dagen
+weg. **Archiveren zegt: dit is af.** Het project is klaar, de reeks is afgerond, en
+het hoeft niet meer tussen je lopende werk te staan — maar het blijft bestaan en het
+blijft vindbaar. Zonder die tweede knop is de enige manier om je overzicht
+overzichtelijk te houden het weggooien van werk dat je wilt houden.
+
+### Het veld stond er al
+
+`archivedAt` staat in §8.3.5, in `Documentation` en in het schema, en werd nergens
+gezet of gelezen. Dit besluit lost dat in; er is geen veld bij gekomen.
+
+### Geen status erbij, en dat is de kern
+
+De verleiding is `status: "gearchiveerd"`. Dat kan niet: **B-13 zegt dat de statussen
+concept en gedeeld heten**, en meer zijn het er niet. Een gearchiveerde documentatie
+is nog steeds een concept of nog steeds gedeeld — hij is alleen uit beeld. Zou
+archiveren een status zijn, dan verliest de app bij het archiveren van een gedeelde
+documentatie de informatie dát hij gedeeld is, en dan klopt `FR-DOC-118` niet meer.
+
+Daarom draagt `archivedAt` het, net zoals `deletedAt` het verwijderen draagt
+(§8.1.6). Twee velden die los van elkaar staan, en één `status` die blijft zeggen wat
+hij zei.
+
+### Waar het verschil zit: bladeren tegenover zoeken
+
+`FR-DOC-120` maakt dat onderscheid zelf, in één zin: *"wanneer je het overzicht
+bekijkt, dan staat hij er niet bij tenzij je het filter aanzet"*, en meteen daarna
+*"wel in zoeken, met een aanduiding"*.
+
+Dat is geen slordigheid maar precies goed. **Bladeren is zien waar je mee bezig bent**
+— daar hoort afgesloten werk niet tussen. **Zoeken is iets terugvinden** — en dan is
+"ik heb het vorig jaar gearchiveerd" de slechtst denkbare reden om het niet te tonen.
+In beide gevallen draagt de treffer zijn aanduiding, zodat je niet hoeft te raden
+waarom iets niet in je overzicht stond.
+
+De regel staat in `SearchService` en niet in het scherm: of iets getoond wordt is een
+regel, en regels staan in services (DR-15).
+
+### Het dashboard telt het niet mee, de aandacht wél
+
+`FR-DOC-120` zegt dat gearchiveerd werk niet meetelt in het dashboard. Dat geldt voor
+het blok **Verder werken aan**: dat gaat over waar je gebleven was.
+
+Het geldt **niet** voor het blok **Aandacht**. Dat blok rekent uit hoeveel schooldagen
+geleden een kind voor het laatst in je documentatie voorkwam, en dat is gebeurd — of
+je het werk daarna hebt afgesloten verandert daar niets aan. Zou archiveren daar
+meetellen, dan zou het afsluiten van één afgerond project ineens vijf kinderen als
+verwaarloosd aanwijzen, en dat is het tegenovergestelde van wat §6.4.4 bedoelt.
+
+### Geen bevestiging
+
+Archiveren gooit niets weg en de knop ernaast draait het in één klik terug.
+Verwijderen vraagt die bevestiging wél, want dat heeft een termijn.
+
+### De keuze van het scherm
+
+`DocumentEditor` ging over de vierhonderd regels (DR-53). De balk erboven is er
+daarom uit gehaald als `Werkbalk`: het schrijfscherm gaat over de inhoud, die balk
+over wat er met het geheel gebeurt.
+
+In hetzelfde spoor is het blok Verder werken aan uit `useDashboard` getrokken als de
+zuivere functie `verderWerkenAan`. Niet om de regels, maar omdat de regel anders niet
+te toetsen was zonder het hele dashboard te laten tekenen.
+
+### Nog niet gedaan
+
+**Groepen en reeksen kun je niet archiveren.** Het handboek vraagt dat ook niet — er
+is geen `FR-` voor, en `archivedAt` staat alleen op `Documentation`. Een afgelopen
+groep hoort bij het schooljaar en niet bij het archief; dat is een ander gesprek
+(DR-01).
+
+**De prullenbak laat niet zien dat iets gearchiveerd wás.** Zet je een verwijderde
+documentatie terug, dan komt hij terug zoals hij was, archief en al. Dat klopt, maar
+het overzicht zegt het niet; wie hem daarna niet ziet staan moet het filter aanzetten.
 
 ---
 

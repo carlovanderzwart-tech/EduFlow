@@ -4,6 +4,7 @@ import { useCallback } from "react";
 
 import { maandagVan, plusDagen, vandaagIso, type IsoDate } from "@/lib/dates";
 import { useDienst } from "@/app/providers/useDienst";
+import { isGearchiveerd } from "@/services/documentation/archiveren";
 import type { CalendarEvent, Documentation, SchoolYear } from "@/domain/types";
 import { perDag } from "@/services/agenda/AgendaService";
 import { vakantieOp, type Vakantie } from "@/services/agenda/HolidayService";
@@ -18,6 +19,25 @@ export const MAX_CONCEPTEN = 5;
 
 /** `FR-DAS-03`: na dertig dagen wordt het blok Back-up dringend. */
 export const BACKUP_DRINGEND_DAGEN = 30;
+
+/**
+ * Het blok Verder werken aan (`FR-DAS-01`, `FR-DAS-02`, `FR-DOC-120`).
+ *
+ * Apart en zuiver, zodat de regel toetsbaar is zonder het hele dashboard te laten
+ * tekenen — de drie zinnen hieronder zijn samen de hele inhoud van dat blok.
+ *
+ * **Op `updatedAt` en niet op `date`** (`FR-DAS-02`). Elders in de app is "wanneer"
+ * de dag waarop het gebeurde; hier is het de vraag waar je gebleven was.
+ *
+ * **Wat gearchiveerd is telt niet mee** (`FR-DOC-120`, B-144). Dit blok gaat over
+ * lopend werk, en een concept dat je bewust hebt afgesloten hoort daar niet tussen.
+ */
+export function verderWerkenAan(documentaties: readonly Documentation[]): Documentation[] {
+  return documentaties
+    .filter((doc) => doc.status === "concept" && !isGearchiveerd(doc))
+    .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, MAX_CONCEPTEN);
+}
 
 export interface Dashboardstand {
   vandaag: IsoDate;
@@ -83,16 +103,19 @@ export function useDashboard() {
           studiedagVandaag: vandaagItems.find((item) => item.kind === "studiedag") ?? null,
           vakantieNu,
           eersteSchooldag: vakantieNu ? plusDagen(vakantieNu.to, 1) : null,
-          // FR-DAS-02: op het dashboard altijd `updatedAt` — "waar was ik".
-          concepten: alleDocs.value
-            .filter((doc) => doc.status === "concept")
-            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-            .slice(0, MAX_CONCEPTEN),
+          concepten: verderWerkenAan(alleDocs.value),
           aandachtAan: record.value.showAttention,
           // FR-DAS-07: staat het blok uit, dan wordt er niets uitgerekend.
           aandacht: record.value.showAttention
             ? aandacht({
                 leerlingen: await lopendeLeerlingen(students, groups),
+                // Hier tellen gearchiveerde documentaties **wel** mee (B-144).
+                // Aandacht vraagt wanneer een kind voor het laatst in je
+                // documentatie voorkwam, en dat is gebeurd — of je het werk
+                // daarna hebt afgesloten verandert daar niets aan. Zou het
+                // meetellen vervallen, dan zou het archiveren van één afgerond
+                // project ineens vijf kinderen als verwaarloosd aanwijzen, en dat
+                // is precies het tegenovergestelde van wat dit blok bedoelt.
                 documentaties: alleDocs.value,
                 vakanties: vakanties.value,
                 drempel: record.value.attentionThresholdDays,

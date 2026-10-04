@@ -6,6 +6,7 @@ import { SearchField } from "@/ui/SearchField";
 import { Button } from "@/ui/button";
 import { Field, FieldLabel } from "@/ui/field";
 import { Input } from "@/ui/input";
+import { Switch } from "@/ui/switch";
 import { NativeSelect, NativeSelectOption } from "@/ui/native-select";
 import type { Group, Series, Student } from "@/domain/types";
 import type { Filters, Sortering } from "@/services/search/SearchService";
@@ -176,6 +177,19 @@ export function FilterBar({
         >
           Dit schooljaar
         </Button>
+
+        {/* `FR-DOC-120`: gearchiveerd werk staat niet tussen wat loopt, tenzij je
+            hierom vraagt. Bij een zoekterm komt het er altijd bij (B-144). */}
+        <Field orientation="horizontal" className="w-auto">
+          <FieldLabel htmlFor="toon-gearchiveerd" className="text-sm font-normal">
+            Toon gearchiveerde
+          </FieldLabel>
+          <Switch
+            id="toon-gearchiveerd"
+            checked={stand.filters.toonGearchiveerd === true}
+            onCheckedChange={(aan) => zetFilter({ toonGearchiveerd: aan || undefined })}
+          />
+        </Field>
 
         <NativeSelect
           aria-label="Sorteren"
