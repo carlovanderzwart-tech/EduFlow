@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-146** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-147** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -148,6 +148,84 @@ heen; er staat dan een gymles in een week waarin je vrij bent. §6.2.5 kent daar
 regel voor en B-115 noemt het niet, dus er is niets gebouwd (DR-01). Wie het stoort kan
 die ene keer verwijderen met "alleen deze". Dit is een kandidaat voor een besluit, geen
 vergeten werk.
+
+
+## B-147 — Het handboek is bijgewerkt naar B-145 en B-146
+
+**Geen nieuw besluit, maar het uitvoeren van twee bestaande.** B-145 en B-146 hebben
+het handboek laten afwijken van wat de app is, en dat stond sindsdien alleen in dit
+register opgetekend. De opdrachtgever heeft toestemming gegeven om de hoofdstukken zelf
+bij te werken.
+
+### Wat er is aangetekend als vervallen (B-145)
+
+| Waar | Wat vervalt |
+|---|---|
+| §12 — AI-architectuur | het hele hoofdstuk |
+| §6.3 — Mail | het hele hoofdstuk, `FR-MAI-01` t/m `FR-MAI-36` |
+| §6.1.8 — Laat AI meeschrijven | `FR-DOC-71` t/m `FR-DOC-83` |
+| §6.1.9 — Titelvoorstel en vervolgzin | `FR-DOC-91` t/m `FR-DOC-96` |
+| §6.1.10 — Gespreksmodus | `FR-DOC-97` t/m `FR-DOC-107` |
+| §15.4 — De AI-verwerking | de hele paragraaf |
+
+Dat zijn vijftig `FR`-nummers plus twee hoofdstukken zonder eigen nummering.
+
+**Niets is weggegooid.** Elke aantekening is een blok bovenaan de paragraaf; geen
+bestaande regel is aangeraakt. De cijfers: 142 regels toegevoegd, nul verwijderd. Dat
+is geen netheid maar een voorwaarde — wie dit besluit ooit terugdraait heeft de hele
+keten nog beschreven liggen, tot op het aantal PBKDF2-rondes.
+
+**Drie stukken zijn met opzet níét vervallen**, en dat staat erbij omdat ze anders
+meegesleept zouden worden:
+
+- **§12.5** (pseudonimisatie) — `PrivacyService` voert hem nog uit en poort 9 bewaakt
+  hem.
+- **De snelheidslimiet van T-17** uit §12.6 — die is nu het slot op de toegangscode
+  van T-05.
+- **De belofte over de notitie voor jezelf** uit §6.1.8 — die leeft door als
+  `FR-DOC-22`, en dat is de helft van de belofte die wél een toets heeft.
+
+### Wat erbij is gekomen (B-146)
+
+`FR-AGE-29` t/m `FR-AGE-31` staan nu in §6.2, als nieuwe paragraaf **§6.2.11 — De
+basisweek**, met de redenering uit B-115 erboven en de twee dingen uit B-146 die je
+moet weten: wat de herkomst wel en niet betekent, en dat een reeks door een vakantie
+heen loopt.
+
+**Hij staat achter §6.2.10 en niet op zijn inhoudelijke plek**, die vlak na §6.2.5 zou
+zijn. Vooraan invoegen betekent §6.2.6 tot en met §6.2.10 omnummeren, en daarmee elke
+verwijzing elders breken voor een volgorde die niemand mist.
+
+### Wat hiermee nog niet klopt
+
+**`FR-AGE-32` t/m `FR-AGE-35` staan ook alleen in dit register.** Vier eisen — de
+datums in het jaaroverzicht, de stip bij een geplande dag, de kale tijd die de middag
+wordt, en de eigen kleur van een agenda-item — leven alleen in B-129, B-132 en B-133.
+Ze zijn alle vier gebouwd en getoetst. Toch is het dezelfde fout als bij de basisweek,
+en één toestemming is er niet voor gevraagd: de opdrachtgever heeft toestemming gegeven
+voor `FR-AGE-29` t/m `FR-AGE-31` en niet voor deze vier. Dit is dus een openstaande
+post en geen vergeten werk.
+
+**`docs/07-gebruikersflows.md` verwijst naar §6.3.10, en die paragraaf bestaat niet.**
+De tweede spookverwijzing stond in §12 en lost zichzelf op nu dat hoofdstuk vervallen
+is. Deze niet: §7 is niet vervallen. Hem herstellen betekent een bestaande regel
+wijzigen, en dat valt buiten wat er is toegestaan.
+
+**`docs/product-bible-volledig.md` is niet bijgewerkt.** Dat is de archiefkopie van
+9.115 regels en hij beschrijft de toestand van 7 augustus 2026. Een archief dat
+meebeweegt is geen archief.
+
+### De les, en waarom hij hier staat en niet alleen in B-146
+
+`FR-AGE-29` t/m `FR-AGE-31` zijn op 13 augustus geboren in B-115 en nooit in §6.2
+terechtgekomen. Ze stonden ook niet in de eisentabel van werkopdracht `D09b`, die ze
+had moeten bouwen. Zeven weken lang kwamen ze dus in geen enkele controle voor, en bij
+het opleveren van B-145 is gemeld dat blok 1 af was terwijl dat niet zo was.
+
+**Een eis die alleen in een besluit woont, wordt niet gebouwd.** Wie hier een `FR-`
+nummer uitgeeft, zet het diezelfde dag in het hoofdstuk waar het thuishoort — of hij
+schrijft op waarom dat niet kan, zoals hierboven bij `FR-AGE-32` t/m `FR-AGE-35`.
+
 
 ---
 

@@ -764,6 +764,20 @@ Een vervolgpagina die door dit mechanisme is ontstaan, is in de navigator herken
 
 #### 6.1.8 Laat AI meeschrijven
 
+> ### ⛔ Deze paragraaf is **vervallen** per B-145 (4 oktober 2026)
+>
+> **`FR-DOC-71` t/m `FR-DOC-83` vervallen; die nummers blijven leegstaan** en worden
+> nooit hergebruikt (§6.0).
+>
+> De opdrachtgever heeft besloten het AI-deel niet te bouwen. Er is geen knop "Laat AI
+> meeschrijven", geen controlescherm en geen vergelijkscherm. De sneltoetsen `Ctrl+Enter`
+> en `Ctrl+Shift+V` uit §6.1.14 horen daar ook bij en zijn er niet.
+>
+> **De tekst blijft staan**, als beschrijving van iets wat niet bestaat. Eén zin
+> hieruit leeft door en is met opzet niet vervallen: wat in de notitie voor jezelf
+> staat blijft binnen. Dat is nu `FR-DOC-22` — zoeken slaat hem over — en dat is de
+> helft van de belofte die wél een toets heeft.
+
 "Laat AI meeschrijven" is de enige AI-knop in het schrijfscherm die de hele tekst betreft. Hij staat in de kop op de laptop en in de vaste balk onderaan op de telefoon. De knop is uitgeschakeld zolang het tekstvlak minder dan 20 tekens bevat; er staat dan als uitleg "Schrijf eerst een paar woorden."
 
 **Wat er gebeurt bij een tik.** In deze volgorde, zonder uitzondering (zie §10.3):
@@ -905,6 +919,16 @@ De maximale omvang van je eigen tekst in één aanroep is 8.000 tekens. Is je te
 
 #### 6.1.9 Titelvoorstel en vervolgzin
 
+> ### ⛔ Deze paragraaf is **vervallen** per B-145 (4 oktober 2026)
+>
+> **`FR-DOC-91` t/m `FR-DOC-96` vervallen; die nummers blijven leegstaan** en worden
+> nooit hergebruikt (§6.0).
+>
+> Er is geen titelvoorstel en geen vervolgzin. Daarmee vervalt ook de reden dat de
+> beschrijving van een reeks bestond: B-04 liet hem als context meegaan bij een
+> vervolgdeel. De beschrijving is er nog, maar hij is nu voor jezelf — dat staat sinds
+> B-145 ook zo op het scherm.
+
 Twee AI-functies die alleen bij documentatie bestaan. De eerste is gemak, de tweede is de reden dat EduFlow bestaat.
 
 **Titelvoorstel.** Onder het titelveld staat, zodra er meer dan 200 tekens tekst is en het titelveld leeg is, de knop "Stel een titel voor". Er komen drie voorstellen van maximaal zes woorden. Klikken vult het veld; je kunt daarna gewoon typen. Er is geen automatisch invullen: een titel die je niet gekozen hebt komt later terug in de lijst en je herkent hem niet.
@@ -932,6 +956,17 @@ Zit de documentatie in een reeks waarin al minstens één eerder deel bestaat, d
 *Gegeven* een voorstel, *wanneer* het verschijnt, *dan* staat het boven het tekstvlak als voorstel, niet in het tekstvlak, met "Neem over" en "Nee, dank je" even groot naast elkaar.
 
 #### 6.1.10 Gespreksmodus
+
+> ### ⛔ Deze paragraaf is **vervallen** per B-145 (4 oktober 2026)
+>
+> **`FR-DOC-97` t/m `FR-DOC-107` vervallen; die nummers blijven leegstaan** en worden
+> nooit hergebruikt (§6.0).
+>
+> Gespreksmodus bestaat niet. De uitwerking van B-03 — de foto's stellen de vragen —
+> gaat niet door, want de laatste stap was dat de AI er een documentatie van bouwt.
+>
+> Het stuk eromheen is er wél: je kiest je foto's, je zet ze in de volgorde die je
+> wilt, en je schrijft er zelf bij. Dat is §6.1.5 en dat is gebouwd.
 
 Gespreksmodus is de tweede manier om een documentatie te maken, en de uitwerking van B-03: de foto's stellen de vragen.
 

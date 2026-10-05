@@ -7,6 +7,24 @@
 
 # Hoofdstuk 6.3 — Mail
 
+> ## ⛔ Dit hele hoofdstuk is **vervallen** per B-145 (4 oktober 2026)
+>
+> **`FR-MAI-01` t/m `FR-MAI-36` vervallen; die nummers blijven leegstaan** en worden
+> nooit hergebruikt (§6.0).
+>
+> De opdrachtgever heeft besloten het AI-deel niet te bouwen, en deze herschreven §6.3
+> is volledig AI. Dat stond al zo in de opdrachtenlijst, als reden om mail naar blok 2
+> te verplaatsen: *"zonder AI blijft er geen module over. Een concept dat je zelf typt
+> met een kopieerknop is een kladblok."*
+>
+> Mail staat sinds B-145 niet meer in de navigatie — vier tabbladen in plaats van vijf
+> — en `/mail` geeft het gewone "deze pagina bestaat niet"-scherm. De domeintypen en
+> de vier maildatabasetabellen zijn blijven staan: ze dragen tabellen die bestaan, en
+> ze weghalen kost een migratie zonder opbrengst.
+>
+> Hiermee verlaat er **geen enkel persoonsgegeven meer het apparaat.** Hoofdstuk 15
+> kende drie uitgaande stromen en alle drie waren ze AI of mail.
+
 ## 6.3.1 Wat deze module wel en niet is
 
 De module Mail schrijft mails. Hij leest je postbus niet, hij koppelt met niets, en hij
