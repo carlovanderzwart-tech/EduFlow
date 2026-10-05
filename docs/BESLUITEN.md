@@ -1,6 +1,6 @@
 # Besluiten sinds de Product Bible
 
-> ## Laatst uitgegeven nummers: **B-146** · **T-46** · **INV-54** · **FR-AGE-35** · **FR-DOC-128** · **FR-INS-47**
+> ## Laatst uitgegeven nummers: **B-148** · **T-46** · **INV-54** · **FR-AGE-36** · **FR-DOC-128** · **FR-INS-47**
 >
 > **Lees deze regel vóór je een nummer uitgeeft, en werk hem bij zodra je er een uitgeeft.**
 > Dit is de enige plek waar nieuwe nummers vandaan komen. Hoofdstuk 19 is gesloten (B-114).
@@ -9,6 +9,87 @@ Hoofdstuk 19 van het handboek bevat alle besluiten tot en met 7 augustus 2026 en
 daarmee historisch: er komt niets meer bij. Dit bestand is het vervolg — elke keuze die
 daarna de documenten verandert, met datum en reden. Nieuwste bovenaan, nummering loopt
 door op hoofdstuk 19.
+
+---
+
+# 5 oktober 2026 — de vakanties in de basisweek
+
+## B-148 — Een basisweekitem slaat de schoolvakanties over
+
+**Probleem.** B-146 leverde de basisweek op met een open punt: een wekelijkse reeks
+loopt door een vakantie heen, dus er staat een gymles in een week waarin je vrij bent.
+§6.2.5 kent daar geen regel voor en B-115 noemde het niet, dus er is toen niets voor
+gebouwd (DR-01). Het is voorgelegd als kandidaat voor een besluit; dit is dat besluit.
+
+**Waarom het meer is dan een schoonheidsfoutje.** Zo'n les is geen afspraak die je
+bent vergeten af te zeggen — hij heeft nooit bestaan, want er was geen school. Een
+agenda die je vrije week volzet met gym kost precies het vertrouwen dat de agenda moet
+opbouwen: wie één keer ziet dat er dingen in staan die niet kloppen, kijkt er daarna
+anders naar.
+
+De herfstvakantie begon twaalf dagen na dit besluit. Dat is geen argument op zichzelf,
+maar het is wel waarom het nu gebeurde en niet in een sprint.
+
+### Nieuwe eis
+
+**FR-AGE-36 — De basisweek slaat de schoolvakanties over.**
+*Gegeven* een onderdeel uit de basisweek, *wanneer* de app er een wekelijkse reeks van
+maakt, *dan* vallen de dagen die in een schoolvakantie liggen eruit. *Gegeven* dat er
+geen vakantiegegevens zijn, *dan* loopt de reeks gewoon door.
+
+### Het gat staat in het record, niet in de weergave
+
+De keuze die ertoe doet. **`excludedDates` krijgt de vakantiedagen erin** bij het
+aanmaken, in plaats van dat elke weergave de vakanties opnieuw langs de reeks legt.
+
+Dat veld betekent letterlijk *"de dagen waarop deze reeks niet valt"*. Dat een
+losgemaakt item er ook een achterlaat is één bron van gaten en niet de definitie — dat
+staat zo in het type, en §6.2.5 noemt het losmaken als voorbeeld en niet als
+uitputtende lijst.
+
+Het alternatief was filteren bij het tekenen. Dat is afgewogen en afgevallen: de
+reeks wordt op **twee** plekken uitgeklapt, in `AgendaService.periode` en in
+`IcsService`, en er komt er een derde zodra er meldingen bijkomen. Elk van die plekken
+zou de vakanties moeten kennen en onthouden ze mee te geven. Vergeet de ICS-export het,
+dan toont de app geen gymles in de herfstvakantie en je telefoon wel — en dat is erger
+dan allebei fout.
+
+Nu klopt de reeks overal tegelijk, zonder dat één van die plekken iets van vakanties
+hoeft te weten.
+
+### Wat je daarvoor inlevert
+
+**De gaten worden één keer uitgerekend en bevriezen.** Pas je later een adviesvakantie
+aan (`FR-AGE-10`), dan verschuift het gat niet mee. De gymles van die ene week staat er
+dan verkeerd in of juist niet in.
+
+Dat is de prijs, en hij is te overzien: het vakantiebestand geeft het hele schooljaar
+vooruit, en een eigen aanpassing is de uitzondering. Wie het tegenkomt haalt het
+onderdeel uit zijn basisweek en zet het er opnieuw in — twee klikken, en dan kloppen de
+gaten weer.
+
+Een knop "gaten opnieuw berekenen" is overwogen en niet gebouwd. Hij lost iets op wat
+bijna nooit gebeurt, en hij vraagt uitleg op het scherm over een mechanisme waar de
+gebruiker verder niets van hoeft te weten (§4.4).
+
+### Zonder vakantiegegevens verandert er niets
+
+Het bestand kan aflopen (`FR-AGE-12`) en een regio kan ontbreken. Dan zijn er geen
+gaten en loopt de reeks gewoon door. Dat is dezelfde afspraak die §6.2.10 geval 5 voor
+de rest van de agenda maakt: ontbrekende vakanties zijn lege dagen en geen fout.
+
+**Het scherm zegt dan ook niets anders.** De regel onder een onderdeel leest het item
+en niet de bedoeling: staan er gaten in, dan staat er *"elke week, behalve 3 keer in
+een vakantie"*; staan er geen, dan staat er *"elke week"*. Een scherm dat belooft wat
+er niet gebeurd is, is erger dan een scherm dat zwijgt.
+
+### Nog niet gedaan
+
+**`FR-AGE-36` moet nog in §6.2.11.** Dat is dezelfde fout die B-147 beschrijft — een
+eis die alleen in een besluit woont wordt niet gebouwd — en hij staat hier opgetekend
+in plaats van stilzwijgend te blijven. Hij gaat erin zodra de hoofdstukwijziging van
+B-147 is samengevoegd; eerder kan niet zonder die twee wijzigingen over elkaar heen te
+laten lopen.
 
 ---
 

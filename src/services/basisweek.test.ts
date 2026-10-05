@@ -29,6 +29,7 @@ import {
   eersteDagOpOfNa,
   isBasisweekreeks,
   uitBasisweek,
+  vakantiegaten,
   WEEKDAGEN,
   type Basisonderdeel,
 } from "./agenda/basisweek";
@@ -44,6 +45,22 @@ const NU = "2026-10-04T10:00:00.000Z";
 const JAAR = { firstSchoolDay: "2026-08-24", lastSchoolDay: "2027-07-16" } as SchoolYear;
 
 const GYM: Basisonderdeel = { weekdag: 2, van: "08:30", tot: "09:15", title: "Gym" };
+
+/** De herfstvakantie van bijlage A: zaterdag 17 t/m zondag 25 oktober 2026. */
+const HERFST = {
+  schoolYearName: "2026-2027",
+  region: "midden" as const,
+  holidayKey: "herfst",
+  name: "Herfstvakantie",
+  from: "2026-10-17",
+  to: "2026-10-25",
+  fixed: false,
+  aangepast: false,
+  landelijk: null,
+};
+
+/** Kerstvakantie: 19 december 2026 t/m 3 januari 2027. */
+const KERST = { ...HERFST, holidayKey: "kerst", name: "Kerstvakantie", from: "2026-12-19", to: "2027-01-03" };
 
 let storage: StorageService;
 let agenda: AgendaService;
@@ -292,5 +309,71 @@ describe("herkomst, geen eigenaar — `FR-AGE-31`, B-115", () => {
     );
 
     expect(uitBasisweek(los)).toBe(false);
+  });
+});
+
+describe("de vakanties worden overgeslagen — `FR-AGE-36`, B-148", () => {
+  it("knipt de dinsdag in de herfstvakantie eruit (`FR-AGE-36`)", () => {
+    const gaten = vakantiegaten("2026-08-25", "2027-07-16", [HERFST]);
+
+    // Dinsdag 20 oktober valt tussen 17 en 25 oktober.
+    expect(gaten).toEqual(["2026-10-20"]);
+  });
+
+  it("knipt elke week van een lange vakantie eruit (`FR-AGE-36`)", () => {
+    const gaten = vakantiegaten("2026-08-25", "2027-07-16", [KERST]);
+
+    // Twee dinsdagen in de kerstvakantie: 22 en 29 december.
+    expect(gaten).toEqual(["2026-12-22", "2026-12-29"]);
+  });
+
+  it("laat de reeks met rust als er geen vakantiegegevens zijn (§6.2.10 geval 5)", () => {
+    // Het bestand kan aflopen, of er is nog geen regio gekozen. Dan loopt de reeks
+    // gewoon door; lege dagen zijn geen fout.
+    expect(vakantiegaten("2026-08-25", "2027-07-16", [])).toEqual([]);
+  });
+
+  it("raakt een weekdag die buiten de vakantie valt niet", () => {
+    // Zaterdag 17 oktober is de eerste vakantiedag, maar een maandagreeks begint op
+    // 24 augustus en raakt binnen de herfstvakantie alleen 19 oktober.
+    const gaten = vakantiegaten("2026-08-24", "2027-07-16", [HERFST]);
+
+    expect(gaten).toEqual(["2026-10-19"]);
+  });
+
+  it("zet de gaten in `excludedDates` van het agenda-item (`FR-AGE-36`)", () => {
+    const invoer = alsAgendainvoer(GYM, JAAR, [HERFST, KERST]);
+
+    expect(invoer.recurrence.excludedDates).toEqual([
+      "2026-10-20",
+      "2026-12-22",
+      "2026-12-29",
+    ]);
+  });
+
+  it("laat `excludedDates` leeg zonder vakanties (`FR-AGE-36`)", () => {
+    expect(alsAgendainvoer(GYM, JAAR).recurrence.excludedDates).toEqual([]);
+  });
+
+  it("laat de gymles in de herfstvakantie niet in de agenda zien (`FR-AGE-36`)", async () => {
+    const gym = waarde(await agenda.maak(alsAgendainvoer(GYM, JAAR, [HERFST])));
+
+    const vakantieweek = verschijningen(gym, "2026-10-19", "2026-10-25");
+    const gewoneWeek = verschijningen(gym, "2026-10-26", "2026-11-01");
+
+    // Dit is de hele belofte: een agenda die je vrije week volzet met gym kost
+    // precies het vertrouwen dat de agenda moet opbouwen.
+    expect(vakantieweek).toHaveLength(0);
+    expect(gewoneWeek).toHaveLength(1);
+  });
+
+  it("telt een vakantiegat niet als een losgemaakte keer (B-148)", async () => {
+    const gym = waarde(await agenda.maak(alsAgendainvoer(GYM, JAAR, [HERFST])));
+
+    // `excludedDates` betekent "de dagen waarop deze reeks niet valt". Een
+    // losgemaakt item is één bron van zo'n gat en niet de definitie; er hoort hier
+    // dus geen tweede item te staan.
+    expect(waarde(await agenda.lijst())).toHaveLength(1);
+    expect(gym.recurrence?.excludedDates).toEqual(["2026-10-20"]);
   });
 });

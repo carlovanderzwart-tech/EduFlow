@@ -25,6 +25,8 @@ import { ongeldig, type Result } from "@/lib/result";
 import { dagMetTijd } from "@/lib/weergave";
 import type { CalendarEvent, SchoolYear } from "@/domain/types";
 
+import { vakantieOp, type Vakantie } from "./HolidayService";
+
 /** Maandag tot en met zondag, met het ISO-nummer dat `weekdag()` teruggeeft. */
 export const WEEKDAGEN = [
   { nummer: 1, naam: "Maandag" },
@@ -70,13 +72,45 @@ export function bezwaarTegen(onderdeel: Basisonderdeel, jaar: SchoolYear | null)
 }
 
 /**
- * Het agenda-item dat bij dit onderdeel hoort (`FR-AGE-29`).
+ * De dagen van deze wekelijkse reeks die in een vakantie vallen (`FR-AGE-36`, B-148).
+ *
+ * Een gymles hoort niet in de herfstvakantie te staan. Zo'n les is geen afspraak die
+ * je bent vergeten af te zeggen — hij heeft nooit bestaan, want er was geen school.
+ *
+ * **Het gat staat in `excludedDates` en wordt niet bij het tekenen weggelaten.** Dat
+ * veld betekent letterlijk "de dagen waarop deze reeks niet valt"; dat een losgemaakt
+ * item er ook een achterlaat is één bron van gaten en niet de definitie. Zo klopt de
+ * reeks overal tegelijk: in de week, in de maand, in het jaar, in de ICS-export en in
+ * de meldingen — zonder dat elk van die plekken de vakanties hoeft te kennen.
+ */
+export function vakantiegaten(
+  eerste: IsoDate,
+  laatste: IsoDate,
+  vakanties: readonly Vakantie[],
+): IsoDate[] {
+  const gaten: IsoDate[] = [];
+  for (let dag = eerste; dag <= laatste; dag = plusDagen(dag, 7)) {
+    if (vakantieOp(dag, vakanties)) gaten.push(dag);
+  }
+  return gaten;
+}
+
+/**
+ * Het agenda-item dat bij dit onderdeel hoort (`FR-AGE-29`, `FR-AGE-36`).
  *
  * Wekelijks, tot en met de laatste schooldag. `until` en niet `count`, want een
  * schooljaar heeft een einddatum en geen aantal weken — en B-123 staat er precies
  * één van de twee toe.
+ *
+ * De vakanties worden er meteen uitgeknipt. Zonder vakantiegegevens — het bestand
+ * loopt af, of je hebt nog geen regio gekozen — blijft de reeks gewoon doorlopen; dat
+ * is hetzelfde als wat §6.2.10 geval 5 voor de rest van de agenda afspreekt.
  */
-export function alsAgendainvoer(onderdeel: Basisonderdeel, jaar: SchoolYear) {
+export function alsAgendainvoer(
+  onderdeel: Basisonderdeel,
+  jaar: SchoolYear,
+  vakanties: readonly Vakantie[] = [],
+) {
   const eerste = eersteDagOpOfNa(jaar.firstSchoolDay, onderdeel.weekdag);
 
   return {
@@ -90,7 +124,7 @@ export function alsAgendainvoer(onderdeel: Basisonderdeel, jaar: SchoolYear) {
       frequency: "wekelijks" as const,
       until: jaar.lastSchoolDay,
       count: null,
-      excludedDates: [],
+      excludedDates: vakantiegaten(eerste, jaar.lastSchoolDay, vakanties),
     },
   };
 }
