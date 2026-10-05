@@ -56,8 +56,8 @@ export function Basisweek() {
     <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
       <p className="text-sm text-muted-foreground">
         Je vaste week: gym, muziek, de bouwvergadering. Wat je hier invult komt elke week in
-        je agenda te staan, tot de laatste schooldag. Daarna is het een gewoon agenda-item —
-        verplaatsen en wijzigen doe je in de agenda zelf.
+        je agenda te staan, tot de laatste schooldag, en de vakanties worden overgeslagen.
+        Daarna is het een gewoon agenda-item — verplaatsen en wijzigen doe je in de agenda zelf.
       </p>
 
       {week.waarde && !week.waarde.jaar ? (
@@ -100,13 +100,27 @@ function useBasisweek() {
   const [fout, setFout] = useState<string | null>(null);
   const [teVerwijderen, setTeVerwijderen] = useState<CalendarEvent | null>(null);
 
-  const laad = useCallback(async ({ agenda }: Diensten) => {
+  const laad = useCallback(async ({ agenda, holidays }: Diensten) => {
     const items = await agenda.lijst();
     if (!items.ok) return items;
     const jaar = await agenda.huidigSchooljaar();
     if (!jaar.ok) return jaar;
 
-    return { ok: true as const, value: { week: basisweekVan(items.value), jaar: jaar.value } };
+    // De vakanties horen erbij, want een gymles hoort niet in de herfstvakantie
+    // te staan (`FR-AGE-36`). Zonder schooljaar is er niets op te halen.
+    const vakanties = jaar.value
+      ? await holidays.vakanties(jaar.value.name, jaar.value.region)
+      : ({ ok: true as const, value: [] });
+    if (!vakanties.ok) return vakanties;
+
+    return {
+      ok: true as const,
+      value: {
+        week: basisweekVan(items.value),
+        jaar: jaar.value,
+        vakanties: vakanties.value,
+      },
+    };
   }, []);
 
   const { waarde, fout: laadfout, bezig, herlaad } = useDienst(laad);
@@ -116,7 +130,9 @@ function useBasisweek() {
     if (!gekeurd.ok) return setFout(gekeurd.error.message);
 
     const { agenda } = await diensten();
-    const uitkomst = await agenda.maak(alsAgendainvoer(onderdeel, gekeurd.value));
+    const uitkomst = await agenda.maak(
+      alsAgendainvoer(onderdeel, gekeurd.value, waarde?.vakanties ?? []),
+    );
     if (!uitkomst.ok) return setFout(uitkomst.error.message);
 
     // Dag en tijd blijven staan: wie twee onderdelen op dinsdagochtend invult, wil
@@ -279,7 +295,7 @@ function Regel({ item, onVerwijder }: { item: CalendarEvent; onVerwijder: () => 
       <ItemContent>
         <ItemTitle>{item.title}</ItemTitle>
         <ItemDescription>
-          {dag} · {klok(item.start)}–{klok(item.end)} · elke week
+          {dag} · {klok(item.start)}–{klok(item.end)} · {herhaling(item)}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -294,6 +310,18 @@ function Regel({ item, onVerwijder }: { item: CalendarEvent; onVerwijder: () => 
       </ItemActions>
     </Item>
   );
+}
+
+/**
+ * Hoe vaak dit onderdeel terugkomt, in woorden (`FR-AGE-36`).
+ *
+ * De tekst leest het item en zegt niet wat de regel behoort te zijn: zonder
+ * vakantiegegevens — het bestand is afgelopen, of er is nog geen regio gekozen — zijn
+ * er geen gaten, en dan hoort er niet te staan dat de vakanties worden overgeslagen.
+ */
+function herhaling(item: CalendarEvent): string {
+  const gaten = item.recurrence?.excludedDates.length ?? 0;
+  return gaten > 0 ? `elke week, behalve ${gaten} keer in een vakantie` : "elke week";
 }
 
 /** De weekdag van een opgeslagen tijdstip, lokaal gelezen. */
