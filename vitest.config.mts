@@ -14,6 +14,15 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    /**
+     * De tijdzone staat vast op die van de app (§8.1.4).
+     *
+     * Zonder deze regel draaien de toetsen in de tijdzone van de machine: hier
+     * Europe/Amsterdam, in CI UTC. Een toets over zomertijd zegt dan op de ene plek
+     * iets anders dan op de andere, en dat is precies de omgevingsafhankelijkheid
+     * die DR-12 verbiedt.
+     */
+    env: { TZ: "Europe/Amsterdam" },
   },
   resolve: {
     alias: {

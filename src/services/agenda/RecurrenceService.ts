@@ -125,12 +125,37 @@ export function verschijningen(
     .map(({ dag, eerste }) => (eerste ? item : verschoven(item, dagenTussen(eigenDagen[0]!, dag))));
 }
 
+/**
+ * Hetzelfde tijdstip van de dag, zoveel dagen later (§6.2.10 geval 1).
+ *
+ * **Niet zoveel keer vierentwintig uur erbij**, en dat verschil is precies een uur
+ * per half jaar. De klok gaat eind oktober terug; telt een wekelijkse reeks dan in
+ * milliseconden door, dan staat de gymles van half negen vanaf dat moment om half
+ * acht. §6.2.10 geval 1 zegt wat er hoort te gebeuren: *"de begintijd blijft staan
+ * zoals ingevoerd"*.
+ *
+ * Daarom wordt er op de **lokale** kalender geteld en niet op de tijdlijn: dag erbij,
+ * uur en minuut houden, en dan pas terug naar UTC. Begin en einde schuiven ieder op
+ * zichzelf, zodat een item dat over middernacht loopt heel blijft.
+ */
+function zelfdeTijdstip(waarde: string, dagen: number): string {
+  const moment = new Date(waarde);
+  const nieuw = new Date(
+    moment.getFullYear(),
+    moment.getMonth(),
+    moment.getDate() + dagen,
+    moment.getHours(),
+    moment.getMinutes(),
+    moment.getSeconds(),
+    moment.getMilliseconds(),
+  );
+  return nieuw.toISOString();
+}
+
 /** Hetzelfde item, zoveel dagen later. Zonder de reeksregel: dit ís een verschijning. */
 function verschoven(item: CalendarEvent, dagen: number): CalendarEvent {
   const schuif = (waarde: string) =>
-    item.allDay
-      ? plusDagen(waarde, dagen)
-      : new Date(new Date(waarde).getTime() + dagen * 86_400_000).toISOString();
+    item.allDay ? plusDagen(waarde, dagen) : zelfdeTijdstip(waarde, dagen);
 
   return {
     ...item,
