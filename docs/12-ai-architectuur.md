@@ -4,6 +4,28 @@
 
 ## 12. AI-architectuur
 
+> ## ⛔ Dit hele hoofdstuk is **vervallen** per B-145 (4 oktober 2026)
+>
+> De opdrachtgever heeft besloten het AI-deel niet te bouwen. Daarmee vervalt blok 2
+> van de doorloop in zijn geheel: werkopdracht `D04` (`/api/ai`, `AIService`,
+> `PromptService`), `D06` (laat AI meeschrijven) en `D10` (mail).
+>
+> **De code is weg.** `src/services/ai/`, `/api/ai` en `schemas/aiRequest.ts` zijn
+> met B-145 verwijderd; poort 10 en 11 van §16.9 staan op *vervallen*. Wat er wél is
+> gebleven: `PrivacyService` met zijn volledige toetsset, en het hele domeinmodel —
+> dat spiegelt dit hoofdstuk, en de tabellen eronder bestaan nog.
+>
+> **De tekst blijft staan en wordt niet weggegooid.** Wie dit besluit ooit terugdraait
+> heeft hier de hele keten beschreven liggen, tot op het aantal PBKDF2-rondes en de
+> drempels van de gouden testset. Lees het dus als beschrijving van iets wat *niet
+> bestaat*, niet als eis.
+>
+> Twee stukken hieruit leven door en zijn met opzet niet vervallen: **§12.5**
+> (pseudonimisatie, die `PrivacyService` nog altijd uitvoert en die poort 9 bewaakt)
+> en de snelheidslimiet van **T-17** uit §12.6, die nu het slot op de toegangscode van
+> T-05 is — zonder dat slot is een toegangscode te raden door hem vaak genoeg te
+> proberen.
+
 Hoofdstuk 3 beschrijft de houding: wat AI mag doen en waarom. Dit hoofdstuk beschrijft het apparaat: welke onderdelen er zijn, wat er precies over de lijn gaat, hoe de kwaliteit gemeten wordt en wat er gebeurt als het misgaat.
 
 ### 12.1 De keten in één beeld

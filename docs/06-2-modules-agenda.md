@@ -239,4 +239,50 @@ weigering is definitief te herstellen via de browser en de app legt uit hoe.
 | 9 | Herhaling zonder einde | Maximaal 200 herhalingen worden berekend; daarna stopt de reeks met een aantekening |
 | 10 | Import van 5.000 items | De app importeert in stappen van 200 met voortgang en een afbreekknop |
 
+#### 6.2.11 De basisweek
+
+> **Toegevoegd op 5 oktober 2026 door B-146.** Deze eisen zijn op 13 augustus geboren
+> in B-115 en nooit in dit hoofdstuk terechtgekomen. Daardoor kwamen ze in geen enkele
+> controle voor — niet in de eisentabel van werkopdracht `D09b`, die ze had moeten
+> bouwen, en niet hier. Ze zijn op 5 oktober alsnog gebouwd.
+>
+> **Deze paragraaf staat achter §6.2.10 en niet op zijn inhoudelijke plek**, die vlak
+> na §6.2.5 zou zijn. Vooraan invoegen betekent §6.2.6 tot en met §6.2.10 omnummeren,
+> en daarmee elke verwijzing elders breken voor een volgorde die niemand mist.
+
+De basisweek is het vaste weekrooster van je groep: gym, muziek, de bouwvergadering.
+Je vult hem in bij Instellingen → Basisweek.
+
+**De basisweek is een invoerscherm, geen tweede gegevensmodel** (B-115). Je vult je
+vaste week in, en de app maakt daar gewone herhalende agenda-items van. Eén mechanisme
+onder de motorkap, één snelle route erboven. Een basisweek met eigen records zou
+betekenen dat verplaatsen, exporteren, meldingen en zoeken twee keer gebouwd en twee
+keer getoetst moeten worden — en dat die twee stilletjes uit elkaar lopen (U-05, DR-03).
+
+**FR-AGE-29 — De basisweek is een invoerscherm.**
+*Gegeven* Instellingen → Basisweek, *wanneer* je een vast onderdeel invult met dag,
+tijd en naam, *dan* maakt de app een wekelijks herhalend agenda-item voor de duur van
+het schooljaar. Volgt uit B-115.
+
+**FR-AGE-30 — Een gegenereerd item is een gewoon item.**
+*Gegeven* een item uit de basisweek, *dan* is het te verplaatsen, te wijzigen en te
+verwijderen zoals elk ander item, met dezelfde vraag "alleen deze, of alle volgende?"
+(`FR-AGE-15`). Volgt uit B-115.
+
+**FR-AGE-31 — De basisweek is zichtbaar als herkomst, niet als eigenaar.**
+*Gegeven* een gegenereerd item, *dan* toont het detailvenster "uit je basisweek" als
+herkomst. Wijzig je de basisweek daarna, *dan* raakt dat de reeds gewijzigde items
+niet. Volgt uit B-115.
+
+**Wat de herkomst wel en niet betekent** (B-146). `source: "derived"` zegt waar een
+item vandaan komt en verder niets. Verplaats je één gymles met "alleen deze", dan
+blijft die ene verzette les staan ook als je het hele onderdeel daarna uit je
+basisweek haalt. Wijzig je met "alle volgende", dan maakt de agenda een nieuwe reeks
+die van jou is en niet meer in het basisweekscherm staat.
+
+**Wat er niet is** (B-146, DR-01). Een wekelijkse reeks loopt door een vakantie heen:
+er staat dan een gymles in een week waarin je vrij bent. §6.2.5 kent daar geen regel
+voor en B-115 noemt het niet, dus er is niets voor gebouwd. Wie het stoort haalt die
+ene keer weg met "alleen deze".
+
 ---

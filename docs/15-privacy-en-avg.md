@@ -58,6 +58,27 @@ De AVG vraagt niet om zo min mogelijk gegevens in het algemeen, maar om niet mee
 
 ### 15.4 De AI-verwerking
 
+> ### ⛔ Deze paragraaf is **vervallen** per B-145 (4 oktober 2026)
+>
+> Deze stroom bestaat niet meer. Het AI-deel wordt niet gebouwd en mail evenmin,
+> en dat waren samen alle drie de uitgaande stromen van dit hoofdstuk.
+>
+> **Er verlaat geen enkel persoonsgegeven het apparaat.** Geen verwerker, geen
+> subverwerker, geen verwerkersovereenkomst met het bestuur, geen toestemmingstekst
+> vóór de eerste aanroep — er is niets om toestemming voor te vragen.
+>
+> Dat verandert het gesprek met de functionaris gegevensbescherming (`O-03`), dat
+> volgens B-104 de zwaarste niet-technische blokkade was vóór het eerste echte kind.
+> Het gesprek vervalt niet, maar het gaat nu over opslag op één apparaat en over wat
+> er gebeurt als dat apparaat kwijtraakt — niet over een stroom naar een provider.
+> De back-up van §8.7 en §6.5.9 is daarmee het onderwerp geworden.
+>
+> **`PrivacyService` is blijven staan**, met zijn volledige toetsset en met poort 9
+> van §16.9 die hem bewaakt. Hij heeft geen aanroeper meer. Hij staat er omdat hij
+> niets kost zolang niemand hem aanroept, omdat dit hoofdstuk hem als bewijs
+> gebruikt, en omdat een eventuele ommezwaai daarmee een week werk is in plaats van
+> een maand.
+
 Dit is de stroom waar het gesprek over gaat.
 
 **Wat er weggaat.** Tekst die de gebruiker heeft geschreven of gedicteerd, waarin de namen uit de leerlingenlijst en de extra termen zijn vervangen door codes, samen met de systeeminstructie, het stijlprofiel en gekozen voorbeelden (§12.3). Bij de vervolgzin gaan er ook eerdere documentaties uit dezelfde reeks mee (B-04), en dat is meer tekst over kinderen dan bij gewoon meeschrijven. Dat staat expliciet in het controlescherm (FR-DOC-95).
