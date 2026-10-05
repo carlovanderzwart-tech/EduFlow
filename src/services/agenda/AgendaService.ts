@@ -146,129 +146,148 @@ function bezwaar(invoer: Agendainvoer): string | null {
   return null;
 }
 
-export function createAgendaService(deps: AgendaDeps) {
-  async function maak(invoer: Agendainvoer): Promise<Result<CalendarEvent>> {
-    const reden = bezwaar(invoer);
-    if (reden) return ongeldig(reden);
 
-    const gemeenschappelijk = {
-      title: invoer.title.trim(),
-      kind: invoer.kind,
-      note: invoer.note ?? "",
-      location: invoer.location ?? "",
-      groupIds: [],
-      studentIds: invoer.studentIds ?? [],
-      documentationId: null,
-      mailDraftId: null,
-      // Zelf gemaakt, dus `own`. Een teruggezet vakantiebestand overschrijft het
-      // niet, want dat raakt alleen `holidayFile` (§8.7). De basisweek levert
-      // `derived` aan (`FR-AGE-31`).
-      source: invoer.source ?? ("own" as const),
-      recurrence: invoer.recurrence ?? null,
-      colour: invoer.colour ?? null,
-    };
+/*
+ * De vijf handelingen krijgen de opslag mee in plaats van haar als afsluiting te
+ * dragen. Dat is wat `createAgendaService` van 91 regels onder de zestig van DR-53
+ * bracht, en het sluit aan bij `huidigSchooljaar`, `zetSchooljaar` en `wijzigReeks`
+ * verderop, die hier al zo stonden.
+ */
 
-    // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
-    // unie van INV-31 valt anders terug op `string` en dan is de winst weg.
-    return invoer.allDay
-      ? deps.storage.create("calendarEvents", {
-          ...gemeenschappelijk,
-          allDay: true,
-          start: invoer.start,
-          end: invoer.end,
-        })
-      : deps.storage.create("calendarEvents", {
-          ...gemeenschappelijk,
-          allDay: false,
-          start: invoer.start,
-          end: invoer.end,
-        });
-  }
+async function maak(
+  storage: StorageService,
+  invoer: Agendainvoer,
+): Promise<Result<CalendarEvent>> {
+  const reden = bezwaar(invoer);
+  if (reden) return ongeldig(reden);
 
-  /**
-   * Alle items, het eerstvolgende bovenaan.
-   *
-   * Een kalenderdag en een tijdstip van dezelfde dag sorteren goed door elkaar: de
-   * dag is het voorvoegsel van het tijdstip, dus `2026-08-11` komt vóór
-   * `2026-08-11T09:00:00.000Z` (INV-31).
-   */
-  async function lijst(): Promise<Result<CalendarEvent[]>> {
-    const uitkomst = await deps.storage.list("calendarEvents");
-    if (!uitkomst.ok) return uitkomst;
+  const gemeenschappelijk = {
+    title: invoer.title.trim(),
+    kind: invoer.kind,
+    note: invoer.note ?? "",
+    location: invoer.location ?? "",
+    groupIds: [],
+    studentIds: invoer.studentIds ?? [],
+    documentationId: null,
+    mailDraftId: null,
+    // Zelf gemaakt, dus `own`. Een teruggezet vakantiebestand overschrijft het
+    // niet, want dat raakt alleen `holidayFile` (§8.7). De basisweek levert
+    // `derived` aan (`FR-AGE-31`).
+    source: invoer.source ?? ("own" as const),
+    recurrence: invoer.recurrence ?? null,
+    colour: invoer.colour ?? null,
+  };
 
-    return {
-      ok: true,
-      value: [...uitkomst.value].sort((a, b) => a.start.localeCompare(b.start)),
-    };
-  }
+  // De twee takken staan uitgeschreven en niet samengevoegd met een spread: de
+  // unie van INV-31 valt anders terug op `string` en dan is de winst weg.
+  return invoer.allDay
+    ? storage.create("calendarEvents", {
+        ...gemeenschappelijk,
+        allDay: true,
+        start: invoer.start,
+        end: invoer.end,
+      })
+    : storage.create("calendarEvents", {
+        ...gemeenschappelijk,
+        allDay: false,
+        start: invoer.start,
+        end: invoer.end,
+      });
+}
 
-  /** Wijzigt een bestaand item; dezelfde regels gelden als bij het maken. */
-  async function wijzig(id: Uuid, invoer: Agendainvoer): Promise<Result<CalendarEvent>> {
-    const reden = bezwaar(invoer);
-    if (reden) return ongeldig(reden);
-
-    const velden = {
-      title: invoer.title.trim(),
-      kind: invoer.kind,
-      note: invoer.note ?? "",
-      location: invoer.location ?? "",
-      studentIds: invoer.studentIds ?? [],
-      recurrence: invoer.recurrence ?? null,
-      colour: invoer.colour ?? null,
-    };
-
-    return invoer.allDay
-      ? deps.storage.update("calendarEvents", id, {
-          ...velden,
-          allDay: true,
-          start: invoer.start,
-          end: invoer.end,
-        })
-      : deps.storage.update("calendarEvents", id, {
-          ...velden,
-          allDay: false,
-          start: invoer.start,
-          end: invoer.end,
-        });
-  }
-
-  /**
-   * Alles wat een periode raakt, ook een item dat er alleen overheen loopt.
-   *
-   * Herhalende items worden hier **uitgeklapt** (§6.2.5, B-123): de opslag draagt één
-   * record per reeks, en pas op het moment dat je een week of een maand bekijkt is
-   * bekend welke verschijningen daarin vallen. Een gymles van elke dinsdag staat dus
-   * in oktober in beeld terwijl het record uit september komt.
-   */
-  async function periode(van: IsoDate, tot: IsoDate): Promise<Result<CalendarEvent[]>> {
-    const alle = await lijst();
-    if (!alle.ok) return alle;
-
-    const uitgeklapt = alle.value.flatMap((item) => verschijningen(item, van, tot));
-
-    return {
-      ok: true,
-      value: uitgeklapt
-        .filter((item) => raaktPeriode(item, van, tot))
-        .sort((a, b) => a.start.localeCompare(b.start)),
-    };
-  }
-
-  /** Verwijderen is markeren; het item blijft dertig dagen herstelbaar (FR-AGE-16). */
-  function verwijder(id: Uuid): Promise<Result<CalendarEvent>> {
-    return deps.storage.softDelete("calendarEvents", id);
-  }
+/**
+ * Alle items, het eerstvolgende bovenaan.
+ *
+ * Een kalenderdag en een tijdstip van dezelfde dag sorteren goed door elkaar: de
+ * dag is het voorvoegsel van het tijdstip, dus `2026-08-11` komt vóór
+ * `2026-08-11T09:00:00.000Z` (INV-31).
+ */
+async function lijst(storage: StorageService): Promise<Result<CalendarEvent[]>> {
+  const uitkomst = await storage.list("calendarEvents");
+  if (!uitkomst.ok) return uitkomst;
 
   return {
-    maak,
-    wijzig,
-    lijst,
-    periode,
-    verwijder,
+    ok: true,
+    value: [...uitkomst.value].sort((a, b) => a.start.localeCompare(b.start)),
+  };
+}
+
+/** Wijzigt een bestaand item; dezelfde regels gelden als bij het maken. */
+async function wijzig(
+  storage: StorageService,
+  id: Uuid,
+  invoer: Agendainvoer,
+): Promise<Result<CalendarEvent>> {
+  const reden = bezwaar(invoer);
+  if (reden) return ongeldig(reden);
+
+  const velden = {
+    title: invoer.title.trim(),
+    kind: invoer.kind,
+    note: invoer.note ?? "",
+    location: invoer.location ?? "",
+    studentIds: invoer.studentIds ?? [],
+    recurrence: invoer.recurrence ?? null,
+    colour: invoer.colour ?? null,
+  };
+
+  return invoer.allDay
+    ? storage.update("calendarEvents", id, {
+        ...velden,
+        allDay: true,
+        start: invoer.start,
+        end: invoer.end,
+      })
+    : storage.update("calendarEvents", id, {
+        ...velden,
+        allDay: false,
+        start: invoer.start,
+        end: invoer.end,
+      });
+}
+
+/**
+ * Alles wat een periode raakt, ook een item dat er alleen overheen loopt.
+ *
+ * Herhalende items worden hier **uitgeklapt** (§6.2.5, B-123): de opslag draagt één
+ * record per reeks, en pas op het moment dat je een week of een maand bekijkt is
+ * bekend welke verschijningen daarin vallen. Een gymles van elke dinsdag staat dus
+ * in oktober in beeld terwijl het record uit september komt.
+ */
+async function periode(
+  storage: StorageService,
+  van: IsoDate,
+  tot: IsoDate,
+): Promise<Result<CalendarEvent[]>> {
+  const alle = await lijst(storage);
+  if (!alle.ok) return alle;
+
+  const uitgeklapt = alle.value.flatMap((item) => verschijningen(item, van, tot));
+
+  return {
+    ok: true,
+    value: uitgeklapt
+      .filter((item) => raaktPeriode(item, van, tot))
+      .sort((a, b) => a.start.localeCompare(b.start)),
+  };
+}
+
+/** Verwijderen is markeren; het item blijft dertig dagen herstelbaar (FR-AGE-16). */
+function verwijder(storage: StorageService, id: Uuid): Promise<Result<CalendarEvent>> {
+  return storage.softDelete("calendarEvents", id);
+}
+
+export function createAgendaService(deps: AgendaDeps) {
+  return {
+    maak: (invoer: Agendainvoer) => maak(deps.storage, invoer),
+    wijzig: (id: Uuid, invoer: Agendainvoer) => wijzig(deps.storage, id, invoer),
+    lijst: () => lijst(deps.storage),
+    periode: (van: IsoDate, tot: IsoDate) => periode(deps.storage, van, tot),
+    verwijder: (id: Uuid) => verwijder(deps.storage, id),
     huidigSchooljaar: () => huidigSchooljaar(deps.storage),
     zetSchooljaar: (invoer: Schooljaarinvoer) => zetSchooljaar(deps.storage, invoer),
     wijzigReeks: (id: Uuid, dag: IsoDate, reikwijdte: Reikwijdte, invoer: Agendainvoer) =>
-      wijzigReeks(deps.storage, maak, id, dag, reikwijdte, invoer),
+      wijzigReeks(deps.storage, (i) => maak(deps.storage, i), id, dag, reikwijdte, invoer),
   };
 }
 

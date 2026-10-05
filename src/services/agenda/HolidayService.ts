@@ -87,6 +87,137 @@ function rijenVan(bestand: Vakantiebestand) {
   );
 }
 
+
+/*
+ * Hieronder staan de vier handelingen die niets met de synchronisatiegrendel te
+ * maken hebben. Ze krijgen `deps` mee in plaats van het als afsluiting te dragen;
+ * dat is wat `createHolidayService` van 121 regels onder de zestig van DR-53 bracht.
+ */
+
+/** De vakanties van een schooljaar en regio, met de aanpassingen eroverheen. */
+async function vakanties(
+  deps: HolidayDeps,
+  schoolYearName: string,
+  region: Region,
+): Promise<Result<Vakantie[]>> {
+  const periodes = await deps.storage.list("holidayPeriods");
+  if (!periodes.ok) return periodes;
+
+  const overrides = await deps.storage.list("holidayOverrides");
+  if (!overrides.ok) return overrides;
+
+  const eigen = new Map(
+    overrides.value
+      .filter((rij) => rij.schoolYearName === schoolYearName && rij.region === region)
+      .map((rij) => [rij.holidayKey, rij]),
+  );
+
+  // Op sleutel ontdubbeld: raakte de tabel ooit dubbel gevuld, dan heelt dat
+  // hiermee vanzelf in plaats van elke vakantie twee keer te tonen.
+  const opSleutel = new Map<string, HolidayPeriod>();
+  for (const rij of periodes.value) {
+    if (rij.schoolYearName !== schoolYearName || rij.region !== region) continue;
+    opSleutel.set(rij.holidayKey, rij);
+  }
+
+  const uit = [...opSleutel.values()]
+    .map((rij) => leg(rij, eigen.get(rij.holidayKey)))
+    .sort((a, b) => a.from.localeCompare(b.from));
+
+  return { ok: true, value: uit };
+}
+
+/**
+ * Past een adviesvakantie aan (`FR-AGE-10`).
+ *
+ * Het bronbestand blijft ongemoeid; er komt een `HolidayOverride` naast te staan.
+ * Een vaste vakantie weigert hier, en dat is INV-32.
+ */
+async function pasAan(
+  deps: HolidayDeps,
+  schoolYearName: string,
+  region: Region,
+  holidayKey: string,
+  from: IsoDate,
+  to: IsoDate,
+): Promise<Result<HolidayOverride>> {
+  if (to < from) {
+    return ongeldig("Het einde van de vakantie ligt vóór het begin. Zet het einde later.");
+  }
+
+  const periodes = await deps.storage.list("holidayPeriods");
+  if (!periodes.ok) return periodes;
+
+  const rij = periodes.value.find(
+    (periode) =>
+      periode.schoolYearName === schoolYearName &&
+      periode.region === region &&
+      periode.holidayKey === holidayKey,
+  );
+  if (!rij) return ongeldig("Deze vakantie staat niet in het vakantiebestand.");
+
+  // INV-32, FR-AGE-09: kerst en zomer liggen landelijk vast.
+  if (rij.fixed) {
+    return ongeldig("Kerst- en zomervakantie liggen landelijk vast.");
+  }
+
+  const overrides = await deps.storage.list("holidayOverrides");
+  if (!overrides.ok) return overrides;
+
+  const bestaand = overrides.value.find(
+    (override) =>
+      override.schoolYearName === schoolYearName &&
+      override.region === region &&
+      override.holidayKey === holidayKey,
+  );
+
+  return bestaand
+    ? deps.storage.update("holidayOverrides", bestaand.id, { from, to })
+    : deps.storage.create("holidayOverrides", { schoolYearName, region, holidayKey, from, to });
+}
+
+/** Haalt een aanpassing weg; daarna gelden de landelijke datums weer. */
+async function herstel(
+  deps: HolidayDeps,
+  schoolYearName: string,
+  region: Region,
+  holidayKey: string,
+): Promise<Result<void>> {
+  const overrides = await deps.storage.list("holidayOverrides");
+  if (!overrides.ok) return overrides;
+
+  const bestaand = overrides.value.find(
+    (override) =>
+      override.schoolYearName === schoolYearName &&
+      override.region === region &&
+      override.holidayKey === holidayKey,
+  );
+  if (!bestaand) return { ok: true, value: undefined };
+
+  const weg = await deps.storage.purge("holidayOverrides", bestaand.id);
+  return weg.ok ? { ok: true, value: undefined } : weg;
+}
+
+/**
+ * De melding bij een aflopend bestand (`FR-AGE-12`, B-50).
+ *
+ * Geeft de tekst terug of `null`. Daarna blijft de agenda gewoon werken:
+ * ontbrekende vakanties zijn lege dagen en geen fout.
+ */
+function verlooptBinnenkort(deps: HolidayDeps): string | null {
+  const grens = plusDagen(deps.clock.now().toISOString().slice(0, 10), WAARSCHUW_DAGEN_VOORAF);
+  if (deps.bestand.validUntil > grens) return null;
+
+  const datum = new Intl.DateTimeFormat("nl-NL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${deps.bestand.validUntil}T00:00:00.000Z`));
+
+  return `De vakantiegegevens lopen af op ${datum}. Vanaf dan voer je vakanties zelf in.`;
+}
+
 export function createHolidayService(deps: HolidayDeps) {
   /**
    * De lopende synchronisatie, zodat er maar één tegelijk draait.
@@ -150,126 +281,20 @@ export function createHolidayService(deps: HolidayDeps) {
     return { ok: true, value: gewijzigd };
   }
 
-  /** De vakanties van een schooljaar en regio, met de aanpassingen eroverheen. */
-  async function vakanties(schoolYearName: string, region: Region): Promise<Result<Vakantie[]>> {
-    const periodes = await deps.storage.list("holidayPeriods");
-    if (!periodes.ok) return periodes;
 
-    const overrides = await deps.storage.list("holidayOverrides");
-    if (!overrides.ok) return overrides;
-
-    const eigen = new Map(
-      overrides.value
-        .filter((rij) => rij.schoolYearName === schoolYearName && rij.region === region)
-        .map((rij) => [rij.holidayKey, rij]),
-    );
-
-    // Op sleutel ontdubbeld: raakte de tabel ooit dubbel gevuld, dan heelt dat
-    // hiermee vanzelf in plaats van elke vakantie twee keer te tonen.
-    const opSleutel = new Map<string, HolidayPeriod>();
-    for (const rij of periodes.value) {
-      if (rij.schoolYearName !== schoolYearName || rij.region !== region) continue;
-      opSleutel.set(rij.holidayKey, rij);
-    }
-
-    const uit = [...opSleutel.values()]
-      .map((rij) => leg(rij, eigen.get(rij.holidayKey)))
-      .sort((a, b) => a.from.localeCompare(b.from));
-
-    return { ok: true, value: uit };
-  }
-
-  /**
-   * Past een adviesvakantie aan (`FR-AGE-10`).
-   *
-   * Het bronbestand blijft ongemoeid; er komt een `HolidayOverride` naast te staan.
-   * Een vaste vakantie weigert hier, en dat is INV-32.
-   */
-  async function pasAan(
-    schoolYearName: string,
-    region: Region,
-    holidayKey: string,
-    from: IsoDate,
-    to: IsoDate,
-  ): Promise<Result<HolidayOverride>> {
-    if (to < from) {
-      return ongeldig("Het einde van de vakantie ligt vóór het begin. Zet het einde later.");
-    }
-
-    const periodes = await deps.storage.list("holidayPeriods");
-    if (!periodes.ok) return periodes;
-
-    const rij = periodes.value.find(
-      (periode) =>
-        periode.schoolYearName === schoolYearName &&
-        periode.region === region &&
-        periode.holidayKey === holidayKey,
-    );
-    if (!rij) return ongeldig("Deze vakantie staat niet in het vakantiebestand.");
-
-    // INV-32, FR-AGE-09: kerst en zomer liggen landelijk vast.
-    if (rij.fixed) {
-      return ongeldig("Kerst- en zomervakantie liggen landelijk vast.");
-    }
-
-    const overrides = await deps.storage.list("holidayOverrides");
-    if (!overrides.ok) return overrides;
-
-    const bestaand = overrides.value.find(
-      (override) =>
-        override.schoolYearName === schoolYearName &&
-        override.region === region &&
-        override.holidayKey === holidayKey,
-    );
-
-    return bestaand
-      ? deps.storage.update("holidayOverrides", bestaand.id, { from, to })
-      : deps.storage.create("holidayOverrides", { schoolYearName, region, holidayKey, from, to });
-  }
-
-  /** Haalt een aanpassing weg; daarna gelden de landelijke datums weer. */
-  async function herstel(
-    schoolYearName: string,
-    region: Region,
-    holidayKey: string,
-  ): Promise<Result<void>> {
-    const overrides = await deps.storage.list("holidayOverrides");
-    if (!overrides.ok) return overrides;
-
-    const bestaand = overrides.value.find(
-      (override) =>
-        override.schoolYearName === schoolYearName &&
-        override.region === region &&
-        override.holidayKey === holidayKey,
-    );
-    if (!bestaand) return { ok: true, value: undefined };
-
-    const weg = await deps.storage.purge("holidayOverrides", bestaand.id);
-    return weg.ok ? { ok: true, value: undefined } : weg;
-  }
-
-  /**
-   * De melding bij een aflopend bestand (`FR-AGE-12`, B-50).
-   *
-   * Geeft de tekst terug of `null`. Daarna blijft de agenda gewoon werken:
-   * ontbrekende vakanties zijn lege dagen en geen fout.
-   */
-  function verlooptBinnenkort(): string | null {
-    const grens = plusDagen(deps.clock.now().toISOString().slice(0, 10), WAARSCHUW_DAGEN_VOORAF);
-    if (deps.bestand.validUntil > grens) return null;
-
-    const datum = new Intl.DateTimeFormat("nl-NL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    }).format(new Date(`${deps.bestand.validUntil}T00:00:00.000Z`));
-
-    return `De vakantiegegevens lopen af op ${datum}. Vanaf dan voer je vakanties zelf in.`;
-  }
-
-  return { synchroniseer, vakanties, pasAan, herstel, verlooptBinnenkort, bestand: deps.bestand };
+  return {
+    synchroniseer,
+    vakanties: (schoolYearName: string, region: Region) =>
+      vakanties(deps, schoolYearName, region),
+    pasAan: (schoolYearName: string, region: Region, holidayKey: string, from: IsoDate, to: IsoDate) =>
+      pasAan(deps, schoolYearName, region, holidayKey, from, to),
+    herstel: (schoolYearName: string, region: Region, holidayKey: string) =>
+      herstel(deps, schoolYearName, region, holidayKey),
+    verlooptBinnenkort: () => verlooptBinnenkort(deps),
+    bestand: deps.bestand,
+  };
 }
+
 
 /** Het bestand met de aanpassing eroverheen, met beide datums zichtbaar. */
 function leg(rij: HolidayPeriod, eigen: HolidayOverride | undefined): Vakantie {
