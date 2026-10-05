@@ -1314,3 +1314,73 @@ describe("een afspraak mag een eigen kleur krijgen — FR-AGE-35, B-133", () => 
     expect(zCalendarEvent.safeParse(fout).success).toBe(false);
   });
 });
+
+describe("zomertijd — §6.2.10 geval 1", () => {
+  /** De klok gaat terug in de nacht van zaterdag 24 op zondag 25 oktober 2026. */
+  function wekelijksOverDeGrens() {
+    return {
+      id: "reeks-1",
+      title: "Gym",
+      kind: "afspraak",
+      allDay: false,
+      // Maandag 12 oktober, 08:30 Amsterdamse tijd — dat is 06:30 UTC in de zomertijd.
+      start: "2026-10-12T06:30:00.000Z",
+      end: "2026-10-12T07:15:00.000Z",
+      recurrence: { frequency: "wekelijks", until: "2026-11-30", count: null, excludedDates: [] },
+      source: "derived",
+      colour: null,
+    } as unknown as CalendarEvent;
+  }
+
+  /** De kalenderdag van een opgeslagen tijdstip, in de tijdzone van de app. */
+  function wanddag(tijdstip: string): string {
+    return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Amsterdam" }).format(
+      new Date(tijdstip),
+    );
+  }
+
+  /** De wandklok van een opgeslagen tijdstip, in de tijdzone van de app (§8.1.4). */
+  function wandklok(tijdstip: string): string {
+    return new Intl.DateTimeFormat("nl-NL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Amsterdam",
+    }).format(new Date(tijdstip));
+  }
+
+  it("houdt de begintijd staan zoals ingevoerd (§6.2.10 geval 1)", () => {
+    const alle = verschijningen(wekelijksOverDeGrens(), "2026-10-12", "2026-11-09");
+
+    // Dit is de hele zaak: half negen blijft half negen, ook nadat de klok terug is
+    // gegaan. Werd er in milliseconden geteld, dan stond hier vanaf 26 oktober 07:30
+    // — een uur te vroeg, een half jaar lang.
+    expect(alle.map((item) => wandklok(item.start))).toEqual([
+      "08:30",
+      "08:30",
+      "08:30",
+      "08:30",
+      "08:30",
+    ]);
+  });
+
+  it("houdt de duur gelijk over de grens heen (§6.2.10 geval 1)", () => {
+    const alle = verschijningen(wekelijksOverDeGrens(), "2026-10-12", "2026-11-09");
+
+    for (const item of alle) {
+      const duur = new Date(item.end).getTime() - new Date(item.start).getTime();
+      expect(duur).toBe(45 * 60 * 1000);
+    }
+  });
+
+  it("zet de verschijning op de juiste kalenderdag", () => {
+    const alle = verschijningen(wekelijksOverDeGrens(), "2026-10-12", "2026-11-09");
+
+    expect(alle.map((item) => wanddag(item.start))).toEqual([
+      "2026-10-12",
+      "2026-10-19",
+      "2026-10-26",
+      "2026-11-02",
+      "2026-11-09",
+    ]);
+  });
+});
