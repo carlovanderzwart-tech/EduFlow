@@ -12,9 +12,16 @@ on:
     # Maandag 06:00 UTC — de wekelijkse ronde uit §16.9.
     - cron: "0 6 * * 1"
 
+# Een nieuwe duw naar een pull request breekt de vorige ronde af: die ging over
+# code die er niet meer staat, en hem laten uitlopen kost alleen wachttijd.
+#
+# **Op `main` wordt er niet afgebroken.** Daar is een afgebroken ronde iets anders:
+# dan staat er een commit in de geschiedenis waar nooit een poort overheen is
+# gegaan, en dat is precies wat §16.9 moet voorkomen. Twee commits kort na elkaar —
+# twee pull requests die vlak na elkaar binnengaan — is geen randgeval.
 concurrency:
   group: bouwstraat-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Zonder deze regel installeert Playwright zijn browsers op een pad dat niet
